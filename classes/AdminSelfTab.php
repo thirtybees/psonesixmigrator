@@ -246,7 +246,7 @@ abstract class AdminSelfTab
         return Tools::getValue($key, (isset($conf[$key]) ? $conf[$key] : ''));
     }
 
-    protected function displayForm($name, $fields, $tabname, $size, $icon)
+    protected function displayConfigForm($name, $fields, $tabname, $size, $icon)
     {
         global $currentIndex;
 
@@ -493,7 +493,7 @@ abstract class AdminSelfTab
         // Include current tab
         elseif ((Tools::getValue('submitAdd'.$this->table) && sizeof($this->_errors)) || isset($_GET['add'.$this->table])) {
             if ($this->tabAccess['add'] === '1') {
-                $this->displayForm();
+                $this->displayConfigForm();
                 if ($this->tabAccess['view']) {
                     echo '<br /><br /><a href="'.((Tools::getValue('back')) ? Tools::getValue('back') : $currentIndex.'&token='.$this->token).'"><img src="../img/admin/arrow2.gif" /> '.((Tools::getValue('back')) ? $this->l('Back') : $this->l('Back to list')).'</a><br />';
                 }
@@ -502,7 +502,7 @@ abstract class AdminSelfTab
             }
         } elseif (isset($_GET['update'.$this->table])) {
             if ($this->tabAccess['edit'] === '1' || ($this->table == 'employee' && $cookie->id_employee == Tools::getValue('id_employee'))) {
-                $this->displayForm();
+                $this->displayConfigForm();
                 if ($this->tabAccess['view']) {
                     echo '<br /><br /><a href="'.((Tools::getValue('back')) ? Tools::getValue('back') : $currentIndex.'&token='.$this->token).'"><img src="../img/admin/arrow2.gif" /> '.((Tools::getValue('back')) ? $this->l('Back') : $this->l('Back to list')).'</a><br />';
                 }

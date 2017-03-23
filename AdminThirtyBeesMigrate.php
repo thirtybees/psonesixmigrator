@@ -334,7 +334,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             'loopBackupFiles'        => [400, 800, 1600],
             'maxBackupFileSize'      => [15728640, 31457280, 62914560],
             'loopBackupDbTime'       => [6, 12, 25],
-            'max_written_allowed'    => [4194304, 8388608, 16777216],
+            'maxWrittenAllowed'    => [4194304, 8388608, 16777216],
             'loopUpgradeFiles'       => [600, 1200, 2400],
             'loopRestoreFiles'       => [400, 800, 1600],
             'loopRestoreQueryTime'   => [6, 12, 25],
@@ -1754,7 +1754,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param mixed $fullpath : current file or directory fullpath eg:'/home/web/www/prestashop/config/settings.inc.php'
      * @param mixed $way      : 'backup' , 'upgrade'
      *
-     * @return void
+     * @return bool
      *
      * @since 1.0.0
      */
@@ -1830,7 +1830,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @param mixed $file
      *
-     * @return void
+     * @return bool
      *
      * @since 1.0.0
      */
@@ -4737,8 +4737,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      */
     public function configOk()
     {
-        $allowed_array = $this->getCheckCurrentPsConfig();
-        $allowed = array_product($allowed_array);
+        $allowedArray = $this->getCheckCurrentPsConfig();
+        $allowed = array_product($allowedArray);
 
         return $allowed;
     }
@@ -4819,7 +4819,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since .10.0
      */
-    protected function displayForm($name, $fields, $tabname, $size, $icon)
+    protected function displayConfigForm($name, $fields, $tabname, $size, $icon)
     {
         $params = [
             'name'    => $name,
