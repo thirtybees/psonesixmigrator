@@ -23,7 +23,7 @@
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
-require_once __DIR__.'/classes/autoload.php';
+require_once realpath(__DIR__.'/../..').'/modules/psonesixmigrator/classes/autoload.php';
 
 if (function_exists('date_default_timezone_set')) {
     // date_default_timezone_get calls date_default_timezone_set, which can provide warning
@@ -37,7 +37,7 @@ if (!defined('_PS_MODULE_DIR_')) {
     define('_PS_MODULE_DIR_', realpath(dirname(__FILE__).'/../../').'/modules/');
 }
 
-define('AUTOUPGRADE_MODULE_DIR', _PS_MODULE_DIR_.'autoupgrade/');
+define('AUTOUPGRADE_MODULE_DIR', _PS_MODULE_DIR_.'psonesixmigrator/');
 require_once(AUTOUPGRADE_MODULE_DIR.'functions.php');
 
 // the following test confirm the directory exists
@@ -49,11 +49,6 @@ if (!isset($_POST['dir'])) {
 // but we need _PS_ROOT_DIR_
 if (!defined('_PS_ROOT_DIR_')) {
     define('_PS_ROOT_DIR_', realpath(dirname(__FILE__).'/../../'));
-}
-
-require_once(_PS_ROOT_DIR_.'/modules/autoupgrade/classes/Tools14.php');
-if (!class_exists('Tools', false)) {
-    eval('class Tools extends Tools14{}');
 }
 
 $dir = Tools::safeOutput(Tools::getValue('dir'));
@@ -79,7 +74,10 @@ include(AUTOUPGRADE_MODULE_DIR.'init.php');
 global $ajax;
 
 $ajax = true;
-$adminObj = new PsOneSixMigrator\AdminSelfUpgrade();
+if (!class_exists('AdminThirtyBeesMigrate')) {
+    require_once    AUTOUPGRADE_MODULE_DIR.'AdminThirtyBeesMigrate.php';
+}
+$adminObj = new AdminThirtyBeesMigrate();
 
 if (is_object($adminObj)) {
     $adminObj->optionDisplayErrors();

@@ -1162,7 +1162,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
         $channel = $this->currentParams['channel'];
         $upgradeInfo = $this->getInfoForChannel($channel);
-        $this->nextParams['result']['available'] = $upgradeInfo['available'];
+        $this->nextParams['result']['available'] = isset($upgradeInfo['available']) ? $upgradeInfo['available'] : false;
 
         $this->nextParams['result']['div'] = $this->divChannelInfos($upgradeInfo);
     }

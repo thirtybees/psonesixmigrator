@@ -27,15 +27,3 @@ require_once __DIR__.'/classes/autoload.php';
 
 ob_start();
 $timerStart = microtime(true);
-
-require_once(__DIR__.'/classes/autoload.php');
-
-require_once(_PS_ROOT_DIR_.'/modules/autoupgrade/classes/Upgrader.php');
-
-if (!class_exists('Upgrader', false)) {
-    if (file_exists(_PS_ROOT_DIR_.'/override/classes/Upgrader.php')) {
-        require_once(_PS_ROOT_DIR_.'/override/classes/Upgrader.php');
-    } else {
-        eval('class Upgrader extends UpgraderCore{}');
-    }
-}
