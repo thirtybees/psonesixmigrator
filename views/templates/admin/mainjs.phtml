@@ -687,7 +687,7 @@ $installVersion = $this->install_version;
             $("#checkPrestaShopFilesVersion").html("<img src=\"../img/admin/warning.gif\" /> Error: Unable to check md5 files");
           }
         }
-      })
+      });
       $.ajax({
         type: "POST",
         url: "<?php echo __PS_BASE_URI__.$adminDir.'/autoupgrade/ajax-upgradetab.php'; ?>",
@@ -696,7 +696,7 @@ $installVersion = $this->install_version;
           dir: "<?php echo $adminDir; ?>",
           token: "<?php echo $this->token; ?>",
           autoupgradeDir: "<?php echo $this->install_autoupgrade_dir; ?>",
-          tab: "'.get_class($this).'",
+          tab: "<?php echo get_class($this); ?>",
           action: "compareReleases",
           ajaxMode: "1",
           params: {}
