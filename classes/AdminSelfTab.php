@@ -246,7 +246,7 @@ abstract class AdminSelfTab
         return Tools::getValue($key, (isset($conf[$key]) ? $conf[$key] : ''));
     }
 
-    protected function _displayForm($name, $fields, $tabname, $size, $icon)
+    protected function displayForm($name, $fields, $tabname, $size, $icon)
     {
         global $currentIndex;
 

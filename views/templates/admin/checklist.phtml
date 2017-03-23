@@ -11,8 +11,8 @@
             <?php echo $this->_displayBlockActivityLog(); ?>
             <br/>
             <form action="<?php echo $this->currentIndex; ?>&amp;customSubmitAutoUpgrade=1&amp;token=<?php echo $this->token; ?>" method="post" enctype="multipart/form-data">
-                <?php echo $this->_displayForm('upgradeOptions', $this->_fieldsUpgradeOptions, '<a href="#" name="upgrade-options" id="upgrade-options">'.$this->l('Upgrade Options').'</a>', '', 'prefs'); ?>
-                <?php echo $this->_displayForm('backupOptions', $this->_fieldsBackupOptions, '<a href="#" name="backup-options" id="backup-options">'.$this->l('Backup Options').'</a>', '', 'database_gear'); ?>
+                <?php echo $this->displayForm('upgradeOptions', $this->_fieldsUpgradeOptions, '<a href="#" name="upgrade-options" id="upgrade-options">'.$this->l('Upgrade Options').'</a>', '', 'prefs'); ?>
+                <?php echo $this->displayForm('backupOptions', $this->_fieldsBackupOptions, '<a href="#" name="backup-options" id="backup-options">'.$this->l('Backup Options').'</a>', '', 'database_gear'); ?>
             </form>
 
             <?php if ($this->configOk() && (version_compare(_PS_VERSION_, $this->upgrader->version_num, '<') && version_compare($this->upgrader->version_num, '1.7.0.0', '<'))) : ?>

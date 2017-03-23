@@ -1,12 +1,12 @@
 <?php /** @var AdminThirtyBeesMigrate $this */ ?>
 <label class="label-small"><?php echo $this->l('Channel:'); ?></label>
 <select name="channel">
-    <?php foreach($this->templateVars['optChannels'] as $channel) : ?>
-        <option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"<?php ($channel === $this->templateVars['selectedChannel']) ? 'class="current" selected="selected">* ' : '>' ?>
+    <?php foreach($optChannels as $channel) : ?>
+        <option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"<?php ($channel === $selectedChannel) ? 'class="current" selected="selected">* ' : '>' ?>
     <?php endforeach; ?>
 </select>
 <?php
-$upgradeInfo = $this->getInfoForChannel($this->templateVars['selectedChannel']);
+$upgradeInfo = $this->getInfoForChannel($selectedChannel);
 echo $this->divChannelInfos($upgradeInfo);
 ?>
 
@@ -24,12 +24,12 @@ echo $this->divChannelInfos($upgradeInfo);
 </div>
 
 <div id="for-useArchive">
-    <?php if ($this->templateVars['channelDir'] !== false && count($this->templateVars['channelDir']) > 0) : ?>
+    <?php if ($channelDir !== false && count($channelDir) > 0) : ?>
     <label class="label-small"><?php echo $this->l('Archive to use:'); ?></label>
         <select name="archive_prestashop">
             <option value=""><?php echo $this->l('choose an archive'); ?></option>
-            <?php foreach ($this->templateVars['channelDir'] as $file) : ?>
-            <option <?php echo ($this->templateVars['archiveFilename'] ? 'selected="selected"' : ''); ?> value="<?php echo str_replace($download, '', $file); ?>"><?php echo str_replace($download, '', $file); ?></option>
+            <?php foreach ($channelDir as $file) : ?>
+            <option <?php echo ($archiveFilename ? 'selected="selected"' : ''); ?> value="<?php echo str_replace($download, '', $file); ?>"><?php echo str_replace($download, '', $file); ?></option>
             <?php endforeach; ?>
 
         </select>

@@ -64,8 +64,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     // retrocompatibility
     /** @var int $loopBackupDbTime */
     public static $loopBackupDbTime = 6;
-    /** @var int $max_written_allowed */
-    public static $max_written_allowed = 4194304;
+    /** @var int $maxWrittenAllowed */
+    public static $maxWrittenAllowed = 4194304;
     /** @var int $loopUpgradeFiles */
     public static $loopUpgradeFiles = 600;
     public static $loopRestoreFiles = 400; // json, xml
@@ -764,7 +764,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
     /**
      * @return void
-     * 
+     *
      * @since 1.0.0
      */
     public function cleanTmpFiles()
@@ -778,7 +778,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
     /**
      * @return bool
-     * 
+     *
      * @since 1.0.0
      */
     public function checkToken()
@@ -797,7 +797,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $string
      *
      * @return string
-     * 
+     *
      * @since 1.0.0
      */
     public function encrypt($string)
@@ -809,7 +809,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param bool $disable
      *
      * @return bool
-     * 
+     *
      * @since 1.0.0
      */
     public function viewAccess($disable = false)
@@ -926,21 +926,18 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
         $this->_fieldsUpgradeOptions['PS_AUTOUP_PERFORMANCE'] = [
             'title'   => $this->l('Server performance'), 'cast' => 'intval', 'validation' => 'isInt', 'defaultValue' => '1',
-            'type'    => 'select', 'desc' => $this->l('Unless you are using a dedicated server, select "Low".').'<br />'.
-                $this->l('A high value can cause the upgrade to fail if your server is not powerful enough to process the upgrade tasks in a short amount of time.'),
+            'type'    => 'select', 'desc' => $this->l('Unless you are using a dedicated server, select "Low".').'<br />'.$this->l('A high value can cause the upgrade to fail if your server is not powerful enough to process the upgrade tasks in a short amount of time.'),
             'choices' => [1 => $this->l('Low (recommended)'), 2 => $this->l('Medium'), 3 => $this->l('High')],
         ];
 
         $this->_fieldsUpgradeOptions['PS_AUTOUP_CUSTOM_MOD_DESACT'] = [
             'title' => $this->l('Disable non-native modules'), 'cast' => 'intval', 'validation' => 'isBool',
-            'type'  => 'bool', 'desc' => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.
-                $this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the upgrade.'),
+            'type'  => 'bool', 'desc' => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the upgrade.'),
         ];
 
         $this->_fieldsUpgradeOptions['PS_AUTOUP_UPDATE_DEFAULT_THEME'] = [
             'title' => $this->l('Upgrade the default theme'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '1',
-            'type'  => 'bool', 'desc' => $this->l('If you customized the default PrestaShop theme in its folder (folder name "prestashop" in 1.4, "default" in 1.5, "bootstrap-default" in 1.6), enabling this option will lose your modifications.').'<br />'
-                .$this->l('If you are using your own theme, enabling this option will simply update the default theme files, and your own theme will be safe.'),
+            'type'  => 'bool', 'desc' => $this->l('If you customized the default PrestaShop theme in its folder (folder name "prestashop" in 1.4, "default" in 1.5, "bootstrap-default" in 1.6), enabling this option will lose your modifications.').'<br />'.$this->l('If you are using your own theme, enabling this option will simply update the default theme files, and your own theme will be safe.'),
         ];
 
         $this->_fieldsUpgradeOptions['PS_AUTOUP_CHANGE_DEFAULT_THEME'] = [
@@ -950,8 +947,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
         $this->_fieldsUpgradeOptions['PS_AUTOUP_KEEP_MAILS'] = [
             'title' => $this->l('Upgrade the default e-mails'), 'cast' => 'intval', 'validation' => 'isBool',
-            'type'  => 'bool', 'desc' => $this->l('This will upgrade the default PrestaShop e-mails.').'<br />'
-                .$this->l('If you customized the default PrestaShop e-mail templates, enabling this option will lose your modifications.'),
+            'type'  => 'bool', 'desc' => $this->l('This will upgrade the default PrestaShop e-mails.').'<br />'.$this->l('If you customized the default PrestaShop e-mail templates, enabling this option will lose your modifications.'),
         ];
 
         /* Developers only options */
@@ -963,8 +959,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
             $this->_fieldsUpgradeOptions['PS_DISPLAY_ERRORS'] = [
                 'title' => $this->l('Display PHP errors'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '0',
-                'type'  => 'bool', 'desc' => $this->l('This option will keep PHP\'s "display_errors" setting to On (or force it).').'<br />'
-                    .$this->l('This is not recommended as the upgrade will immediately fail if a PHP error occurs during an Ajax call.'),
+                'type'  => 'bool', 'desc' => $this->l('This option will keep PHP\'s "display_errors" setting to On (or force it).').'<br />'.$this->l('This is not recommended as the upgrade will immediately fail if a PHP error occurs during an Ajax call.'),
             ];
         } elseif ($this->getConfig('PS_DISPLAY_ERRORS')) {
             $this->writeConfig(['PS_DISPLAY_ERRORS' => '0']);
@@ -1008,29 +1003,38 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * reset module configuration with $new_config values (previous config will be totally lost)
      *
-     * @param array $new_config
+     * @param array $newConfig
      *
      * @return boolean true if success
+     *
+     * @since 1.0.0
      */
-    public function resetConfig($new_config)
+    public function resetConfig($newConfig)
     {
-        return (bool) file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->configFilename, base64_encode(serialize($new_config)));
+        return (bool) file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->configFilename, base64_encode(serialize($newConfig)));
     }
 
     /**
      * Delete directory and subdirectories
      *
      * @param string $dirname Directory name
+     *
+     * @param bool   $deleteSelf
+     *
+     * @return bool
+     * @since 1.0.0
      */
-    public static function deleteDirectory($dirname, $delete_self = true)
+    public static function deleteDirectory($dirname, $deleteSelf = true)
     {
-        return Tools::deleteDirectory($dirname, $delete_self);
+        return Tools::deleteDirectory($dirname, $deleteSelf);
     }
 
     /**
      * ends the rollback process
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessRollbackComplete()
     {
@@ -1042,6 +1046,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * ends the upgrade process
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessUpgradeComplete()
     {
@@ -1069,6 +1075,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * getFilePath return the path to the zipfile containing prestashop.
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     private function getFilePath()
     {
@@ -1078,7 +1086,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * update configuration after validating the new values
      *
-     * @access public
+     * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessUpdateConfig()
     {
@@ -1141,7 +1151,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * display informations related to the selected channel : link/changelog for remote channel,
      * or configuration values for special channels
      *
-     * @access public
+     * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessGetChannelInfo()
     {
@@ -1162,6 +1174,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $channel name of the channel
      *
      * @return array available, version_num, version_name, link, md5, changelog
+     *
+     * @since 1.0.0
      */
     public function getInfoForChannel($channel)
     {
@@ -1215,6 +1229,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $upgradeInfo;
     }
 
+    /**
+     * @param array $upgradeInfo
+     *
+     * @return string
+     *
+     * @since 1.0.0
+     */
     public function divChannelInfos($upgradeInfo)
     {
         if ($this->getConfig('channel') == 'private') {
@@ -1222,14 +1243,16 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             $upgradeInfo['md5'] = $this->getConfig('private_release_md5');
         }
 
-        return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/channelinfo.phtml');
+        return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/channelinfo.phtml', ['upgradeInfo' => $upgradeInfo]);
     }
 
     /**
      * get the list of all modified and deleted files between current version
      * and target version (according to channel configuration)
      *
-     * @access public
+     * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessCompareReleases()
     {
@@ -1278,7 +1301,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * list the files modified in the current installation regards to the original version
      *
-     * @access public
+     * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessCheckFilesVersion()
     {
@@ -1327,6 +1352,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessUpgradeNow17()
     {
         return $this->ajaxProcessUpgradeNow();
@@ -1336,8 +1366,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * very first step of the upgrade process. The only thing done is the selection
      * of the next step
      *
-     * @access public
      * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessUpgradeNow()
     {
@@ -1384,6 +1415,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * extract chosen version into $this->latestPath directory
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessUnzip()
     {
@@ -1450,6 +1483,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @desc extract a zip file to the given directory
      * @return bool success
      * we need a copy of it to be able to restore without keeping Tools and Autoload stuff
+     *              
+     * @since 1.0.0
      */
     private function ZipExtract($fromFile, $toDir)
     {
@@ -1478,14 +1513,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             $this->nextQuickInfo[] = $this->l('Using class ZipArchive...');
             $zip = new \ZipArchive();
             if ($zip->open($fromFile) === true && isset($zip->filename) && $zip->filename) {
-                $extract_result = true;
-                $res = true;
+                $extractResult = true;
                 // We extract file by file, it is very fast
                 for ($i = 0; $i < $zip->numFiles; $i++) {
-                    $extract_result &= $zip->extractTo($toDir, [$zip->getNameIndex($i)]);
+                    $extractResult &= $zip->extractTo($toDir, [$zip->getNameIndex($i)]);
                 }
 
-                if ($extract_result) {
+                if ($extractResult) {
                     $this->nextQuickInfo[] = $this->l('Archive extracted');
 
                     return true;
@@ -1507,7 +1541,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
             $zip = new \PclZip($fromFile);
 
-            if (($file_list = $zip->listContent()) == 0) {
+            if (($fileList = $zip->listContent()) == 0) {
                 $this->next = 'error';
                 $this->nextQuickInfo[] = sprintf($this->l('[ERROR] Error on extracting archive using PclZip: %s.'), $zip->errorInfo(true));
 
@@ -1517,7 +1551,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             // PCL is very slow, so we need to extract files 500 by 500
             $i = 0;
             $j = 1;
-            foreach ($file_list as $file) {
+            foreach ($fileList as $file) {
                 if (!isset($indexes[$i])) {
                     $indexes[$i] = [];
                 }
@@ -1529,13 +1563,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
             // replace also modified files
             foreach ($indexes as $index) {
-                if (($extract_result = $zip->extract(PCLZIP_OPT_BY_INDEX, $index, PCLZIP_OPT_PATH, $toDir, PCLZIP_OPT_REPLACE_NEWER)) == 0) {
+                if (($extractResult = $zip->extract(PCLZIP_OPT_BY_INDEX, $index, PCLZIP_OPT_PATH, $toDir, PCLZIP_OPT_REPLACE_NEWER)) == 0) {
                     $this->next = 'error';
                     $this->nextErrors[] = sprintf($this->l('[ERROR] Error on extracting archive using PclZip: %s.'), $zip->errorInfo(true));
 
                     return false;
                 } else {
-                    foreach ($extract_result as $extractedFile) {
+                    foreach ($extractResult as $extractedFile) {
                         $file = str_replace($this->prodRootDir, '', $extractedFile['filename']);
                         if ($extractedFile['status'] != 'ok' && $extractedFile['status'] != 'already_a_directory') {
                             $this->nextQuickInfo[] = sprintf($this->l('[ERROR] %s has not been unzipped: '.$extractedFile['status']), $file);
@@ -1555,15 +1589,20 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return bool
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessUpgradeFiles()
     {
         $this->nextParams = $this->currentParams;
 
-        $admin_dir = str_replace($this->prodRootDir.DIRECTORY_SEPARATOR, '', $this->adminDir);
+        $adminDir = str_replace($this->prodRootDir.DIRECTORY_SEPARATOR, '', $this->adminDir);
         if (file_exists($this->latestRootDir.DIRECTORY_SEPARATOR.'admin')) {
-            rename($this->latestRootDir.DIRECTORY_SEPARATOR.'admin', $this->latestRootDir.DIRECTORY_SEPARATOR.$admin_dir);
+            rename($this->latestRootDir.DIRECTORY_SEPARATOR.'admin', $this->latestRootDir.DIRECTORY_SEPARATOR.$adminDir);
         } elseif (file_exists($this->latestRootDir.DIRECTORY_SEPARATOR.'admin-dev')) {
-            rename($this->latestRootDir.DIRECTORY_SEPARATOR.'admin-dev', $this->latestRootDir.DIRECTORY_SEPARATOR.$admin_dir);
+            rename($this->latestRootDir.DIRECTORY_SEPARATOR.'admin-dev', $this->latestRootDir.DIRECTORY_SEPARATOR.$adminDir);
         }
         if (file_exists($this->latestRootDir.DIRECTORY_SEPARATOR.'install-dev')) {
             rename($this->latestRootDir.DIRECTORY_SEPARATOR.'install-dev', $this->latestRootDir.DIRECTORY_SEPARATOR.$this->install_autoupgrade_dir);
@@ -1575,35 +1614,35 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         if (!isset($this->nextParams['filesToUpgrade'])) {
             // list saved in $this->toUpgradeFileList
             // get files differences (previously generated)
-            $admin_dir = trim(str_replace($this->prodRootDir, '', $this->adminDir), DIRECTORY_SEPARATOR);
-            $filepath_list_diff = $this->autoupgradePath.DIRECTORY_SEPARATOR.$this->diffFileList;
-            if (file_exists($filepath_list_diff)) {
-                $list_files_diff = unserialize(base64_decode(file_get_contents($filepath_list_diff)));
+            $adminDir = trim(str_replace($this->prodRootDir, '', $this->adminDir), DIRECTORY_SEPARATOR);
+            $filepathListDiff = $this->autoupgradePath.DIRECTORY_SEPARATOR.$this->diffFileList;
+            if (file_exists($filepathListDiff)) {
+                $listFilesDiff = unserialize(base64_decode(file_get_contents($filepathListDiff)));
                 // only keep list of files to delete. The modified files will be listed with _listFilesToUpgrade
-                $list_files_diff = $list_files_diff['deleted'];
-                foreach ($list_files_diff as $k => $path) {
+                $listFilesDiff = $listFilesDiff['deleted'];
+                foreach ($listFilesDiff as $k => $path) {
                     if (preg_match("#autoupgrade#", $path)) {
-                        unset($list_files_diff[$k]);
+                        unset($listFilesDiff[$k]);
                     } else {
-                        $list_files_diff[$k] = str_replace('/'.'admin', '/'.$admin_dir, $path);
+                        $listFilesDiff[$k] = str_replace('/'.'admin', '/'.$adminDir, $path);
                     }
                 } // do not replace by DIRECTORY_SEPARATOR
             } else {
-                $list_files_diff = [];
+                $listFilesDiff = [];
             }
 
-            if (!($list_files_to_upgrade = $this->_listFilesToUpgrade($this->latestRootDir))) {
+            if (!($listFilesToUpgrade = $this->_listFilesToUpgrade($this->latestRootDir))) {
                 return false;
             }
 
             // also add files to remove
-            $list_files_to_upgrade = array_merge($list_files_diff, $list_files_to_upgrade);
+            $listFilesToUpgrade = array_merge($listFilesDiff, $listFilesToUpgrade);
             // save in a serialized array in $this->toUpgradeFileList
-            file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toUpgradeFileList, base64_encode(serialize($list_files_to_upgrade)));
+            file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toUpgradeFileList, base64_encode(serialize($listFilesToUpgrade)));
             $this->nextParams['filesToUpgrade'] = $this->toUpgradeFileList;
-            $total_files_to_upgrade = count($list_files_to_upgrade);
+            $totalFilesToUpgrade = count($listFilesToUpgrade);
 
-            if ($total_files_to_upgrade == 0) {
+            if ($totalFilesToUpgrade == 0) {
                 $this->nextQuickInfo[] = $this->l('[ERROR] Unable to find files to upgrade.');
                 $this->nextErrors[] = $this->l('[ERROR] Unable to find files to upgrade.');
                 $this->next_desc = $this->l('Unable to list files to upgrade');
@@ -1611,9 +1650,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
                 return false;
             }
-            $this->nextQuickInfo[] = sprintf($this->l('%s files will be upgraded.'), $total_files_to_upgrade);
+            $this->nextQuickInfo[] = sprintf($this->l('%s files will be upgraded.'), $totalFilesToUpgrade);
 
-            $this->next_desc = sprintf($this->l('%s files will be upgraded.'), $total_files_to_upgrade);
+            $this->next_desc = sprintf($this->l('%s files will be upgraded.'), $totalFilesToUpgrade);
             $this->next = 'upgradeFiles';
             $this->stepDone = false;
 
@@ -1675,6 +1714,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $dir
      *
      * @return number of files found
+     *
+     * @since 1.0.0
      */
     public function _listFilesToUpgrade($dir)
     {
@@ -1707,17 +1748,21 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     }
 
     /**
-     *    bool _skipFile : check whether a file is in backup or restore skip list
+     * Check whether a file is in backup or restore skip list
      *
-     * @param type $file     : current file or directory name eg:'.svn' , 'settings.inc.php'
-     * @param type $fullpath : current file or directory fullpath eg:'/home/web/www/prestashop/config/settings.inc.php'
-     * @param type $way      : 'backup' , 'upgrade'
+     * @param mixed $file     : current file or directory name eg:'.svn' , 'settings.inc.php'
+     * @param mixed $fullpath : current file or directory fullpath eg:'/home/web/www/prestashop/config/settings.inc.php'
+     * @param mixed $way      : 'backup' , 'upgrade'
+     *
+     * @return void
+     *
+     * @since 1.0.0
      */
     protected function _skipFile($file, $fullpath, $way = 'backup')
     {
         $fullpath = str_replace('\\', '/', $fullpath); // wamp compliant
         $rootpath = str_replace('\\', '/', $this->prodRootDir);
-        $admin_dir = str_replace($this->prodRootDir, '', $this->adminDir);
+        $adminDir = str_replace($this->prodRootDir, '', $this->adminDir);
         switch ($way) {
             case 'backup':
                 if (in_array($file, $this->backupIgnoreFiles)) {
@@ -1725,7 +1770,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 }
 
                 foreach ($this->backupIgnoreAbsoluteFiles as $path) {
-                    $path = str_replace(DIRECTORY_SEPARATOR.'admin', DIRECTORY_SEPARATOR.$admin_dir, $path);
+                    $path = str_replace(DIRECTORY_SEPARATOR.'admin', DIRECTORY_SEPARATOR.$adminDir, $path);
                     if ($fullpath == $rootpath.$path) {
                         return true;
                     }
@@ -1740,7 +1785,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 }
 
                 foreach ($this->restoreIgnoreAbsoluteFiles as $path) {
-                    $path = str_replace(DIRECTORY_SEPARATOR.'admin', DIRECTORY_SEPARATOR.$admin_dir, $path);
+                    $path = str_replace(DIRECTORY_SEPARATOR.'admin', DIRECTORY_SEPARATOR.$adminDir, $path);
                     if ($fullpath == $rootpath.$path) {
                         return true;
                     }
@@ -1762,7 +1807,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 }
 
                 foreach ($this->excludeAbsoluteFilesFromUpgrade as $path) {
-                    $path = str_replace(DIRECTORY_SEPARATOR.'admin', DIRECTORY_SEPARATOR.$admin_dir, $path);
+                    $path = str_replace(DIRECTORY_SEPARATOR.'admin', DIRECTORY_SEPARATOR.$adminDir, $path);
                     if (strpos($fullpath, $rootpath.$path) !== false) {
                         $this->nextQuickInfo[] = sprintf($this->l('File %s is preserved'), $fullpath);
 
@@ -1786,6 +1831,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param mixed $file
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     public function upgradeThisFile($file)
     {
@@ -1827,8 +1874,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 }
             } elseif (is_file($orig)) {
                 if ($this->isTranslationFile($file) && file_exists($dest)) {
-                    $type_trad = $this->getTranslationFileType($file);
-                    $res = $this->mergeTranslationFile($orig, $dest, $type_trad);
+                    $typeTrad = $this->getTranslationFileType($file);
+                    $res = $this->mergeTranslationFile($orig, $dest, $typeTrad);
                     if ($res) {
                         $this->nextQuickInfo[] = sprintf($this->l('[TRANSLATION] The translation files have been merged into file %1$s.'), $dest);
 
@@ -1878,7 +1925,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $file filepath (from prestashop root)
      *
      * @access public
-     * @return boolean
+     * @return bool
+     *
+     * @since 1.0.0
      */
     public function isTranslationFile($file)
     {
@@ -1896,28 +1945,30 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @access public
      * @return string type of translation item
+     *
+     * @since 1.0.0
      */
     public function getTranslationFileType($file)
     {
         $type = false;
         // line shorter
         $separator = addslashes(DIRECTORY_SEPARATOR);
-        $translation_dir = $separator.'translations'.$separator;
+        $translationDir = $separator.'translations'.$separator;
         if (version_compare(_PS_VERSION_, '1.5.0.5', '<')) {
-            $regex_module = '#'.$separator.'modules'.$separator.'.*'.$separator.'('.implode('|', $this->installedLanguagesIso).')\.php#';
+            $regexModule = '#'.$separator.'modules'.$separator.'.*'.$separator.'('.implode('|', $this->installedLanguagesIso).')\.php#';
         } else {
-            $regex_module = '#'.$separator.'modules'.$separator.'.*'.$translation_dir.'('.implode('|', $this->installedLanguagesIso).')\.php#';
+            $regexModule = '#'.$separator.'modules'.$separator.'.*'.$translationDir.'('.implode('|', $this->installedLanguagesIso).')\.php#';
         }
 
-        if (preg_match($regex_module, $file)) {
+        if (preg_match($regexModule, $file)) {
             $type = 'module';
-        } elseif (preg_match('#'.$translation_dir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'admin\.php#', $file)) {
+        } elseif (preg_match('#'.$translationDir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'admin\.php#', $file)) {
             $type = 'back office';
-        } elseif (preg_match('#'.$translation_dir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'errors\.php#', $file)) {
+        } elseif (preg_match('#'.$translationDir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'errors\.php#', $file)) {
             $type = 'error message';
-        } elseif (preg_match('#'.$translation_dir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'fields\.php#', $file)) {
+        } elseif (preg_match('#'.$translationDir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'fields\.php#', $file)) {
             $type = 'field';
-        } elseif (preg_match('#'.$translation_dir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'pdf\.php#', $file)) {
+        } elseif (preg_match('#'.$translationDir.'('.implode('|', $this->installedLanguagesIso).')'.$separator.'pdf\.php#', $file)) {
             $type = 'pdf';
         } elseif (preg_match('#'.$separator.'themes'.$separator.'(default|prestashop)'.$separator.'lang'.$separator.'('.implode('|', $this->installedLanguagesIso).')\.php#', $file)) {
             $type = 'front office';
@@ -1934,25 +1985,27 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $type type of translation file (module, bo, fo, field, pdf, error)
      *
      * @access public
-     * @return boolean
+     * @return bool
+     *
+     * @since 1.0.0
      */
     public function mergeTranslationFile($orig, $dest, $type)
     {
         switch ($type) {
             case 'front office':
-                $var_name = '_LANG';
+                $varName = '_LANG';
                 break;
             case 'back office':
-                $var_name = '_LANGADM';
+                $varName = '_LANGADM';
                 break;
             case 'error message':
-                $var_name = '_ERRORS';
+                $varName = '_ERRORS';
                 break;
             case 'field':
-                $var_name = '_FIELDS';
+                $varName = '_FIELDS';
                 break;
             case 'module':
-                $var_name = '_MODULE';
+                $varName = '_MODULE';
                 // if current version is before 1.5.0.5, module has no translations dir
                 if (version_compare(_PS_VERSION_, '1.5.0.5', '<') && (version_compare($this->install_version, '1.5.0.5', '>'))) {
                     $dest = str_replace(DIRECTORY_SEPARATOR.'translations', '', $dest);
@@ -1960,10 +2013,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
                 break;
             case 'pdf':
-                $var_name = '_LANGPDF';
+                $varName = '_LANGPDF';
                 break;
             case 'mail':
-                $var_name = '_LANGMAIL';
+                $varName = '_LANGMAIL';
                 break;
             default:
                 return false;
@@ -1975,12 +2028,12 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             return true;
         }
         include($orig);
-        if (!isset($$var_name)) {
-            $this->nextQuickInfo[] = sprintf($this->l('[WARNING] %1$s variable missing in file %2$s. Merge skipped.'), $var_name, $orig);
+        if (!isset($$varName)) {
+            $this->nextQuickInfo[] = sprintf($this->l('[WARNING] %1$s variable missing in file %2$s. Merge skipped.'), $varName, $orig);
 
             return true;
         }
-        $var_orig = $$var_name;
+        $var_orig = $$varName;
 
         if (!file_exists($dest)) {
             $this->nextQuickInfo[] = sprintf($this->l('[NOTICE] File %s does not exist, merge skipped.'), $dest);
@@ -1988,30 +2041,30 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             return false;
         }
         include($dest);
-        if (!isset($$var_name)) {
+        if (!isset($$varName)) {
             // in that particular case : file exists, but variable missing, we need to delete that file
             // (if not, this invalid file will be copied in /translations during upgradeDb process)
             if ('module' == $type && file_exists($dest)) {
                 unlink($dest);
             }
-            $this->nextQuickInfo[] = sprintf($this->l('[WARNING] %1$s variable missing in file %2$s. File %2$s deleted and merge skipped.'), $var_name, $dest);
+            $this->nextQuickInfo[] = sprintf($this->l('[WARNING] %1$s variable missing in file %2$s. File %2$s deleted and merge skipped.'), $varName, $dest);
 
             return false;
         }
-        $var_dest = $$var_name;
+        $varDest = $$varName;
 
-        $merge = array_merge($var_orig, $var_dest);
+        $merge = array_merge($var_orig, $varDest);
 
         if ($fd = fopen($dest, 'w')) {
-            fwrite($fd, "<?php\n\nglobal \$".$var_name.";\n\$".$var_name." = array();\n");
+            fwrite($fd, "<?php\n\nglobal \$".$varName.";\n\$".$varName." = array();\n");
             foreach ($merge as $k => $v) {
                 if (get_magic_quotes_gpc()) {
                     $v = stripslashes($v);
                 }
                 if ('mail' == $type) {
-                    fwrite($fd, '$'.$var_name.'[\''.$this->db->escape($k).'\'] = \''.$this->db->escape($v).'\';'."\n");
+                    fwrite($fd, '$'.$varName.'[\''.$this->db->escape($k).'\'] = \''.$this->db->escape($v).'\';'."\n");
                 } else {
-                    fwrite($fd, '$'.$var_name.'[\''.$this->db->escape($k, true).'\'] = \''.$this->db->escape($v, true).'\';'."\n");
+                    fwrite($fd, '$'.$varName.'[\''.$this->db->escape($k, true).'\'] = \''.$this->db->escape($v, true).'\';'."\n");
                 }
             }
             fwrite($fd, "\n?>");
@@ -2028,16 +2081,18 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @access public
      * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessUpgradeModules()
     {
-        $start_time = time();
+        $startTime = time();
         if (!isset($this->nextParams['modulesToUpgrade'])) {
             // list saved in $this->toUpgradeFileList
-            $total_modules_to_upgrade = $this->_listModulesToUpgrade();
-            if ($total_modules_to_upgrade) {
-                $this->nextQuickInfo[] = sprintf($this->l('%s modules will be upgraded.'), $total_modules_to_upgrade);
-                $this->next_desc = sprintf($this->l('%s modules will be upgraded.'), $total_modules_to_upgrade);
+            $totalModulesToUpgrade = $this->_listModulesToUpgrade();
+            if ($totalModulesToUpgrade) {
+                $this->nextQuickInfo[] = sprintf($this->l('%s modules will be upgraded.'), $totalModulesToUpgrade);
+                $this->next_desc = sprintf($this->l('%s modules will be upgraded.'), $totalModulesToUpgrade);
             }
             $this->stepDone = false;
             $this->next = 'upgradeModules';
@@ -2062,37 +2117,36 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             return true;
         }
 
-        $time_elapsed = time() - $start_time;
         // module list
         if (count($listModules) > 0) {
             do {
-                $module_info = array_shift($listModules);
+                $moduleInfo = array_shift($listModules);
 
-                $this->upgradeThisModule($module_info['id'], $module_info['name']);
-                $time_elapsed = time() - $start_time;
-            } while (($time_elapsed < self::$loopUpgradeModulesTime) && count($listModules) > 0);
+                $this->upgradeThisModule($moduleInfo['id'], $moduleInfo['name']);
+                $timeElapsed = time() - $startTime;
+            } while (($timeElapsed < self::$loopUpgradeModulesTime) && count($listModules) > 0);
 
-            $modules_left = count($listModules);
+            $modulesLeft = count($listModules);
             file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toUpgradeModuleList, base64_encode(serialize($listModules)));
             unset($listModules);
 
             $this->next = 'upgradeModules';
-            if ($modules_left) {
-                $this->next_desc = sprintf($this->l('%s modules left to upgrade.'), $modules_left);
+            if ($modulesLeft) {
+                $this->next_desc = sprintf($this->l('%s modules left to upgrade.'), $modulesLeft);
             }
             $this->stepDone = false;
         } else {
             if (version_compare($this->install_version, '1.5.0.0', '>=')) {
-                $modules_to_delete['backwardcompatibility'] = 'Backward Compatibility';
-                $modules_to_delete['dibs'] = 'Dibs';
-                $modules_to_delete['cloudcache'] = 'Cloudcache';
-                $modules_to_delete['mobile_theme'] = 'The 1.4 mobile_theme';
-                $modules_to_delete['trustedshops'] = 'Trustedshops';
-                $modules_to_delete['dejala'] = 'Dejala';
-                $modules_to_delete['stripejs'] = 'Stripejs';
-                $modules_to_delete['blockvariouslinks'] = 'Block Various Links';
+                $modulesToDelete['backwardcompatibility'] = 'Backward Compatibility';
+                $modulesToDelete['dibs'] = 'Dibs';
+                $modulesToDelete['cloudcache'] = 'Cloudcache';
+                $modulesToDelete['mobile_theme'] = 'The 1.4 mobile_theme';
+                $modulesToDelete['trustedshops'] = 'Trustedshops';
+                $modulesToDelete['dejala'] = 'Dejala';
+                $modulesToDelete['stripejs'] = 'Stripejs';
+                $modulesToDelete['blockvariouslinks'] = 'Block Various Links';
 
-                foreach ($modules_to_delete as $key => $module) {
+                foreach ($modulesToDelete as $key => $module) {
                     Db::getInstance()->execute(
                         'DELETE ms.*, hm.*
 					FROM `'._DB_PREFIX_.'module_shop` ms
@@ -2131,9 +2185,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * list modules to upgrade and save them in a serialized array in $this->toUpgradeModuleList
      *
-     * @param string $dir
-     *
      * @return number of files found
+     *
+     * @since 1.0.0
      */
     public function _listModulesToUpgrade()
     {
@@ -2151,16 +2205,16 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
 
         $allModules = scandir($dir);
-        foreach ($allModules as $module_name) {
-            if (is_file($dir.DIRECTORY_SEPARATOR.$module_name)) {
+        foreach ($allModules as $moduleName) {
+            if (is_file($dir.DIRECTORY_SEPARATOR.$moduleName)) {
                 continue;
-            } elseif (is_dir($dir.DIRECTORY_SEPARATOR.$module_name.DIRECTORY_SEPARATOR)) {
+            } elseif (is_dir($dir.DIRECTORY_SEPARATOR.$moduleName.DIRECTORY_SEPARATOR)) {
                 if (is_array($this->modules_addons)) {
-                    $id_addons = array_search($module_name, $this->modules_addons);
+                    $idAddons = array_search($moduleName, $this->modules_addons);
                 }
-                if (isset($id_addons) && $id_addons) {
-                    if ($module_name != $this->autoupgradeDir) {
-                        $list[] = ['id' => $id_addons, 'name' => $module_name];
+                if (isset($idAddons) && $idAddons) {
+                    if ($moduleName != $this->autoupgradeDir) {
+                        $list[] = ['id' => $idAddons, 'name' => $moduleName];
                     }
                 }
             }
@@ -2174,19 +2228,19 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * upgrade module $name (identified by $id_module on addons server)
      *
-     * @param mixed $id_module
+     * @param mixed $idModule
      * @param mixed $name
      *
      * @access public
      * @return void
      */
-    public function upgradeThisModule($id_module, $name)
+    public function upgradeThisModule($idModule, $name)
     {
-        $zip_fullpath = $this->tmpPath.DIRECTORY_SEPARATOR.$name.'.zip';
+        $zipFullpath = $this->tmpPath.DIRECTORY_SEPARATOR.$name.'.zip';
 
-        $dest_extract = $this->prodRootDir.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR;
+        $destExtract = $this->prodRootDir.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR;
 
-        $addons_url = 'api.addons.prestashop.com';
+        $addonsUrl = 'api.addons.prestashop.com';
         $protocolsList = ['https://' => 443, 'http://' => 80];
         if (!extension_loaded('openssl')) {
             unset($protocolsList['https://']);
@@ -2194,7 +2248,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             unset($protocolsList['http://']);
         }
 
-        $postData = 'version='.$this->install_version.'&method=module&id_module='.(int) $id_module;
+        $postData = 'version='.$this->install_version.'&method=module&id_module='.(int) $idModule;
 
         // Make the request
         $opts = [
@@ -2208,19 +2262,19 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         $context = stream_context_create($opts);
         foreach ($protocolsList as $protocol => $port) {
             // file_get_contents can return false if https is not supported (or warning)
-            $content = Tools::file_get_contents($protocol.$addons_url, false, $context);
+            $content = Tools::file_get_contents($protocol.$addonsUrl, false, $context);
             if ($content == false || substr($content, 5) == '<?xml') {
                 continue;
             }
             if ($content !== null) {
-                if ((bool) file_put_contents($zip_fullpath, $content)) {
-                    if (filesize($zip_fullpath) <= 300) {
-                        unlink($zip_fullpath);
+                if ((bool) file_put_contents($zipFullpath, $content)) {
+                    if (filesize($zipFullpath) <= 300) {
+                        unlink($zipFullpath);
                     } // unzip in modules/[mod name] old files will be conserved
-                    elseif ($this->ZipExtract($zip_fullpath, $dest_extract)) {
+                    elseif ($this->ZipExtract($zipFullpath, $destExtract)) {
                         $this->nextQuickInfo[] = sprintf($this->l('The files of module %s have been upgraded.'), $name);
-                        if (file_exists($zip_fullpath)) {
-                            unlink($zip_fullpath);
+                        if (file_exists($zipFullpath)) {
+                            unlink($zipFullpath);
                         }
                     } else {
                         $this->nextQuickInfo[] = sprintf($this->l('[WARNING] Error when trying to upgrade module %s.'), $name);
@@ -2241,6 +2295,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return true;
     }
 
+    /**
+     * @return bool
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessUpgradeDb()
     {
         $this->nextParams = $this->currentParams;
@@ -2263,6 +2322,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * This function now replaces doUpgrade.php or upgrade.php
      *
      * @return bool
+     *
+     * @since 1.0.0
      */
     public function doUpgrade()
     {
@@ -2348,20 +2409,20 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             //custom sql file creation
             $upgradeFiles = [];
 
-            $upgrade_dir_sql = INSTALL_PATH.'/upgrade/sql';
+            $upgradeDirSql = INSTALL_PATH.'/upgrade/sql';
             // if 1.4;
-            if (!file_exists($upgrade_dir_sql)) {
-                $upgrade_dir_sql = INSTALL_PATH.'/sql/upgrade';
+            if (!file_exists($upgradeDirSql)) {
+                $upgradeDirSql = INSTALL_PATH.'/sql/upgrade';
             }
 
-            if (!file_exists($upgrade_dir_sql)) {
+            if (!file_exists($upgradeDirSql)) {
                 $this->next = 'error';
                 $this->next_desc = $this->l('Unable to find upgrade directory in the installation path.');
 
                 return false;
             }
 
-            if ($handle = opendir($upgrade_dir_sql)) {
+            if ($handle = opendir($upgradeDirSql)) {
                 while (false !== ($file = readdir($handle))) {
                     if ($file != '.' and $file != '..') {
                         $upgradeFiles[] = str_replace(".sql", "", $file);
@@ -2371,8 +2432,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             }
             if (empty($upgradeFiles)) {
                 $this->next = 'error';
-                $this->nextQuickInfo[] = sprintf($this->l('Cannot find the SQL upgrade files. Please check that the %s folder is not empty.'), $upgrade_dir_sql);
-                $this->nextErrors[] = sprintf($this->l('Cannot find the SQL upgrade files. Please check that the %s folder is not empty.'), $upgrade_dir_sql);
+                $this->nextQuickInfo[] = sprintf($this->l('Cannot find the SQL upgrade files. Please check that the %s folder is not empty.'), $upgradeDirSql);
+                $this->nextErrors[] = sprintf($this->l('Cannot find the SQL upgrade files. Please check that the %s folder is not empty.'), $upgradeDirSql);
 
                 // fail 31
                 return false;
@@ -2404,21 +2465,23 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             $sqlContentVersion = [];
             if ($this->deactivateCustomModule) {
                 require_once(_PS_INSTALLER_PHP_UPGRADE_DIR_.'deactivate_custom_modules.php');
-                deactivate_custom_modules();
+                if (function_exists('deactivate_custom_modules')) {
+                    deactivate_custom_modules();
+                }
             }
 
             if (version_compare(INSTALL_VERSION, '1.5.6.1', '=')) {
                 $filename = _PS_INSTALLER_PHP_UPGRADE_DIR_.'migrate_orders.php';
                 $content = file_get_contents($filename);
-                $str_old[] = '$values_order_detail = array();';
-                $str_old[] = '$values_order = array();';
-                $str_old[] = '$col_order_detail = array();';
-                $content = str_replace($str_old, '', $content);
+                $strOld[] = '$values_order_detail = array();';
+                $strOld[] = '$values_order = array();';
+                $strOld[] = '$col_order_detail = array();';
+                $content = str_replace($strOld, '', $content);
                 file_put_contents($filename, $content);
             }
 
             foreach ($neededUpgradeFiles as $version) {
-                $file = $upgrade_dir_sql.DIRECTORY_SEPARATOR.$version.'.sql';
+                $file = $upgradeDirSql.DIRECTORY_SEPARATOR.$version.'.sql';
                 if (!file_exists($file)) {
                     $this->next = 'error';
                     $this->nextQuickInfo[] = sprintf($this->l('Error while loading SQL upgrade file "%s.sql".'), $version);
@@ -2448,7 +2511,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             // Configuration::loadConfiguration();
             $request = '';
 
-            foreach ($sqlContentVersion as $upgrade_file => $sqlContent) {
+            foreach ($sqlContentVersion as $upgradeFile => $sqlContent) {
                 foreach ($sqlContent as $query) {
                     $query = trim($query);
                     if (!empty($query)) {
@@ -2476,24 +2539,24 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                             $phpRes = null;
                             /* Call a simple function */
                             if (strpos($phpString, '::') === false) {
-                                $func_name = str_replace($pattern[0], '', $php[0]);
-                                if (version_compare(INSTALL_VERSION, '1.5.5.0', '=') && $func_name == 'fix_download_product_feature_active') {
+                                $funcName = str_replace($pattern[0], '', $php[0]);
+                                if (version_compare(INSTALL_VERSION, '1.5.5.0', '=') && $funcName == 'fix_download_product_feature_active') {
                                     continue;
                                 }
 
-                                if (!file_exists(_PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($func_name).'.php')) {
-                                    $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgrade_file.' PHP - missing file '.$query.'</div>';
-                                    $this->nextErrors[] = '[ERROR] '.$upgrade_file.' PHP - missing file '.$query;
+                                if (!file_exists(_PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($funcName).'.php')) {
+                                    $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgradeFile.' PHP - missing file '.$query.'</div>';
+                                    $this->nextErrors[] = '[ERROR] '.$upgradeFile.' PHP - missing file '.$query;
                                     $warningExist = true;
                                 } else {
-                                    require_once(_PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($func_name).'.php');
-                                    $phpRes = call_user_func_array($func_name, $parameters);
+                                    require_once(_PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($funcName).'.php');
+                                    $phpRes = call_user_func_array($funcName, $parameters);
                                 }
                             } /* Or an object method */
                             else {
-                                $func_name = [$php[0], str_replace($pattern[0], '', $php[1])];
-                                $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgrade_file.' PHP - Object Method call is forbidden ( '.$php[0].'::'.str_replace($pattern[0], '', $php[1]).')</div>';
-                                $this->nextErrors[] = '[ERROR] '.$upgrade_file.' PHP - Object Method call is forbidden ('.$php[0].'::'.str_replace($pattern[0], '', $php[1]).')';
+                                $funcName = [$php[0], str_replace($pattern[0], '', $php[1])];
+                                $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgradeFile.' PHP - Object Method call is forbidden ( '.$php[0].'::'.str_replace($pattern[0], '', $php[1]).')</div>';
+                                $this->nextErrors[] = '[ERROR] '.$upgradeFile.' PHP - Object Method call is forbidden ('.$php[0].'::'.str_replace($pattern[0], '', $php[1]).')';
                                 $warningExist = true;
                             }
 
@@ -2501,17 +2564,17 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                                 // $this->next = 'error';
                                 $this->nextQuickInfo[] = '
 								<div class="upgradeDbError">
-									[ERROR] PHP '.$upgrade_file.' '.$query."\n".'
+									[ERROR] PHP '.$upgradeFile.' '.$query."\n".'
 									'.(empty($phpRes['error']) ? '' : $phpRes['error']."\n").'
 									'.(empty($phpRes['msg']) ? '' : ' - '.$phpRes['msg']."\n").'
 								</div>';
                                 $this->nextErrors[] = '
-								[ERROR] PHP '.$upgrade_file.' '.$query."\n".'
+								[ERROR] PHP '.$upgradeFile.' '.$query."\n".'
 								'.(empty($phpRes['error']) ? '' : $phpRes['error']."\n").'
 								'.(empty($phpRes['msg']) ? '' : ' - '.$phpRes['msg']."\n");
                                 $warningExist = true;
                             } else {
-                                $this->nextQuickInfo[] = '<div class="upgradeDbOk">[OK] PHP '.$upgrade_file.' : '.$query.'</div>';
+                                $this->nextQuickInfo[] = '<div class="upgradeDbOk">[OK] PHP '.$upgradeFile.' : '.$query.'</div>';
                             }
                             if (isset($phpRes)) {
                                 unset($phpRes);
@@ -2519,7 +2582,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                         } else {
                             if (strstr($query, 'CREATE TABLE') !== false) {
                                 $pattern = '/CREATE TABLE.*[`]*'._DB_PREFIX_.'([^`]*)[`]*\s\(/';
-                                preg_match($pattern, $query, $matches);;
+                                preg_match($pattern, $query, $matches);
                                 if (isset($matches[1]) && $matches[1]) {
                                     $drop = 'DROP TABLE IF EXISTS `'._DB_PREFIX_.$matches[1].'`;';
                                     $result = $this->db->execute($drop, false);
@@ -2531,19 +2594,19 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                             $result = $this->db->execute($query, false);
                             if (!$result) {
                                 $error = $this->db->getMsgError();
-                                $error_number = $this->db->getNumberError();
+                                $errorNumber = $this->db->getNumberError();
                                 $this->nextQuickInfo[] = '
 								<div class="upgradeDbError">
-								[WARNING] SQL '.$upgrade_file.'
-								'.$error_number.' in '.$query.': '.$error.'</div>';
+								[WARNING] SQL '.$upgradeFile.'
+								'.$errorNumber.' in '.$query.': '.$error.'</div>';
 
                                 $duplicates = ['1050', '1054', '1060', '1061', '1062', '1091'];
-                                if (!in_array($error_number, $duplicates)) {
-                                    $this->nextErrors[] = 'SQL '.$upgrade_file.' '.$error_number.' in '.$query.': '.$error;
+                                if (!in_array($errorNumber, $duplicates)) {
+                                    $this->nextErrors[] = 'SQL '.$upgradeFile.' '.$errorNumber.' in '.$query.': '.$error;
                                     $warningExist = true;
                                 }
                             } else {
-                                $this->nextQuickInfo[] = '<div class="upgradeDbOk">[OK] SQL '.$upgrade_file.' '.$query.'</div>';
+                                $this->nextQuickInfo[] = '<div class="upgradeDbOk">[OK] SQL '.$upgradeFile.' '.$query.'</div>';
                             }
                         }
                         if (isset($query)) {
@@ -2560,8 +2623,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
             $this->nextQuickInfo[] = $this->l('Database upgrade OK'); // no error !
 
-            # At this point, database upgrade is over.
-            # Now we need to add all previous missing settings items, and reset cache and compile directories
+            // At this point, database upgrade is over.
+            // Now we need to add all previous missing settings items, and reset cache and compile directories
             $this->writeNewSettings();
 
             // Settings updated, compile and cache directories must be emptied
@@ -2662,23 +2725,23 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     require_once(_PS_TOOL_DIR_.'tar/Archive_Tar.php');
                     if (is_array($langs)) {
                         foreach ($langs as $lang) {
-                            $lang_pack = Tools::jsonDecode(Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://www.prestashop.com/download/lang_packs/get_language_pack.php?version='.$this->install_version.'&iso_lang='.$lang['iso_code']));
+                            $langPack = Tools::jsonDecode(Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://www.prestashop.com/download/lang_packs/get_language_pack.php?version='.$this->install_version.'&iso_lang='.$lang['iso_code']));
 
-                            if (!$lang_pack) {
+                            if (!$langPack) {
                                 continue;
-                            } elseif ($content = Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://translations.prestashop.com/download/lang_packs/gzip/'.$lang_pack->version.'/'.$lang['iso_code'].'.gzip')) {
+                            } elseif ($content = Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://translations.prestashop.com/download/lang_packs/gzip/'.$langPack->version.'/'.$lang['iso_code'].'.gzip')) {
                                 $file = _PS_TRANSLATIONS_DIR_.$lang['iso_code'].'.gzip';
                                 if ((bool) file_put_contents($file, $content)) {
                                     $gz = new Archive_Tar($file, true);
-                                    $files_list = $gz->listContent();
+                                    $filesList = $gz->listContent();
                                     if (!$this->keepMails) {
                                         $files_listing = [];
-                                        foreach ($files_list as $i => $file) {
+                                        foreach ($filesList as $i => $file) {
                                             if (preg_match('/^mails\/'.$lang['iso_code'].'\/.*/', $file['filename'])) {
-                                                unset($files_list[$i]);
+                                                unset($filesList[$i]);
                                             }
                                         }
-                                        foreach ($files_list as $file) {
+                                        foreach ($filesList as $file) {
                                             if (isset($file['filename']) && is_string($file['filename'])) {
                                                 $files_listing[] = $file['filename'];
                                             }
@@ -2708,7 +2771,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     }
 
                     if (class_exists('Tools2') && method_exists('Tools2', 'generateHtaccess')) {
-                        $url_rewrite = (bool) Db::getInstance()->getvalue('SELECT `value` FROM `'._DB_PREFIX_.'configuration` WHERE name=\'PS_REWRITING_SETTINGS\'');
+                        $urlRewrite = (bool) Db::getInstance()->getvalue('SELECT `value` FROM `'._DB_PREFIX_.'configuration` WHERE name=\'PS_REWRITING_SETTINGS\'');
 
                         if (!defined('_MEDIA_SERVER_1_')) {
                             define('_MEDIA_SERVER_1_', '');
@@ -2828,7 +2891,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                             eval('class Group extends GroupCore{}');
                         }
 
-                        Tools2::generateHtaccess(null, $url_rewrite);
+                        Tools2::generateHtaccess(null, $urlRewrite);
                     }
                 }
 
@@ -2947,10 +3010,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     {
         // Initialize
         // setting the memory limit to 128M only if current is lower
-        $memory_limit = ini_get('memory_limit');
-        if ((substr($memory_limit, -1) != 'G')
-            && ((substr($memory_limit, -1) == 'M' and substr($memory_limit, 0, -1) < 128)
-                || is_numeric($memory_limit) and (intval($memory_limit) < 131072))
+        $memoryLimit = ini_get('memory_limit');
+        if ((substr($memoryLimit, -1) != 'G')
+            && ((substr($memoryLimit, -1) == 'M' and substr($memoryLimit, 0, -1) < 128)
+                || is_numeric($memoryLimit) and (intval($memoryLimit) < 131072))
         ) {
             @ini_set('memory_limit', '128M');
         }
@@ -3003,10 +3066,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             define('_PS_MODULE_DIR_', INSTALL_PATH.'/../modules/');
         }
 
-        $upgrade_dir_php = 'upgrade/php';
-        if (!file_exists(INSTALL_PATH.DIRECTORY_SEPARATOR.$upgrade_dir_php)) {
-            $upgrade_dir_php = 'php';
-            if (!file_exists(INSTALL_PATH.DIRECTORY_SEPARATOR.$upgrade_dir_php)) {
+        $upgradeDirPhp = 'upgrade/php';
+        if (!file_exists(INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp)) {
+            $upgradeDirPhp = 'php';
+            if (!file_exists(INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp)) {
                 $this->next = 'error';
                 $this->next_desc = INSTALL_PATH.$this->l(' directory is missing in archive or directory');
                 $this->nextQuickInfo[] = INSTALL_PATH.' directory is missing in archive or directory';
@@ -3015,7 +3078,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 return false;
             }
         }
-        define('_PS_INSTALLER_PHP_UPGRADE_DIR_', INSTALL_PATH.DIRECTORY_SEPARATOR.$upgrade_dir_php.DIRECTORY_SEPARATOR);
+        define('_PS_INSTALLER_PHP_UPGRADE_DIR_', INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp.DIRECTORY_SEPARATOR);
 
         return true;
     }
@@ -3025,20 +3088,14 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @return bool
      *
+     * @since 1.0.0
      */
     public function doUpgrade17()
     {
-        $base_uri = str_replace(realpath($_SERVER['DOCUMENT_ROOT']), '', realpath(_PS_ROOT_DIR_));
+        $baseUri = str_replace(realpath($_SERVER['DOCUMENT_ROOT']), '', realpath(_PS_ROOT_DIR_));
         $hostName = $this->getServerFullBaseUrl();
 
-        $url = $hostName.str_replace('\\', '/', $base_uri).
-            '/'.$this->install_autoupgrade_dir.'/upgrade/upgrade.php?autoupgrade=1'.
-            '&deactivateCustomModule=1'.
-            '&updateDefaultTheme=1'.
-            '&keepMails=0'.
-            '&changeToDefaultTheme=1'.
-            '&adminDir='.base64_encode($this->adminDir).
-            '&idEmployee='.(int) $_COOKIE['id_employee'];
+        $url = $hostName.str_replace('\\', '/', $baseUri).'/'.$this->install_autoupgrade_dir.'/upgrade/upgrade.php?autoupgrade=1'.'&deactivateCustomModule=1'.'&updateDefaultTheme=1'.'&keepMails=0'.'&changeToDefaultTheme=1'.'&adminDir='.base64_encode($this->adminDir).'&idEmployee='.(int) $_COOKIE['id_employee'];
 
         $json = Tools::file_get_contents($url, false, null, $curl_timeout = 3600);
         $result = json_decode($json, true);
@@ -3078,6 +3135,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return true;
     }
 
+    /**
+     * @return string
+     *
+     * @since 1.0.0
+     */
     public function getServerFullBaseUrl()
     {
         $s = $_SERVER;
@@ -3092,6 +3154,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $protocol.'://'.$host;
     }
 
+    /**
+     * @return bool
+     *
+     * @since 1.0.0
+     */
     public function writeNewSettings()
     {
         // note : duplicated line
@@ -3171,7 +3238,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         error_reporting($oldLevel);
     }
 
-    private function createCacheFsDirectories($level_depth, $directory = false)
+    /**
+     * @param      $levelDepth
+     * @param bool $directory
+     *
+     * @since 1.0.0
+     */
+    protected function createCacheFsDirectories($levelDepth, $directory = false)
     {
         if (!$directory) {
             if (!defined('_PS_CACHEFS_DIRECTORY_')) {
@@ -3181,9 +3254,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
         $chars = '0123456789abcdef';
         for ($i = 0; $i < strlen($chars); $i++) {
-            $new_dir = $directory.$chars[$i].'/';
-            if (mkdir($new_dir, 0775) && chmod($new_dir, 0775) && $level_depth - 1 > 0) {
-                self::createCacheFsDirectories($level_depth - 1, $new_dir);
+            $newDir = $directory.$chars[$i].'/';
+            if (mkdir($newDir, 0775) && chmod($newDir, 0775) && $levelDepth - 1 > 0) {
+                self::createCacheFsDirectories($levelDepth - 1, $newDir);
             }
         }
     }
@@ -3192,6 +3265,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * Clean the database from unwanted entires
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessCleanDatabase()
     {
@@ -3214,6 +3289,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         $this->nextQuickInfo[] = $this->l('The database has been cleaned.');
     }
 
+    /**
+     * @return bool
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessRollback()
     {
         // 1st, need to analyse what was wrong.
@@ -3268,6 +3348,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessNoRollbackFound()
     {
         $this->next_desc = $this->l('Nothing to restore');
@@ -3279,6 +3364,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * and delete files that weren't archived
      *
      * @return boolean true if succeed
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessRestoreFiles()
     {
@@ -3398,6 +3485,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return true;
     }
 
+    /**
+     * @param $zipfile
+     *
+     * @return array|bool|int
+     *
+     * @since 1.0.0
+     */
     private function _listArchivedFiles($zipfile)
     {
         if (file_exists($zipfile)) {
@@ -3438,12 +3532,14 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @access public
      * @return void
+     *
+     * @since 1.0.0
      */
     public function _listFilesToRemove()
     {
-        $prev_version = preg_match('#auto-backupfiles_V([0-9.]*)_#', $this->restoreFilesFilename, $matches);
-        if ($prev_version) {
-            $prev_version = $matches[1];
+        $prevVersion = preg_match('#auto-backupfiles_V([0-9.]*)_#', $this->restoreFilesFilename, $matches);
+        if ($prevVersion) {
+            $prevVersion = $matches[1];
         }
 
         if (!$this->upgrader) {
@@ -3460,12 +3556,12 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             $toRemove = $this->_listFilesInDir($this->prodRootDir, 'restore', true);
         }
 
-        $admin_dir = str_replace($this->prodRootDir, '', $this->adminDir);
+        $adminDir = str_replace($this->prodRootDir, '', $this->adminDir);
         // if a file in "ToRemove" has been skipped during backup,
         // just keep it
         foreach ($toRemove as $key => $file) {
             $filename = substr($file, strrpos($file, '/') + 1);
-            $toRemove[$key] = preg_replace('#^/admin#', $admin_dir, $file);
+            $toRemove[$key] = preg_replace('#^/admin#', $adminDir, $file);
             // this is a really sensitive part, so we add an extra checks: preserve everything that contains "autoupgrade"
             if ($this->_skipFile($filename, $file, 'backup') || strpos($file, $this->autoupgradeDir)) {
                 unset($toRemove[$key]);
@@ -3475,7 +3571,16 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $toRemove;
     }
 
-    public function _listFilesInDir($dir, $way = 'backup', $list_directories = false)
+    /**
+     * @param        $dir
+     * @param string $way
+     * @param bool   $listDirectories
+     *
+     * @return array
+     *
+     * @since 1.0.0
+     */
+    public function _listFilesInDir($dir, $way = 'backup', $listDirectories = false)
     {
         $list = [];
         $dir = rtrim($dir, '/').DIRECTORY_SEPARATOR;
@@ -3489,8 +3594,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     $fullPath = $dir.$file;
                     if (!$this->_skipFile($file, $fullPath, $way)) {
                         if (is_dir($fullPath)) {
-                            $list = array_merge($list, $this->_listFilesInDir($fullPath, $way, $list_directories));
-                            if ($list_directories) {
+                            $list = array_merge($list, $this->_listFilesInDir($fullPath, $way, $listDirectories));
+                            if ($listDirectories) {
                                 $list[] = $fullPath;
                             }
                         } else {
@@ -3504,12 +3609,20 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $list;
     }
 
+    /**
+     * @param       $dir
+     * @param array $ignore
+     *
+     * @return bool
+     * 
+     * @since 1.0.0
+     */
     public function isDirEmpty($dir, $ignore = ['.svn', '.git'])
     {
-        $array_ignore = array_merge(['.', '..'], $ignore);
+        $arrayIgnore = array_merge(['.', '..'], $ignore);
         $content = scandir($dir);
         foreach ($content as $filename) {
-            if (!in_array($filename, $array_ignore)) {
+            if (!in_array($filename, $arrayIgnore)) {
                 return false;
             }
         }
@@ -3519,6 +3632,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
     /**
      * try to restore db backup file
+     *
+     * @return bool
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessRestoreDb()
     {
@@ -3531,7 +3648,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             _DB_PREFIX_.'statssearch',
         ];
         $this->nextParams['dbStep'] = $this->currentParams['dbStep'];
-        $start_time = time();
+        $startTime = time();
         $db = $this->db;
         $listQuery = [];
         $errors = [];
@@ -3552,10 +3669,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 return false;
             }
             $this->nextParams['dbStep'] = $match[1];
-            $backupdb_path = $this->backupPath.DIRECTORY_SEPARATOR.$this->restoreName;
+            $backupdbPath = $this->backupPath.DIRECTORY_SEPARATOR.$this->restoreName;
 
-            $dot_pos = strrpos($currentDbFilename, '.');
-            $fileext = substr($currentDbFilename, $dot_pos + 1);
+            $dotPos = strrpos($currentDbFilename, '.');
+            $fileext = substr($currentDbFilename, $dotPos + 1);
             $requests = [];
             $content = '';
 
@@ -3564,7 +3681,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             switch ($fileext) {
                 case 'bz':
                 case 'bz2':
-                    if ($fp = bzopen($backupdb_path.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
+                    if ($fp = bzopen($backupdbPath.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
                         while (!feof($fp)) {
                             $content .= bzread($fp, 4096);
                         }
@@ -3573,7 +3690,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     } // @todo : handle error
                     break;
                 case 'gz':
-                    if ($fp = gzopen($backupdb_path.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
+                    if ($fp = gzopen($backupdbPath.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
                         while (!feof($fp)) {
                             $content .= gzread($fp, 4096);
                         }
@@ -3581,7 +3698,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     gzclose($fp);
                     break;
                 default:
-                    if ($fp = fopen($backupdb_path.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
+                    if ($fp = fopen($backupdbPath.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
                         while (!feof($fp)) {
                             $content .= fread($fp, 4096);
                         }
@@ -3607,20 +3724,20 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             // @TODO : drop all old tables (created in upgrade)
             // This part has to be executed only onces (if dbStep=0)
             if ($this->nextParams['dbStep'] == '1') {
-                $all_tables = $this->db->executeS('SHOW TABLES LIKE "'._DB_PREFIX_.'%"', true, false);
+                $allTables = $this->db->executeS('SHOW TABLES LIKE "'._DB_PREFIX_.'%"', true, false);
                 $drops = [];
-                foreach ($all_tables as $k => $v) {
+                foreach ($allTables as $k => $v) {
                     $table = array_shift($v);
                     $drops['drop table '.$k] = 'DROP TABLE IF EXISTS `'.bqSql($table).'`';
                     $drops['drop view '.$k] = 'DROP VIEW IF EXISTS `'.bqSql($table).'`';
                 }
-                unset($all_tables);
+                unset($allTables);
                 $listQuery = array_merge($drops, $listQuery);
             }
             file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toRestoreQueryList, base64_encode(serialize($listQuery)));
         }
         // @todo : error if listQuery is not an array (that can happen if toRestoreQueryList is empty for example)
-        $time_elapsed = time() - $start_time;
+        $timeElapsed = time() - $startTime;
         if (is_array($listQuery) && (count($listQuery) > 0)) {
             do {
                 if (count($listQuery) == 0) {
@@ -3654,7 +3771,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 if (!empty($query)) {
                     if (!$this->db->execute($query, false)) {
                         if (is_array($listQuery)) {
-                            $listQuery = array_unshift($listQuery, $query);
+                            array_unshift($listQuery, $query);
                         }
                         $this->nextErrors[] = $this->l('[SQL ERROR] ').$query.' - '.$this->db->getMsgError();
                         $this->nextQuickInfo[] = $this->l('[SQL ERROR] ').$query.' - '.$this->db->getMsgError();
@@ -3670,12 +3787,12 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 // else
                 // $this->nextQuickInfo[] = '[OK] '.$query;
 
-                $time_elapsed = time() - $start_time;
-            } while ($time_elapsed < self::$loopRestoreQueryTime);
+                $timeElapsed = time() - $startTime;
+            } while ($timeElapsed < self::$loopRestoreQueryTime);
 
-            $queries_left = count($listQuery);
+            $queriesLeft = count($listQuery);
 
-            if ($queries_left > 0) {
+            if ($queriesLeft > 0) {
                 file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toRestoreQueryList, base64_encode(serialize($listQuery)));
             } elseif (file_exists($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toRestoreQueryList)) {
                 unlink($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toRestoreQueryList);
@@ -3683,7 +3800,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
             $this->stepDone = false;
             $this->next = 'restoreDb';
-            $this->nextQuickInfo[] = $this->next_desc = sprintf($this->l('%1$s queries left for file %2$s...'), $queries_left, $this->nextParams['dbStep']);
+            $this->nextQuickInfo[] = $this->next_desc = sprintf($this->l('%1$s queries left for file %2$s...'), $queriesLeft, $this->nextParams['dbStep']);
             unset($query);
             unset($listQuery);
         } else {
@@ -3696,10 +3813,20 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return true;
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessMergeTranslations()
     {
     }
 
+    /**
+     * @return bool
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessBackupDb()
     {
         if (!$this->getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->version_num, '1.7.0.0', '<')) {
@@ -3711,9 +3838,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             return true;
         }
 
-        $relative_backup_path = str_replace(_PS_ROOT_DIR_, '', $this->backupPath);
+        $relativeBackupPath = str_replace(_PS_ROOT_DIR_, '', $this->backupPath);
         $report = '';
-        if (!ConfigurationTest::test_dir($relative_backup_path, false, $report)) {
+        if (!ConfigurationTest::test_dir($relativeBackupPath, false, $report)) {
             $this->next_desc = $this->l('Backup directory is not writable ');
             $this->nextQuickInfo[] = 'Backup directory is not writable ';
             $this->nextErrors[] = 'Backup directory is not writable "'.$this->backupPath.'"';
@@ -3726,12 +3853,12 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         $this->stepDone = false;
         $this->next = 'backupDb';
         $this->nextParams = $this->currentParams;
-        $start_time = time();
+        $startTime = time();
 
         $psBackupAll = true;
         $psBackupDropTable = true;
         if (!$psBackupAll) {
-            $ignore_stats_table = [
+            $ignoreStatsTable = [
                 _DB_PREFIX_.'connections',
                 _DB_PREFIX_.'connections_page',
                 _DB_PREFIX_.'connections_source',
@@ -3739,7 +3866,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 _DB_PREFIX_.'statssearch',
             ];
         } else {
-            $ignore_stats_table = [];
+            $ignoreStatsTable = [];
         }
 
         // INIT LOOP
@@ -3773,7 +3900,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 $this->nextParams['backup_loop_limit'] = 0;
             }
 
-            if ($written == 0 || $written > self::$max_written_allowed) {
+            if ($written == 0 || $written > self::$maxWrittenAllowed) {
                 // increment dbStep will increment filename each time here
                 $this->nextParams['dbStep']++;
                 // new file, new step
@@ -3855,12 +3982,12 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     }
                     $views .= preg_replace('#DEFINER=[^\s]+\s#', 'DEFINER=CURRENT_USER ', $schema[0]['Create View']).";\n\n";
                     $written += fwrite($fp, "\n".$views);
-                    $ignore_stats_table[] = $schema[0]['View'];
+                    $ignoreStatsTable[] = $schema[0]['View'];
                 } // case table
                 elseif (isset($schema[0]['Table'])) {
                     // Case common table
                     $written += fwrite($fp, '/* Scheme for table '.$schema[0]['Table']." */\n");
-                    if ($psBackupDropTable && !in_array($schema[0]['Table'], $ignore_stats_table)) {
+                    if ($psBackupDropTable && !in_array($schema[0]['Table'], $ignoreStatsTable)) {
                         // If some *upgrade* transform a table in a view, drop both just in case
                         $written += fwrite($fp, 'DROP VIEW IF EXISTS `'.$schema[0]['Table'].'`;'."\n");
                         $written += fwrite($fp, 'DROP TABLE IF EXISTS `'.$schema[0]['Table'].'`;'."\n");
@@ -3875,10 +4002,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             // end of schema
 
             // POPULATE TABLE
-            if (!in_array($table, $ignore_stats_table)) {
+            if (!in_array($table, $ignoreStatsTable)) {
                 do {
-                    $backup_loop_limit = $this->nextParams['backup_loop_limit'];
-                    $data = $this->db->executeS('SELECT * FROM `'.$table.'` LIMIT '.(int) $backup_loop_limit.',200', false, false);
+                    $backupLoopLimit = $this->nextParams['backup_loop_limit'];
+                    $data = $this->db->executeS('SELECT * FROM `'.$table.'` LIMIT '.(int) $backupLoopLimit.',200', false, false);
                     $this->nextParams['backup_loop_limit'] += 200;
                     $sizeof = $this->db->numRows();
                     if ($data && ($sizeof > 0)) {
@@ -3916,18 +4043,18 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                             $written += fwrite($fp, $s);
                             ++$i;
                         }
-                        $time_elapsed = time() - $start_time;
+                        $timeElapsed = time() - $startTime;
                     } else {
                         unset($this->nextParams['backup_table']);
                         unset($this->currentParams['backup_table']);
                         break;
                     }
-                } while (($time_elapsed < self::$loopBackupDbTime) && ($written < self::$max_written_allowed));
+                } while (($timeElapsed < self::$loopBackupDbTime) && ($written < self::$maxWrittenAllowed));
             }
             $found++;
-            $time_elapsed = time() - $start_time;
+            $timeElapsed = time() - $startTime;
             $this->nextQuickInfo[] = sprintf($this->l('%1$s table has been saved.'), $table);
-        } while (($time_elapsed < self::$loopBackupDbTime) && ($written < self::$max_written_allowed));
+        } while (($timeElapsed < self::$loopBackupDbTime) && ($written < self::$maxWrittenAllowed));
 
         // end of loop
         if (isset($fp)) {
@@ -3976,6 +4103,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return bool
+     *
+     * @since 1.0.0
+     */
     public function ajaxProcessBackupFiles()
     {
         if (!$this->getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->version_num, '1.7.0.0', '<')) {
@@ -4043,8 +4175,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             if ($zip && $res) {
                 $this->next = 'backupFiles';
                 $this->stepDone = false;
-                $files_to_add = [];
-                $close_flag = true;
+                $filesToAdd = [];
+                $closeFlag = true;
                 for ($i = 0; $i < self::$loopBackupFiles; $i++) {
                     if (count($filesToBackup) <= 0) {
                         $this->stepDone = true;
@@ -4061,8 +4193,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     $size = filesize($file);
                     if ($size < self::$maxBackupFileSize) {
                         if (isset($zipArchive) && $zipArchive) {
-                            $added_to_zip = $zip->addFile($file, $archiveFilename);
-                            if ($added_to_zip) {
+                            $addedToZip = $zip->addFile($file, $archiveFilename);
+                            if ($addedToZip) {
                                 if ($filesToBackup) {
                                     $this->nextQuickInfo[] = sprintf($this->l('%1$s added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesToBackup));
                                 }
@@ -4075,11 +4207,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                                 $this->next = 'error';
                                 $this->error = 1;
                                 $this->next_desc = sprintf($this->l('Error when trying to add %1$s to archive %2$s.', 'AdminThirtyBeesMigrate', true), $file, $archiveFilename);
-                                $close_flag = false;
+                                $closeFlag = false;
                                 break;
                             }
                         } else {
-                            $files_to_add[] = $file;
+                            $filesToAdd[] = $file;
                             if (count($filesToBackup)) {
                                 $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %3$s) added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesToBackup), $size);
                             } else {
@@ -4092,14 +4224,14 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     }
                 }
 
-                if ($zipArchive && $close_flag && is_object($zip)) {
+                if ($zipArchive && $closeFlag && is_object($zip)) {
                     $zip->close();
                 } elseif (!$zipArchive) {
-                    $added_to_zip = $zip->add($files_to_add, PCLZIP_OPT_REMOVE_PATH, $this->prodRootDir);
-                    if ($added_to_zip) {
+                    $addedToZip = $zip->add($filesToAdd, PCLZIP_OPT_REMOVE_PATH, $this->prodRootDir);
+                    if ($addedToZip) {
                         $zip->privCloseFd();
                     }
-                    if (!$added_to_zip) {
+                    if (!$addedToZip) {
                         if (file_exists($this->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename)) {
                             unlink($this->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename);
                         }
@@ -4131,7 +4263,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * Remove all sample files.
      *
-     * @return boolean true if succeed
+     * @return bool
+     *
+     * @since 1.0.0
      */
     public function ajaxProcessRemoveSamples()
     {
@@ -4194,6 +4328,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $fileext suffixe filename
      *
      * @return void
+     *
+     * @since 1.0.0
      */
     private function _listSampleFiles($dir, $fileext = '.jpg')
     {
@@ -4219,7 +4355,14 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $res;
     }
 
-    private function _removeOneSample($removeList)
+    /**
+     * @param $removeList
+     *
+     * @return bool
+     *
+     * @since 1.0.0
+     */
+    protected function _removeOneSample($removeList)
     {
         if (is_array($removeList) and count($removeList) > 0) {
             if (file_exists($removeList[0]) and unlink($removeList[0])) {
@@ -4245,7 +4388,9 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * download PrestaShop archive according to the chosen channel
      *
-     * @access public
+     * @return void
+     * 
+     * @since 1.0.0
      */
     public function ajaxProcessDownload()
     {
@@ -4274,8 +4419,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 $this->nextQuickInfo[] = $this->l('download directory has been emptied');
             }
             $report = '';
-            $relative_download_path = str_replace(_PS_ROOT_DIR_, '', $this->downloadPath);
-            if (ConfigurationTest::test_dir($relative_download_path, false, $report)) {
+            $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->downloadPath);
+            if (ConfigurationTest::test_dir($relativeDownloadPath, false, $report)) {
                 $res = $this->upgrader->downloadLast($this->downloadPath, $this->destDownloadFilename);
                 if ($res) {
                     $md5file = md5_file(realpath($this->downloadPath).DIRECTORY_SEPARATOR.$this->destDownloadFilename);
@@ -4315,6 +4460,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function ajaxPreProcess()
     {
         /* PrestaShop demo mode */
@@ -4345,11 +4495,21 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function displayAjax()
     {
         echo $this->buildAjaxResult();
     }
 
+    /**
+     * @return string
+     *
+     * @since 1.0.0
+     */
     public function buildAjaxResult()
     {
         $return = [];
@@ -4383,6 +4543,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return Tools::jsonEncode($return);
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function display()
     {
         // in order to not use Tools class
@@ -4424,13 +4589,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         $this->upgrader = $upgrader;
 
         /* Make sure the user has configured the upgrade options, or set default values */
-        $configuration_keys = [
+        $configurationKeys = [
             'PS_AUTOUP_UPDATE_DEFAULT_THEME' => 1, 'PS_AUTOUP_CHANGE_DEFAULT_THEME' => 0, 'PS_AUTOUP_KEEP_MAILS' => 1, 'PS_AUTOUP_CUSTOM_MOD_DESACT' => 1,
             'PS_AUTOUP_MANUAL_MODE'          => 0, 'PS_AUTOUP_PERFORMANCE' => 1, 'PS_DISPLAY_ERRORS' => 0,
         ];
-        foreach ($configuration_keys as $k => $default_value) {
+        foreach ($configurationKeys as $k => $defaultValue) {
             if (\Configuration::get($k) == '') {
-                \Configuration::updateValue($k, $default_value);
+                \Configuration::updateValue($k, $defaultValue);
             }
         }
 
@@ -4448,7 +4613,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         if (!file_exists($this->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php')) {
             echo '<div class="error">'.'<img src="../img/admin/warning.gif" /> '.$this->l('[TECHNICAL ERROR] ajax-upgradetab.php is missing. Please reinstall or reset the module.').'</div>';
 
-            return false;
+            return;
         }
         /* PrestaShop demo mode*/
         $this->html .= '<link type="text/css" rel="stylesheet" href="'.__PS_BASE_URI__.'modules/autoupgrade/css/styles.css" />';
@@ -4466,14 +4631,14 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 		</fieldset>';
 
         /* Checks/requirements and "Upgrade PrestaShop now" blocks */
-        $this->html .= $this->_displayCurrentConfiguration();
+        $this->html .= $this->displayCurrentConfiguration();
         $this->html .= '<div class="clear"></div>';
         $this->_displayBlockUpgradeButton();
 
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/checklist.phtml');
 
         $this->html .= '<script type="text/javascript" src="'.__PS_BASE_URI__.'modules/autoupgrade/js/jquery.xml2json.js"></script>';
-        $this->html .= $this->_getJsInit();
+        $this->html .= $this->getJsInit();
 
         echo $this->html;
     }
@@ -4481,33 +4646,45 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /** this returns fieldset containing the configuration points you need to use autoupgrade
      *
      * @return string
+     *
+     * @since 1.0.0
      */
-    protected function _displayCurrentConfiguration()
+    protected function displayCurrentConfiguration()
     {
         return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/currentconfiguration.phtml');
     }
 
+    /**
+     * @return array
+     *
+     * @since 1.0.0
+     */
     public function getCheckCurrentPsConfig()
     {
-        static $allowed_array;
+        static $allowedArray;
 
-        if (empty($allowed_array)) {
-            $allowed_array = [];
-            $allowed_array['fopen'] = ConfigurationTest::test_fopen() || ConfigurationTest::test_curl();
-            $allowed_array['root_writable'] = $this->getRootWritable();
-            $admin_dir = trim(str_replace($this->prodRootDir, '', $this->adminDir), DIRECTORY_SEPARATOR);
-            $allowed_array['admin_au_writable'] = ConfigurationTest::test_dir($admin_dir.DIRECTORY_SEPARATOR.$this->autoupgradeDir, false, $report);
-            $allowed_array['shop_deactivated'] = (!\Configuration::get('PS_SHOP_ENABLE') || (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['127.0.0.1', 'localhost'])));
-            $allowed_array['cache_deactivated'] = !(defined('_PS_CACHE_ENABLED_') && _PS_CACHE_ENABLED_);
-            $allowed_array['module_version_ok'] = $this->checkAutoupgradeLastVersion();
+        if (empty($allowedArray)) {
+            $allowedArray = [];
+            $allowedArray['fopen'] = ConfigurationTest::test_fopen() || ConfigurationTest::test_curl();
+            $allowedArray['root_writable'] = $this->getRootWritable();
+            $adminDir = trim(str_replace($this->prodRootDir, '', $this->adminDir), DIRECTORY_SEPARATOR);
+            $allowedArray['admin_au_writable'] = ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$this->autoupgradeDir, false, $report);
+            $allowedArray['shop_deactivated'] = (!\Configuration::get('PS_SHOP_ENABLE') || (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['127.0.0.1', 'localhost'])));
+            $allowedArray['cache_deactivated'] = !(defined('_PS_CACHE_ENABLED_') && _PS_CACHE_ENABLED_);
+            $allowedArray['module_version_ok'] = $this->checkAutoupgradeLastVersion();
             if (version_compare(_PS_VERSION_, '1.5.0.0', '<')) {
-                $allowed_array['test_mobile'] = ConfigurationTest::test_mobile();
+                $allowedArray['test_mobile'] = ConfigurationTest::test_mobile();
             }
         }
 
-        return $allowed_array;
+        return $allowedArray;
     }
 
+    /**
+     * @return bool|null
+     *
+     * @since 1.0.0
+     */
     public function getRootWritable()
     {
         // Root directory permissions cannot be checked recursively anymore, it takes too much time
@@ -4517,6 +4694,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $this->root_writable;
     }
 
+    /**
+     * @return bool|mixed|string
+     *
+     * @since 1.0.0
+     */
     public function checkAutoupgradeLastVersion()
     {
         if ($this->getModuleVersion()) {
@@ -4528,13 +4710,18 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $this->lastAutoupgradeVersion;
     }
 
+    /**
+     * @return bool|null|string
+     *
+     * @since 1.0.0
+     */
     public function getModuleVersion()
     {
         if (is_null($this->module_version)) {
             if (file_exists(_PS_ROOT_DIR_.'/modules/autoupgrade/config.xml')
-                && $xml_module_version = simplexml_load_file(_PS_ROOT_DIR_.'/modules/autoupgrade/config.xml')
+                && $xmlModuleVersion = simplexml_load_file(_PS_ROOT_DIR_.'/modules/autoupgrade/config.xml')
             ) {
-                $this->module_version = (string) $xml_module_version->version;
+                $this->module_version = (string) $xmlModuleVersion->version;
             } else {
                 $this->module_version = false;
             }
@@ -4543,6 +4730,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $this->module_version;
     }
 
+    /**
+     * @return float|int
+     *
+     * @since 1.0.0
+     */
     public function configOk()
     {
         $allowed_array = $this->getCheckCurrentPsConfig();
@@ -4557,114 +4749,77 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @access private
      * @return void
+     *
+     * @since 1.0.0
      */
     private function _displayBlockUpgradeButton()
     {
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/blockupgradebutton.phtml');
     }
 
+    /**
+     * @return string
+     *
+     * @since 1.0.0
+     */
     public function getBlockConfigurationAdvanced()
     {
         return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/advanced.phtml');
     }
 
+    /**
+     * @param string $channel
+     *
+     * @return string
+     *
+     * @since 1.0.0
+     */
     public function getBlockSelectChannel($channel = 'stable')
     {
-        $this->templateVars['optChannels'] = [
-            'stable',
-            'beta',
-        ];
         $download = $this->downloadPath.DIRECTORY_SEPARATOR;
-        $this->templateVars['download'] = $download;
-        $this->templateVars['channelDir'] = glob($download.'*.zip');
-        $this->templateVars['archiveFilename'] = $this->getConfig('archive.filename');
-        $this->templateVars['selectedChannel'] = is_string($channel) ? $channel : 'stable';
+        $params = [
+            'optChannels' => ['stable', 'beta'],
+            'selectedChannel' => is_string($channel) ? $channel : 'stable',
+            'download' => $download,
+            'channelDir' => glob($download.'*.zip'),
+            'archiveFilename' => $this->getConfig('archive.filename'),
+        ];
 
-        return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/channelselector.phtml');
+        return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/channelselector.phtml', $params);
     }
 
+    /**
+     * @return string
+     *
+     * @since 1.0.0
+     */
     public function displayDevTools()
     {
         return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/devtools.phtml');
     }
 
-    private function _upgradingTo17Step1()
-    {
-        $checks = new CheckTests17();
-        $checkRequiredTests = $checks->checkRequiredTests();
-
-        $this->html .= '
-        <fieldset id="hideStep17-1">
-            <legend>'.sprintf($this->l('Upgrading to PrestaShop %s'), $this->upgrader->version_num).'</legend>';
-
-        $this->html .= '<p>'.sprintf($this->l('Migrating from PrestaShop %s to the PrestaShop %s version will have a HUGE impact on your store.'), _PS_VERSION_, $this->upgrader->version_num).'</p>';
-
-        $this->html .= '<p><b>'.sprintf($this->l('You will not be able to use your current theme, modules and advanced stock data as soon as your store is upgraded to %s'), $this->upgrader->version_num).'</b></p>';
-
-        $this->html .= '<p>'.$this->l('Please also make sure that your server installation meets the minimum requirements:').'</p>';
-
-        $this->html .= '<ul style="list-style-type: none;">';
-
-        if (!empty($checkRequiredTests)) {
-            $pic_ok = '<img src="../img/admin/enabled.gif" alt="ok"/>';
-            $pic_nok = '<img src="../img/admin/disabled.gif" alt="nok"/>';
-
-            $translationsTests = [
-                'upload'                    => sprintf($this->l('%s folder exists'), '/upload/'),
-                'img_dir'                   => sprintf($this->l('%s folder exists'), '/img/'),
-                'module_dir'                => sprintf($this->l('%s folder exists'), '/modules/'),
-                'theme_dir'                 => sprintf($this->l('%s folder exists'), '/themes/'),
-                'translations_dir'          => sprintf($this->l('%s folder exists'), '/translations/'),
-                'customizable_products_dir' => sprintf($this->l('%s folder exists'), '/upload/'),
-                'virtual_products_dir'      => sprintf($this->l('%s folder exists'), '/download/'),
-                'config_dir'                => sprintf($this->l('%s folder exists'), '/config/'),
-                'mails_dir'                 => sprintf($this->l('%s folder exists'), '/mails/'),
-
-                'system' => $this->l('Required system functions are enabled (fopen, file_exists, chmod)'),
-
-                'phpversion'         => sprintf($this->l('%s function is enabled'), 'version_compare'),
-                'apache_mod_rewrite' => sprintf($this->l('%s function is enabled'), 'apache_mod_rewrite'),
-
-                'curl'      => sprintf($this->l('%s extension is enabled'), 'cURL'),
-                'gd'        => sprintf($this->l('%s extension is enabled'), 'gd'),
-                'json'      => sprintf($this->l('%s extension is enabled'), 'json'),
-                'pdo_mysql' => sprintf($this->l('%s extension is enabled'), 'PDO MySQL'),
-                'openssl'   => sprintf($this->l('%s extension is enabled'), 'open SSL'),
-                'simplexml' => sprintf($this->l('%s extension is enabled'), 'simpleXML'),
-                'zip'       => sprintf($this->l('%s extension is enabled'), 'zip'),
-                'intl'      => sprintf($this->l('%s extension is enabled'), 'intl'),
-                'fileinfo'  => sprintf($this->l('%s extension is enabled'), 'fileinfo'),
-            ];
-
-            foreach ($checkRequiredTests['checks'] as $key => $test) {
-                $this->html .= '<li>'.($test === 'ok' ? $pic_ok : $pic_nok).' '.(isset($translationsTests[$key]) ? $translationsTests[$key] : $key).'</li>';
-            }
-
-            if (empty($checkRequiredTests['success'])) {
-                $this->html .= '<p style="text-align:center;font-weight: bold; font-size: 1.2em;">'.$this->l('Your installation lacks some of the minimum requirements. Please check and try again.').'</p>';
-            }
-        }
-
-        $this->html .= '</ul>
-        </fieldset>';
-    }
-
-    private function _upgradingTo17Step2()
-    {
-        $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/upgradingto17step2.phtml');
-    }
-
-    private function _displayComparisonBlock()
-    {
-        $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/comparisonblock.phtml');
-    }
-
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     private function _displayBlockActivityLog()
     {
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/activitylog.phtml');
     }
 
-    protected function _displayForm($name, $fields, $tabname, $size, $icon)
+    /**
+     * @param $name
+     * @param $fields
+     * @param $tabname
+     * @param $size
+     * @param $icon
+     *
+     * @return void
+     *
+     * @since .10.0
+     */
+    protected function displayForm($name, $fields, $tabname, $size, $icon)
     {
         $params = [
             'name'    => $name,
@@ -4677,23 +4832,23 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/displayform.phtml', $params);
     }
 
-    private function getConfigFor17()
-    {
-        return [
-            'PS_AUTOUP_CUSTOM_MOD_DESACT'    => 1,
-            'PS_AUTOUP_UPDATE_DEFAULT_THEME' => 1,
-            'PS_AUTOUP_CHANGE_DEFAULT_THEME' => 1,
-            'PS_AUTOUP_KEEP_MAILS'           => 1,
-            'PS_AUTOUP_BACKUP'               => 1,
-            'PS_AUTOUP_KEEP_IMAGES'          => 1,
-        ];
-    }
-
+    /**
+     * Display rollback form
+     *
+     * @return void
+     *
+     * @since 1.0.0
+     */
     protected function _displayRollbackForm()
     {
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/rollbackform.phtml');
     }
 
+    /**
+     * @return array
+     * 
+     * @since 1.0.0
+     */
     protected function getBackupDbAvailable()
     {
         $array = [];
@@ -4709,6 +4864,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $array;
     }
 
+    /**
+     * @return array
+     *
+     * @since 1.0.0
+     */
     protected function getBackupFilesAvailable()
     {
         $array = [];
@@ -4724,16 +4884,23 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return $array;
     }
 
-    private function _buttonUpgradingTo17Step2()
-    {
-        $this->html .= '<p class="clear" style="text-align: center;"><a href="" id="showStep17-2" class="button-autoupgrade17">'.sprintf($this->l('Upgrade to PrestaShop %s'), $this->upgrader->version_num).'</a></p>';
-    }
-
-    private function _getJsInit()
+    /**
+     * Get js init stuff
+     *
+     * @return string
+     *
+     * @since 1.0.0
+     */
+    private function getJsInit()
     {
         return $this->displayAdminTemplate(__DIR__.'/views/templates/admin/mainjs.phtml');
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function optionDisplayErrors()
     {
         if ($this->getConfig('PS_DISPLAY_ERRORS')) {
@@ -4768,6 +4935,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         if (ob_get_level() && ob_get_length() > 0) {
             ob_end_clean();
         }
+
         return $content;
     }
 }
