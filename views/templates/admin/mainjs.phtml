@@ -217,7 +217,7 @@ $installVersion = $this->install_version;
       if ($(this).val() != 0) {
         $(this).after("<a class=\"button confirmBeforeDelete\" href=\"index.php?tab=AdminThirtyBeesMigrate&token=<?php echo $this->token; ?>&amp;deletebackup&amp;name="+$(this).val()+"\"> <img src=\"../img/admin/disabled.gif\" /><?php echo $this->l('Delete'); ?></a>");
         $(this).next().click(function (e) {
-          if (!confirm("'.$this->l('Are you sure you want to delete this backup?', 'AdminThirtyBeesMigrate', true, false).'")) {
+          if (!confirm("<?php echo $this->l('Are you sure you want to delete this backup?', 'AdminThirtyBeesMigrate', true, false); ?>")) {
             e.preventDefault();
           }
         });
@@ -282,7 +282,7 @@ $installVersion = $this->install_version;
       showConfigResult(res.next_desc);
     }
     $("#upgradeNow").unbind();
-    $("#upgradeNow").replaceWith("<a class=\"button-autoupgrade\" href=\"'.$this->currentIndex.'&token='.$this->token.'\" ><?php echo $this->l('Click to refresh the page and use the new configuration', 'AdminThirtyBeesMigrate', true); ?></a>");
+    $("#upgradeNow").replaceWith("<a class=\"button-autoupgrade\" href=\"<?php echo $this->currentIndex; ?>&token=<?php echo $this->token; ?>\" ><?php echo $this->l('Click to refresh the page and use the new configuration', 'AdminThirtyBeesMigrate', true); ?></a>");
   }
   function startProcess(type) {
 
@@ -655,7 +655,7 @@ $installVersion = $this->install_version;
             $("#checkPrestaShopFilesVersion").prepend("<img src=\"../img/admin/warning.gif\" /> ");
           } else {
             $("#checkPrestaShopFilesVersion").prepend("<img src=\"../img/admin/warning.gif\" /> ");
-            $("#checkPrestaShopFilesVersion").append("<a id=\"toggleChangedList\" class=\"button\" href=\"\">'.$this->l('See or hide the list').'</a><br/>");
+            $("#checkPrestaShopFilesVersion").append("<a id=\"toggleChangedList\" class=\"button\" href=\"\"><?php echo $this->l('See or hide the list'); ?></a><br/>");
             $("#checkPrestaShopFilesVersion").append("<div id=\"changedList\" style=\"display:none \"><br/>");
             if (answer.result.core.length) {
               addModifiedFileList("<?php echo $this->l('Core file(s)'); ?>", answer.result.core, "changedImportant", "#changedList");

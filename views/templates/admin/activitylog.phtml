@@ -4,7 +4,7 @@
     <div id="upgradeResultToDoList" style="width:890px!important;"></div>
     <div id="currentlyProcessing" style="display:none;float:left">
         <h4 id="pleaseWait"><?php echo $this->l('Currently processing'); ?> <img class="pleaseWait" src="<?php echo __PS_BASE_URI__; ?>img/loader.gif"/></h4>
-        <div id="infoStep" class="processing" >'.$this->l('Analyzing the situation...').'</div>
+        <div id="infoStep" class="processing" ><?php echo $this->l('Analyzing the situation...'); ?></div>
     </div>
     <div id="errorDuringUpgrade" style="display:none;float:right">
         <h4><?php echo $this->l('Errors'); ?></h4>

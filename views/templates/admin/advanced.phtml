@@ -3,16 +3,16 @@
 $config = $this->getConfig();
 $channel = $config['channel'];
 if (empty($channel)) {
-    $channel = Upgrader::DEFAULT_CHANNEL;
+    $channel = PsOneSixMigrator\Upgrader::DEFAULT_CHANNEL;
 }
 ?>
 <div>
-    <input type="button" class="button" style="float:right" name="btn_adv" value="'.$this->l('More options (Expert mode)').'"/>
+    <input type="button" class="button" style="float:right" name="btn_adv" value="<?php echo $this->l('More options (Expert mode)'); ?>"/>
 </div>
 <div style="float: left; margin-top: 13px; display:none;" id="configResult">&nbsp;</div>
 <div class="clear" id="advanced">
     <h3><?php echo $this->l('Expert mode'); ?></h3>
-    <h4 style="margin-top: 0px;">'.$this->l('Please select your channel:').'</h4>
+    <h4 style="margin-top: 0px;"><?php echo $this->l('Please select your channel:'); ?></h4>
     <p><?php echo $this->l('Channels are offering you different ways to perform an upgrade. You can either upload the new version manually or let the 1-Click Upgrade module download it for you.'); ?><br />
         <?php echo $this->l('The Alpha, Beta and Private channels give you the ability to upgrade to a non-official or unstable release (for testing purposes only).'); ?><br />
         <?php echo $this->l('By default, you should use the "Minor release" channel which is offering the latest stable version available.'); ?>

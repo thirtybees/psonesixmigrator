@@ -44,9 +44,9 @@ $channel = $this->getConfig('channel');
                 }
                 ?>
 
-                <small><a href="'.$this->upgrader->link.'"><?php echo sprintf($this->l('PrestaShop will be downloaded from %s'), $this->upgrader->link); ?></a></small><br/>
+                <small><a href="<?php echo $this->upgrader->link; ?>"><?php echo sprintf($this->l('PrestaShop will be downloaded from %s'), $this->upgrader->link); ?></a></small><br/>
                 <div class="clear">&nbsp;</div>
-                <small><a href="'.$this->upgrader->changelog.'" target="_blank" ><?php echo $this->l('open changelog in a new window'); ?></a></small>
+                <small><a href="<?php echo $this->upgrader->changelog; ?>" target="_blank" ><?php echo $this->l('open changelog in a new window'); ?></a></small>
                 <div class="clear">&nbsp;</div>
                 <?php
             } else {
@@ -78,7 +78,7 @@ $channel = $this->getConfig('channel');
 
     if ($showBigButtonNewVersion) { ?>
         <div class="clear"></div>
-        <a class="button button-autoupgrade" href="index.php?tab=AdminThirtyBeesMigrate&amp;token='.$this->token.'&amp;refreshCurrentVersion=1"><?php echo $this->l('Check if a new version is available'); ?></a>
+        <a class="button button-autoupgrade" href="index.php?tab=AdminThirtyBeesMigrate&amp;token=<?php echo $this->token; ?>&amp;refreshCurrentVersion=1"><?php echo $this->l('Check if a new version is available'); ?></a>
         <div><span style="font-style: italic; font-size: 11px;"><?php echo sprintf($this->l('Last check: %s'), \Configuration::get('PS_LAST_VERSION_CHECK') ? date('Y-m-d H:i:s', Configuration::get('PS_LAST_VERSION_CHECK')) : $this->l('never')); ?></span></div><?php
     } else { ?>
         <div class="clear"></div>
