@@ -8,7 +8,7 @@
     <?php if (version_compare($this->upgrader->version_num, '1.7.0.0', '<') || !empty($checkRequiredTests['success'])) : ?>
         <div id="hideStep17basic">
             <?php echo $this->_displayComparisonBlock(); ?>
-            <?php echo $this->_displayBlockActivityLog(); ?>
+            <?php echo $this->displayBlockActivityLog(); ?>
             <br/>
             <form action="<?php echo $this->currentIndex; ?>&amp;customSubmitAutoUpgrade=1&amp;token=<?php echo $this->token; ?>" method="post" enctype="multipart/form-data">
                 <?php echo $this->displayConfigForm('upgradeOptions', $this->_fieldsUpgradeOptions, '<a href="#" name="upgrade-options" id="upgrade-options">'.$this->l('Upgrade Options').'</a>', '', 'prefs'); ?>
@@ -20,7 +20,7 @@
                     <a href="" id="upgradeNow" class="button-autoupgrade upgradestep"><?php echo sprintf($this->l('Upgrade to PrestaShop %s'), $this->upgrader->version_num); ?></a>
                 </p>
             <?php endif; ?>
-        <?php echo $this->_displayRollbackForm(); ?>
+        <?php echo $this->displayRollbackForm(); ?>
         </div>
     <?php endif; ?>
 <?php endif; ?>

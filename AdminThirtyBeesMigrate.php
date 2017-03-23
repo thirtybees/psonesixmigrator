@@ -366,10 +366,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
 
         if (defined('_PS_ADMIN_DIR_')) {
-            $file_tab = @filemtime($this->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php');
+            $fileTab = @filemtime($this->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php');
             $file = @filemtime(_PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.$this->autoupgradeDir.DIRECTORY_SEPARATOR.'ajax-upgradetab.php');
 
-            if ($file_tab < $file) {
+            if ($fileTab < $file) {
                 @copy(
                     _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.$this->autoupgradeDir.DIRECTORY_SEPARATOR.'ajax-upgradetab.php',
                     $this->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php'
@@ -834,7 +834,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      */
     public function postProcess()
     {
-        $this->_setFields();
+        $this->setFields();
 
         // set default configuration to default channel & dafault configuration for backup and upgrade
         // (can be modified in expert mode)
@@ -913,7 +913,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @return void
      */
-    private function _setFields()
+    private function setFields()
     {
         $this->_fieldsBackupOptions['PS_AUTOUP_BACKUP'] = [
             'title' => $this->l('Back up my files and database'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '1',
@@ -3375,13 +3375,13 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
             || !file_exists($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toRemoveFileList)
         ) {
             // cleanup current PS tree
-            $fromArchive = $this->_listArchivedFiles($this->backupPath.DIRECTORY_SEPARATOR.$this->restoreFilesFilename);
+            $fromArchive = $this->listArchivedFiles($this->backupPath.DIRECTORY_SEPARATOR.$this->restoreFilesFilename);
             foreach ($fromArchive as $k => $v) {
                 $fromArchive[$k] = '/'.$v;
             }
             file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->fromArchiveFileList, base64_encode(serialize($fromArchive)));
             // get list of files to remove
-            $toRemove = $this->_listFilesToRemove();
+            $toRemove = $this->listFilesToRemove();
             // let's reverse the array in order to make possible to rmdir
             // remove fullpath. This will be added later in the loop.
             // we do that for avoiding fullpath to be revealed in a text file
@@ -3492,7 +3492,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    private function _listArchivedFiles($zipfile)
+    private function listArchivedFiles($zipfile)
     {
         if (file_exists($zipfile)) {
             $res = false;
@@ -3535,7 +3535,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    public function _listFilesToRemove()
+    public function listFilesToRemove()
     {
         $prevVersion = preg_match('#auto-backupfiles_V([0-9.]*)_#', $this->restoreFilesFilename, $matches);
         if ($prevVersion) {
@@ -3553,7 +3553,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         // if we can't find the diff file list corresponding to _PS_VERSION_ and prev_version,
         // let's assume to remove every files
         if (!$toRemove) {
-            $toRemove = $this->_listFilesInDir($this->prodRootDir, 'restore', true);
+            $toRemove = $this->listFilesInDir($this->prodRootDir, 'restore', true);
         }
 
         $adminDir = str_replace($this->prodRootDir, '', $this->adminDir);
@@ -3580,7 +3580,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    public function _listFilesInDir($dir, $way = 'backup', $listDirectories = false)
+    public function listFilesInDir($dir, $way = 'backup', $listDirectories = false)
     {
         $list = [];
         $dir = rtrim($dir, '/').DIRECTORY_SEPARATOR;
@@ -3594,7 +3594,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     $fullPath = $dir.$file;
                     if (!$this->_skipFile($file, $fullPath, $way)) {
                         if (is_dir($fullPath)) {
-                            $list = array_merge($list, $this->_listFilesInDir($fullPath, $way, $listDirectories));
+                            $list = array_merge($list, $this->listFilesInDir($fullPath, $way, $listDirectories));
                             if ($listDirectories) {
                                 $list[] = $fullPath;
                             }
@@ -4132,7 +4132,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
         if (empty($this->nextParams['filesForBackup'])) {
             // @todo : only add files and dir listed in "originalPrestashopVersion" list
-            $filesToBackup = $this->_listFilesInDir($this->prodRootDir, 'backup', false);
+            $filesToBackup = $this->listFilesInDir($this->prodRootDir, 'backup', false);
             file_put_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->toBackupFileList, base64_encode(serialize($filesToBackup)));
             if (count($this->toBackupFileList)) {
                 $this->nextQuickInfo[] = sprintf($this->l('%s Files to backup.'), count($this->toBackupFileList));
@@ -4272,23 +4272,23 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         $this->stepDone = false;
         // remove all sample pics in img subdir
         if (!isset($this->currentParams['removeList'])) {
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/c', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/cms', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/l', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/m', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/os', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/p', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/s', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/scenes', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/st', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img/su', '.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img', '404.gif');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img', 'favicon.ico');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img', 'logo.jpg');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/img', 'logo_stores.gif');
-            $this->_listSampleFiles($this->latestPath.'/prestashop/modules/editorial', 'homepage_logo.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/c', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/cms', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/l', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/m', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/os', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/p', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/s', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/scenes', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/st', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img/su', '.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img', '404.gif');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img', 'favicon.ico');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img', 'logo.jpg');
+            $this->listSampleFiles($this->latestPath.'/prestashop/img', 'logo_stores.gif');
+            $this->listSampleFiles($this->latestPath.'/prestashop/modules/editorial', 'homepage_logo.jpg');
             // remove all override present in the archive
-            $this->_listSampleFiles($this->latestPath.'/prestashop/override', '.php');
+            $this->listSampleFiles($this->latestPath.'/prestashop/override', '.php');
 
             if (count($this->sampleFileList) > 0) {
                 $this->nextQuickInfo[] = sprintf($this->l('Starting to remove %1$s sample files'), count($this->sampleFileList));
@@ -4311,7 +4311,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                 // break the loop, all sample already removed
                 return true;
             }
-            $resRemove &= $this->_removeOneSample($this->nextParams['removeList']);
+            $resRemove &= $this->removeOneSample($this->nextParams['removeList']);
             if (!$resRemove) {
                 break;
             }
@@ -4331,7 +4331,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    private function _listSampleFiles($dir, $fileext = '.jpg')
+    private function listSampleFiles($dir, $fileext = '.jpg')
     {
         $res = false;
         $dir = rtrim($dir, '/').DIRECTORY_SEPARATOR;
@@ -4346,7 +4346,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
                     if (preg_match('#'.preg_quote($fileext, '#').'$#i', $file)) {
                         $this->sampleFileList[] = $dir.$file;
                     } elseif (is_dir($dir.$file)) {
-                        $res &= $this->_listSampleFiles($dir.$file, $fileext);
+                        $res &= $this->listSampleFiles($dir.$file, $fileext);
                     }
                 }
             }
@@ -4362,7 +4362,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    protected function _removeOneSample($removeList)
+    protected function removeOneSample($removeList)
     {
         if (is_array($removeList) and count($removeList) > 0) {
             if (file_exists($removeList[0]) and unlink($removeList[0])) {
@@ -4633,7 +4633,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         /* Checks/requirements and "Upgrade PrestaShop now" blocks */
         $this->html .= $this->displayCurrentConfiguration();
         $this->html .= '<div class="clear"></div>';
-        $this->_displayBlockUpgradeButton();
+        $this->displayBlockUpgradeButton();
 
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/checklist.phtml');
 
@@ -4752,7 +4752,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    private function _displayBlockUpgradeButton()
+    private function displayBlockUpgradeButton()
     {
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/blockupgradebutton.phtml');
     }
@@ -4803,7 +4803,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    private function _displayBlockActivityLog()
+    private function displayBlockActivityLog()
     {
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/activitylog.phtml');
     }
@@ -4839,7 +4839,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @since 1.0.0
      */
-    protected function _displayRollbackForm()
+    protected function displayRollbackForm()
     {
         $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/rollbackform.phtml');
     }
