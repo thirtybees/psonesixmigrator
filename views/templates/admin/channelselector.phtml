@@ -1,0 +1,56 @@
+<?php /** @var AdminThirtyBeesMigrate $this */ ?>
+<label class="label-small"><?php echo $this->l('Channel:'); ?></label>
+<select name="channel">
+    <?php foreach($this->templateVars['optChannels'] as $channel) : ?>
+        <option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"<?php ($channel === $this->templateVars['selectedChannel']) ? 'class="current" selected="selected">* ' : '>' ?>
+    <?php endforeach; ?>
+</select>
+<?php
+$upgradeInfo = $this->getInfoForChannel($this->templateVars['selectedChannel']);
+echo $this->divChannelInfos($upgradeInfo);
+?>
+
+<div id="for-useMinor" ><div class="margin-form margin-form-small"><?php echo $this->l('This option regroup all stable versions.'); ?></div></div>
+<div id="for-usePrivate">
+    <p><label class="label-small"><?php echo $this->l('Link:'); ?></label>
+        <input size="50" type="text" name="private_release_link" value="<?php $this->getConfig('private_release_link'); ?>"/> *
+    </p>
+    <p><label class="label-small"><?php echo $this->l('Hash key:'); ?></label>
+        <input size="32" type="text" name="private_release_md5" value="<?php echo $this->getConfig('private_release_md5'); ?>"/> *
+    </p>
+    <p><label class="label-small"><?php echo $this->l('Allow major upgrade:'); ?></label>
+        <input type="checkbox" name="private_allow_major" value="1"<?php echo ($this->getConfig('private_allow_major') ? ' checked="checked"' : ''); ?>/>
+    </p>
+</div>
+
+<div id="for-useArchive">
+    <?php if ($this->templateVars['channelDir'] !== false && count($this->templateVars['channelDir']) > 0) : ?>
+    <label class="label-small"><?php echo $this->l('Archive to use:'); ?></label>
+        <select name="archive_prestashop">
+            <option value=""><?php echo $this->l('choose an archive'); ?></option>
+            <?php foreach ($this->templateVars['channelDir'] as $file) : ?>
+            <option <?php echo ($this->templateVars['archiveFilename'] ? 'selected="selected"' : ''); ?> value="<?php echo str_replace($download, '', $file); ?>"><?php echo str_replace($download, '', $file); ?></option>
+            <?php endforeach; ?>
+
+        </select>
+        <?php echo $this->l('to upgrade for version'); ?><input type="text" size="10" name="archive_num" value="<?php echo ($this->getConfig('archive.version_num') ? $this->getConfig('archive.version_num') : ''); ?>" /> *
+    <?php else : ?>
+        <div class="warn"><?php echo $this->l('No archive found in your admin/autoupgrade/download directory'); ?></div>
+    <?php endif; ?>
+
+    <div class="margin-form">* <?php echo $this->l('This option will skip the download step.'); ?>
+        <?php echo sprintf($this->l('The archive in the directory %1$s will be used for upgrading.'), '<b>/admin/autoupgrade/download/</b>'); ?>
+    </div>
+    <div id="for-useDirectory">
+        <div>
+            <?php echo sprintf($this->l('The directory %1$s will be used to upgrade to version '), '<b>/admin/autoupgrade/latest/prestashop/</b>'); ?>
+        <input type="text" size="10" name="directory_num" value="<?php echo ($this->getConfig('directory.version_num') ? $this->getConfig('directory.version_num') : ''); ?>" /> <small>(1.6.0.6 for instance)</small> *
+            <div class="margin-form">* <?php echo $this->l('This option will skip both download and unzip steps.'); ?></div>
+        </div>
+    </div>
+    <div style="clear:both;">
+        <div class="margin-form" style="">
+            <input type="button" class="button" value="<?php echo $this->l('Save'); ?>" name="submitConf-channel" />
+        </div>
+    </div>
+</div>

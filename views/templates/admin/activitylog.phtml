@@ -1,0 +1,15 @@
+<fieldset id="activityLogBlock" style="display:none">
+    <legend><img src="../img/admin/slip.gif" /> <?php echo $this->l('Activity Log'); ?></legend>
+    <p id="upgradeResultCheck"></p>
+    <div id="upgradeResultToDoList" style="width:890px!important;"></div>
+    <div id="currentlyProcessing" style="display:none;float:left">
+        <h4 id="pleaseWait"><?php echo $this->l('Currently processing'); ?> <img class="pleaseWait" src="<?php echo __PS_BASE_URI__; ?>img/loader.gif"/></h4>
+        <div id="infoStep" class="processing" >'.$this->l('Analyzing the situation...').'</div>
+    </div>
+    <div id="errorDuringUpgrade" style="display:none;float:right">
+        <h4><?php echo $this->l('Errors'); ?></h4>
+        <div id="infoError" class="processing" ></div>
+    </div>
+    <div class="clear">&nbsp;</div>
+    <div id="quickInfo" class="processing"></div>
+</fieldset>

@@ -1,0 +1,33 @@
+<?php
+/** @var AdminThirtyBeesMigrate $this */
+$backupAvailable = array_intersect($this->getBackupDbAvailable(), $this->getBackupFilesAvailable());
+if (!$this->getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) && count($backupAvailable) && !in_array($this->backupName, $backupAvailable)) {
+    $this->backupName = end($backupAvailable);
+}
+?>
+
+<fieldset style="margin-top:10px">
+    <legend><img src="../img/admin/previous.gif"/><?php echo $this->l('Rollback'); ?></legend>
+    <div id="rollbackForm">
+        <p>
+            <?php echo $this->l('After upgrading your shop, you can rollback to the previous database and files. Use this function if your theme or an essential module is not working correctly.'); ?>
+        </p>
+        <br/>
+        <div id="rollbackContainer">
+            <a disabled="disabled" class="upgradestep button" href="" id="rollback"><?php echo $this->l('Rollback'); ?></a>
+        </div>
+        <br/>
+        <div id="restoreBackupContainer">
+            <?php echo $this->l('Choose your backup:'); ?>
+            <select name="restoreName">
+                <option value="0"><?php echo $this->l('-- Choose a backup to restore --'); ?></option>
+                <?php if (is_array($backupAvailable) && count($backupAvailable)) : ?>
+                    <?php foreach ($backupAvailable as $backupName) : ?>
+                        <option value="<?php echo $backupName; ?>"><?php echo $backupName; ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+        </div>
+        <div class="clear">&nbsp;</div>
+    </div>
+</fieldset>';

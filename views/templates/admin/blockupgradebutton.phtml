@@ -1,0 +1,99 @@
+<?php
+/** @var AdminThirtyBeesMigrate $this */
+$channel = $this->getConfig('channel');
+?>
+
+<fieldset id="upgradeButtonBlock">
+    <legend><?php echo $this->l('Start your Upgrade'); ?></legend>
+    <div class="blocOneClickUpgrade">
+        <?php if (version_compare(_PS_VERSION_, $this->upgrader->version_num, '==')) : ?>
+            <p><?php echo $this->l('Congratulations, you are already using the latest version available!'); ?></p>
+        <?php elseif (version_compare(_PS_VERSION_, $this->upgrader->version_num, '>')) : ?>
+            <p><?php echo $this->l('You come from the future! You are using a more recent version than the latest available!'); ?></p>
+        <?php endif; ?>
+        <table class="table" cellpadding="0" cellspacing="0"><tr><th><?php echo $this->l('Your current PrestaShop version'); ?></th><td><?php echo _PS_VERSION_; ?></td></tr>
+            <tr>
+                <th><?php echo sprintf($this->l('Latest official version for %1$s channel.'), $channel); ?></th>
+                <?php if (!in_array($channel, ['archive', 'directory'])) : ?>
+                    <?php if (!empty($this->upgrader->version_num)) : ?>
+                        <td><b><?php echo $this->upgrader->version_name; ?></b> <?php echo $this->upgrader->version_num; ?></td>
+                    <?php endif; ?>
+                <?php else : ?>
+                    <td><?php echo $this->l('N/A'); ?></td>
+                <?php endif; ?>
+            </tr>
+        </table>
+    </div>
+
+    <?php if ($this->configOk()) {
+        if (version_compare(_PS_VERSION_, $this->upgrader->version_num, '<')) {
+            $showBigButtonNewVersion = false;
+            // smarty2 uses is a warning only, and will be displayed only if current version is 1.3 or 1.4 and target is <1.5;
+            $useSmartyThree = !(\Configuration::get('PS_FORCE_SMARTY_2') === '1' || \Configuration::get('PS_FORCE_SMARTY_2') === false);
+            if ($useSmartyThree) {
+                $srcShopStatus = '../img/admin/enabled.gif';
+                $label = $this->l('You use Smarty 3');
+            } else {
+                $srcShopStatus = '../img/admin/warning.gif';
+                $label = $this->l('Smarty 2 is deprecated in 1.4 and was removed in 1.5. You may need to upgrade your current theme or use a new one.');
+            }
+
+            if (!in_array($channel, ['archive', 'directory'])) {
+                if ($this->getConfig('channel') == 'private') {
+                    $this->upgrader->link = $this->getConfig('private_release_link');
+                }
+                ?>
+
+                <small><a href="'.$this->upgrader->link.'"><?php echo sprintf($this->l('PrestaShop will be downloaded from %s'), $this->upgrader->link); ?></a></small><br/>
+                <div class="clear">&nbsp;</div>
+                <small><a href="'.$this->upgrader->changelog.'" target="_blank" ><?php echo $this->l('open changelog in a new window'); ?></a></small>
+                <div class="clear">&nbsp;</div>
+                <?php
+            } else {
+                ?>
+                <div class="clear">&nbsp;</div>
+                <div><?php echo sprintf($this->l('No file will be downloaded (channel %s is used)'), $channel); ?></div>
+                <?php
+            }
+
+            // if skipActions property is used, we will handle that in the display :)
+            if (count(AdminThirtyBeesMigrate::$skipAction) > 0) { ?>
+                <div id="skipAction-list" class="warn" style="display:block;font-weight:normal">
+                    <img src="../img/admin/warning.gif"/>
+                    <?php echo $this->l('The following action are automatically replaced'); ?>
+                    <ul>
+                        <?php foreach (AdminThirtyBeesMigrate::$skipAction as $k => $v) : ?>
+                            <li><?php echo sprintf($this->l('%1$s will be replaced by %2$s'), '<b>'.$k.'</b>', '<b>'.$v.'</b>'); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <p><?php echo $this->l('To change this behavior, you need to manually edit your php files'); ?></p>
+                </div><?php
+            }
+        } else {
+            $showBigButtonNewVersion = true;
+        }
+    } else {
+        $showBigButtonNewVersion = true;
+    }
+
+    if ($showBigButtonNewVersion) { ?>
+        <div class="clear"></div>
+        <a class="button button-autoupgrade" href="index.php?tab=AdminThirtyBeesMigrate&amp;token='.$this->token.'&amp;refreshCurrentVersion=1"><?php echo $this->l('Check if a new version is available'); ?></a>
+        <div><span style="font-style: italic; font-size: 11px;"><?php echo sprintf($this->l('Last check: %s'), \Configuration::get('PS_LAST_VERSION_CHECK') ? date('Y-m-d H:i:s', Configuration::get('PS_LAST_VERSION_CHECK')) : $this->l('never')); ?></span></div><?php
+    } else { ?>
+        <div class="clear"></div>
+        <a class="button button-autoupgrade" href="index.php?tab=AdminThirtyBeesMigrate&token='<?php echo $this->token; ?>'&refreshCurrentVersion=1">
+            <?php echo $this->l('refresh the page'); ?>
+        </a>
+        <div>
+            <span><?php echo sprintf($this->l('Last datetime check: %s '), date('Y-m-d H:i:s', \Configuration::get('PS_LAST_VERSION_CHECK'))); ?></span>
+        </div>
+        <?php
+    } ?>
+
+    <?php echo $this->getBlockConfigurationAdvanced(); ?>
+</fieldset>
+
+<?php if ($this->manualMode) : ?>
+    <?php echo $this->displayDevTools(); ?>
+<?php endif; ?>

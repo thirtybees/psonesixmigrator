@@ -1,0 +1,45 @@
+<?php /** @var AdminThirtyBeesMigrate $this */ ?>
+<div id="channel-infos">
+    <div class="all-infos">
+        <?php if (isset($this->templateVars['upgradeInfo']['version_name'])) : ?>
+            <div style="clear:both;">
+                <label class="label-small"><?php echo $this->l('Name:'); ?></label>
+                <div class="margin-form margin-form-small" style="padding-top:5px">
+                    <span class="name"><?php echo $this->templateVars['upgradeInfo']['version_name']; ?>&nbsp;</span>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($this->templateVars['upgradeInfo']['version_number'])) : ?>
+            <div style="clear:both;">
+                <label class="label-small"><?php echo $this->l('Version number:'); ?></label>
+                <div class="margin-form margin-form-small" style="padding-top:5px">
+                    <span class="version"><?php echo $this->templateVars['upgradeInfo']['version_num']; ?>&nbsp;</span>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($this->templateVars['upgradeInfo']['link'])) : ?>
+            <div style="clear:both;">
+                <label class="label-small"><?php echo $this->l('URL:'); ?></label>
+                <div class="margin-form margin-form-small" style="padding-top:5px">
+                    <a class="url" href="<?php echo $this->templateVars['upgradeInfo']['link']; ?>"><?php echo $this->templateVars['upgradeInfo']['link']; ?></a>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($this->templateVars['upgradeInfo']['md5'])) : ?>
+            <div style="clear:both;">
+                <label class="label-small"><?php echo $this->l('MD5 hash:'); ?></label>
+                <div class="margin-form margin-form-small" style="padding-top:5px">
+                    <span class="md5"><?php echo $this->templateVars['upgradeInfo']['md5']; ?>&nbsp;</span>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($this->templateVars['upgradeInfo']['changelog'])) : ?>
+            <div style="clear:both;">
+                <label class="label-small"><?php echo $this->l('Changelog:'); ?></label>
+                <div class="margin-form margin-form-small" style="padding-top:5px">
+                    <a class="changelog" href="<?php echo $this->templateVars['upgradeInfo']['changelog']; ?>"><?php echo $this->l('see changelog'); ?></a>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>

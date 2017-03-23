@@ -1,0 +1,27 @@
+<?php /** @var AdminThirtyBeesMigrate $this */ ?>
+<?php if (!$this->configOk() || (version_compare($this->upgrader->version_num, '1.7.1.0', '<') &&  version_compare($this->upgrader->version_num, '1.7.0.0', '>='))) : ?>
+    <style="text-align:center;font-weight: bold; font-size: 1.2em;"><?php echo $this->l('You cannot upgrade to this version.') ?>
+    <?php if (!$this->configOk()) : ?>
+        <p style="text-align:center;font-weight: bold; font-size: 1.2em;"><?php echo $this->l('Please check the pre-upgrade checklist.'); ?></p>
+    <?php endif; ?>
+<?php else : ?>
+    <?php if (version_compare($this->upgrader->version_num, '1.7.0.0', '<') || !empty($checkRequiredTests['success'])) : ?>
+        <div id="hideStep17basic">
+            <?php echo $this->_displayComparisonBlock(); ?>
+            <?php echo $this->_displayBlockActivityLog(); ?>
+            <br/>
+            <form action="'.$this->currentIndex.'&amp;customSubmitAutoUpgrade=1&amp;token=<?php echo $this->token; ?>" method="post" enctype="multipart/form-data">
+                <?php echo $this->_displayForm('upgradeOptions', $this->_fieldsUpgradeOptions, '<a href="#" name="upgrade-options" id="upgrade-options">'.$this->l('Upgrade Options').'</a>', '', 'prefs'); ?>
+                <?php echo $this->_displayForm('backupOptions', $this->_fieldsBackupOptions, '<a href="#" name="backup-options" id="backup-options">'.$this->l('Backup Options').'</a>', '', 'database_gear'); ?>
+            </form>
+
+            <?php if ($this->configOk() && (version_compare(_PS_VERSION_, $this->upgrader->version_num, '<') && version_compare($this->upgrader->version_num, '1.7.0.0', '<'))) : ?>
+                <p class="clear" style="text-align: center;">
+                    <a href="" id="upgradeNow" class="button-autoupgrade upgradestep"><?php echo sprintf($this->l('Upgrade to PrestaShop %s'), $this->upgrader->version_num); ?></a>
+                </p>
+            <?php endif; ?>
+        <?php echo $this->_displayRollbackForm(); ?>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+
