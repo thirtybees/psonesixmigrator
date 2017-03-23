@@ -445,13 +445,6 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
             $postData = 'version='._PS_VERSION_.'&method=listing&action=native&iso_code=all';
             $xmlLocal = $this->prodRootDir.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'xml'.DIRECTORY_SEPARATOR.'modules_native_addons.xml';
-            $xml = $upgrader->getApiAddons($xmlLocal, $postData, true);
-
-            if (is_object($xml)) {
-                foreach ($xml as $mod) {
-                    $this->modules_addons[(string) $mod->id] = (string) $mod->name;
-                }
-            }
 
             // installedLanguagesIso is used to merge translations files
             $isoIds = \Language::getIsoIds(false);
@@ -620,6 +613,16 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @param mixed  $string
+     * @param string $class
+     * @param bool   $addslashes
+     * @param bool   $htmlentities
+     *
+     * @return mixed|string
+     * 
+     * @since 1.0.0
+     */
     protected function l($string, $class = 'AdminTab', $addslashes = false, $htmlentities = true)
     {
         // need to be called in order to populate $classInModule
@@ -638,6 +641,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $source current class
      *
      * @return string translated string
+     *
+     * @since 1.0.0
      */
     public static function findTranslation($name, $string, $source)
     {
@@ -706,6 +711,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      *
      * @access public
      * @return array or string
+     *               
+     * @since 1.0.0
      */
     public function getConfig($key = '')
     {
@@ -729,6 +736,10 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
     /**
      * create cookies id_employee, id_tab and autoupgrade (token)
+     *
+     * @return false
+     *
+     * @since 1.0.0
      */
     public function createCustomToken()
     {
@@ -751,6 +762,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return false;
     }
 
+    /**
+     * @return void
+     * 
+     * @since 1.0.0
+     */
     public function cleanTmpFiles()
     {
         foreach ($this->tmpFiles as $tmpFile) {
@@ -760,6 +776,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
     }
 
+    /**
+     * @return bool
+     * 
+     * @since 1.0.0
+     */
     public function checkToken()
     {
         // simple checkToken in ajax-mode, to be free of Cookie class (and no Tools::encrypt() too )
@@ -776,12 +797,21 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * @param string $string
      *
      * @return string
+     * 
+     * @since 1.0.0
      */
     public function encrypt($string)
     {
         return md5(_COOKIE_KEY_.$string);
     }
 
+    /**
+     * @param bool $disable
+     *
+     * @return bool
+     * 
+     * @since 1.0.0
+     */
     public function viewAccess($disable = false)
     {
         if ($this->ajax) {
@@ -797,6 +827,11 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         return false;
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public function postProcess()
     {
         $this->_setFields();
@@ -826,8 +861,8 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         }
 
         if (Tools::isSubmit('putUnderMaintenance') && version_compare(_PS_VERSION_, '1.5.0.0', '>=')) {
-            foreach (\Shop::getCompleteListOfShopsID() as $id_shop) {
-                \Configuration::updateValue('PS_SHOP_ENABLE', 0, false, null, (int) $id_shop);
+            foreach (\Shop::getCompleteListOfShopsID() as $idShop) {
+                \Configuration::updateValue('PS_SHOP_ENABLE', 0, false, null, (int) $idShop);
             }
             \Configuration::updateGlobalValue('PS_SHOP_ENABLE', 0);
         } elseif (Tools::isSubmit('putUnderMaintenance')) {
@@ -939,18 +974,20 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
     /**
      * update module configuration (saved in file $this->configFilename) with $new_config
      *
-     * @param array $new_config
+     * @param array $newConfig
      *
      * @return boolean true if success
+     *
+     * @since 1.0.0
      */
-    public function writeConfig($new_config)
+    public function writeConfig($newConfig)
     {
         if (!file_exists($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->configFilename)) {
-            $this->upgrader->channel = $new_config['channel'];
+            $this->upgrader->channel = $newConfig['channel'];
             $this->upgrader->checkPSVersion();
             $this->install_version = $this->upgrader->version_num;
 
-            return $this->resetConfig($new_config);
+            return $this->resetConfig($newConfig);
         }
 
         $config = file_get_contents($this->autoupgradePath.DIRECTORY_SEPARATOR.$this->configFilename);
@@ -960,7 +997,7 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
         } // retrocompat, before base64_decode implemented
         $config = $configUnserialized;
 
-        foreach ($new_config as $key => $val) {
+        foreach ($newConfig as $key => $val) {
             $config[$key] = $val;
         }
         $this->next_desc = $this->l('Configuration successfully updated.').' <strong>'.$this->l('This page will now be reloaded and the module will check if a new version is available.').'</strong>';
@@ -4629,96 +4666,15 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
 
     protected function _displayForm($name, $fields, $tabname, $size, $icon)
     {
-        $confValues = $this->getConfig();
-        $required = false;
+        $params = [
+            'name'    => $name,
+            'fields'  => $fields,
+            'tabname' => $tabname,
+            'size'    => $size,
+            'icon'    => $icon,
+        ];
 
-        $this->html .= '
-			<fieldset id="'.$name.'Block"><legend><img src="../img/admin/'.strval($icon).'.gif" />'.$tabname.'</legend>';
-        foreach ($fields as $key => $field) {
-            if (isset($field['required']) && $field['required']) {
-                $required = true;
-            }
-
-            if ((isset($field['disabled']) && $field['disabled']) || version_compare($this->upgrader->version_num, '1.7.1.0', '>=')) {
-                $disabled = true;
-            } else {
-                $disabled = false;
-            }
-
-            if (isset($confValues17[$key])) {
-                $val = $confValues17[$key];
-            } else {
-                if (isset($confValues[$key])) {
-                    $val = $confValues[$key];
-                } else {
-                    $val = isset($field['defaultValue']) ? $field['defaultValue'] : false;
-                }
-            }
-
-            if (!in_array($field['type'], ['image', 'radio', 'container', 'container_end']) || isset($field['show'])) {
-                $this->html .= '<div style="clear: both; padding-top:15px;">'.($field['title'] ? '<label >'.$field['title'].'</label>' : '').'<div class="margin-form" style="padding-top:5px;">';
-            }
-
-            /* Display the appropriate input type for each field */
-            switch ($field['type']) {
-                case 'disabled':
-                    $this->html .= $field['disabled'];
-                    break;
-
-                case 'bool':
-                    $this->html .= '<label class="t" for="'.$key.'_on">
-						<img src="../img/admin/enabled.gif" alt="'.$this->l('Yes').'" title="'.$this->l('Yes').'" /></label>
-					<input type="radio" '.($disabled ? 'disabled="disabled"' : '').' name="'.$key.'" id="'.$key.'_on" value="1"'.($val ? ' checked="checked"' : '').(isset($field['js']['on']) ? $field['js']['on'] : '').' />
-					<label class="t" for="'.$key.'_on"> '.$this->l('Yes').'</label>
-					<label class="t" for="'.$key.'_off"><img src="../img/admin/disabled.gif" alt="'.$this->l('No').'" title="'.$this->l('No').'" style="margin-left: 10px;" /></label>
-					<input type="radio" '.($disabled ? 'disabled="disabled"' : '').' name="'.$key.'" id="'.$key.'_off" value="0" '.(!$val ? 'checked="checked"' : '').(isset($field['js']['off']) ? $field['js']['off'] : '').'/>
-					<label class="t" for="'.$key.'_off"> '.$this->l('No').'</label>';
-                    break;
-
-                case 'radio':
-                    foreach ($field['choices'] as $cValue => $cKey) {
-                        $this->html .= '<input '.($disabled ? 'disabled="disabled"' : '').' type="radio" name="'.$key.'" id="'.$key.$cValue.'_on" value="'.(int) ($cValue).'"'.(($cValue == $val) ? ' checked="checked"' : '').(isset($field['js'][$cValue]) ? ' '.$field['js'][$cValue] : '').' /><label class="t" for="'.$key.$cValue.'_on"> '.$cKey.'</label><br />';
-                    }
-                    $this->html .= '<br />';
-                    break;
-
-                case 'select':
-                    $this->html .= '<select name='.$key.'>';
-                    foreach ($field['choices'] as $cValue => $cKey) {
-                        $this->html .= '<option value="'.(int) $cValue.'"'.(($cValue == $val) ? ' selected="selected"' : '').'>'.$cKey.'</option>';
-                    }
-                    $this->html .= '</select>';
-                    break;
-
-                case 'textarea':
-                    $this->html .= '<textarea '.($disabled ? 'disabled="disabled"' : '').' name='.$key.' cols="'.$field['cols'].'" rows="'.$field['rows'].'">'.htmlentities($val, ENT_COMPAT, 'UTF-8').'</textarea>';
-                    break;
-
-                case 'container':
-                    $this->html .= '<div id="'.$key.'">';
-                    break;
-
-                case 'container_end':
-                    $this->html .= (isset($field['content']) === true ? $field['content'] : '').'</div>';
-                    break;
-
-                case 'text':
-                default:
-                    $this->html .= '<input '.($disabled ? 'disabled="disabled"' : '').' type="'.$field['type'].'"'.(isset($field['id']) === true ? ' id="'.$field['id'].'"' : '').' size="'.(isset($field['size']) ? (int) ($field['size']) : 5).'" name="'.$key.'" value="'.($field['type'] == 'password' ? '' : htmlentities($val, ENT_COMPAT, 'UTF-8')).'" />'.(isset($field['next']) ? '&nbsp;'.strval($field['next']) : '');
-            }
-            $this->html .= ((isset($field['required']) && $field['required'] && !in_array($field['type'], ['image', 'radio'])) ? ' <sup>*</sup>' : '');
-            $this->html .= (isset($field['desc']) ? '<p style="clear:both">'.((isset($field['thumb']) && $field['thumb'] && $field['thumb']['pos'] == 'after') ? '<img src="'.$field['thumb']['file'].'" alt="'.$field['title'].'" title="'.$field['title'].'" style="float:left;" />' : '').$field['desc'].'</p>' : '');
-            if (!in_array($field['type'], ['image', 'radio', 'container', 'container_end']) || isset($field['show'])) {
-                $this->html .= '</div></div>';
-            }
-        }
-
-        $this->html .= '	<div align="center" style="margin-top: 20px;">
-					<input type="submit" value="'.$this->l('   Save   ', 'AdminPreferences').'" name="customSubmitAutoUpgrade" class="button" />
-				</div>
-				'.($required ? '<div class="small"><sup>*</sup> '.$this->l('Required field', 'AdminPreferences').'</div>' : '').'
-			</fieldset>
-			<br/>';
+        $this->html .= $this->displayAdminTemplate(__DIR__.'/views/templates/admin/displayform.phtml', $params);
     }
 
     private function getConfigFor17()
@@ -4792,13 +4748,18 @@ class AdminThirtyBeesMigrate extends AdminSelfTab
      * Display a phtml template file
      *
      * @param string $file
+     * @param array  $params
      *
      * @return string Content
      *
      * @since 1.0.0
      */
-    public function displayAdminTemplate($file)
+    public function displayAdminTemplate($file, $params = [])
     {
+        foreach ($params as $name => $param) {
+            $$name = $param;
+        }
+
         ob_start();
 
         include($file);

@@ -1,0 +1,90 @@
+<?php
+/** @var AdminThirtyBeesMigrate $this */
+$confValues = $this->getConfig();
+$required = false;
+?>
+
+<fieldset id="<?php echo $name; ?>Block"><legend><img src="../img/admin/<?php echo strval($icon); ?>.gif" /><?php echo $tabname ?></legend>
+    <?php foreach ($fields as $key => $field) :
+        if (isset($field['required']) && $field['required']) {
+            $required = true;
+        }
+
+        if ((isset($field['disabled']) && $field['disabled']) || version_compare($this->upgrader->version_num, '1.7.1.0', '>=')) {
+            $disabled = true;
+        } else {
+            $disabled = false;
+        }
+
+        if (isset($confValues17[$key])) {
+            $val = $confValues17[$key];
+        } else {
+            if (isset($confValues[$key])) {
+                $val = $confValues[$key];
+            } else {
+                $val = isset($field['defaultValue']) ? $field['defaultValue'] : false;
+            }
+        } ?>
+
+        <?php if (!in_array($field['type'], ['image', 'radio', 'container', 'container_end']) || isset($field['show'])) : ?>
+            <div style="clear: both; padding-top:15px;">'.($field['title'] ? '<label >'.$field['title'].'</label>' : '').'<div class="margin-form" style="padding-top:5px;">';
+        <?php endif; ?>
+            <?php switch ($field['type']) : ?>
+            <?php case 'disabled': ?>
+                <?php echo $field['disabled']; ?>
+            <?php break; ?>
+
+            <?php case 'bool': ?>
+                <label class="t" for="'.$key.'_on">
+                    <img src="../img/admin/enabled.gif" alt="'.$this->l('Yes').'" title="'.$this->l('Yes').'" /></label>
+                <input type="radio" <?php echo ($disabled ? 'disabled="disabled"' : ''); ?> name="<?php echo $key; ?>" id="<?php echo $key; ?>_on" value="1"<?php echo ($val ? ' checked="checked"' : '').(isset($field['js']['on']) ? $field['js']['on'] : ''); ?> />
+                <label class="t" for="'.$key.'_on"> '.$this->l('Yes').'</label>
+                <label class="t" for="'.$key.'_off"><img src="../img/admin/disabled.gif" alt="'.$this->l('No').'" title="'.$this->l('No').'" style="margin-left: 10px;" /></label>
+                <input type="radio" <?php echo ($disabled ? 'disabled="disabled"' : ''); ?> name="<?php echo $key; ?>" id="<?php echo $key; ?>_off" value="0" <?php echo (!$val ? 'checked="checked"' : '').(isset($field['js']['off']) ? $field['js']['off'] : ''); ?>/>
+                <label class="t" for="'.$key.'_off"> '.$this->l('No').'</label>';
+            <?php break; ?>
+
+            <?php case 'radio': ?>
+                <?php foreach ($field['choices'] as $cValue => $cKey) : ?>
+                    <input <?php echo ($disabled ? 'disabled="disabled"' : ''); ?> type="radio" name="'.$key.'" id="'.$key.$cValue.'_on" value="'.(int) ($cValue).'"<?php echo (($cValue == $val) ? ' checked="checked"' : '').(isset($field['js'][$cValue]) ? ' '.$field['js'][$cValue] : '').' /><label class="t" for="'.$key.$cValue.'_on"> '.$cKey.'</label><br />'; ?>
+                <?php endforeach; ?>
+                    <br />
+            <?php break; ?>
+
+            <?php case 'select': ?>
+                <select name='.$key.'>
+                    <?php foreach ($field['choices'] as $cValue => $cKey) : ?>
+                        <option value="<?php echo (int) $cValue; ?>"<?php echo (($cValue == $val) ? ' selected="selected"' : ''); ?>><?php echo $cKey; ?></option>
+                    <?php endforeach; ?>
+                </select>
+            <?php break; ?>
+
+            <?php case 'textarea': ?>
+                <textarea <?php echo ($disabled ? 'disabled="disabled"' : ''); ?> name=<?php echo $key; ?> cols="<?php echo $field['cols']; ?>" rows="<?php echo $field['rows']; ?>"><?php echo htmlentities($val, ENT_COMPAT, 'UTF-8'); ?></textarea>
+            <?php break; ?>
+
+            <?php case 'container': ?>
+                <div id="<?php echo $key; ?>">
+            <?php break; ?>
+
+            <?php case 'container_end': ?>
+                <?php echo (isset($field['content']) === true ? $field['content'] : ''); ?></div>
+            <?php break; ?>
+
+            <?php case 'text': ?>
+            <?php default: ?>
+                <input <?php echo ($disabled ? 'disabled="disabled"' : ''); ?> type="<?php echo $field['type']; ?>"<?php echo (isset($field['id']) === true ? ' id="'.$field['id'].'"' : ''); ?> size="<?php echo (isset($field['size']) ? (int) ($field['size']) : 5).'" name="'.$key.'" value="'.($field['type'] == 'password' ? '' : htmlentities($val, ENT_COMPAT, 'UTF-8')).'" />'.(isset($field['next']) ? '&nbsp;'.strval($field['next']) : ''); ?>
+            <?php endswitch; ?>
+            <?php echo ((isset($field['required']) && $field['required'] && !in_array($field['type'], ['image', 'radio'])) ? ' <sup>*</sup>' : ''); ?>
+            <?php echo (isset($field['desc']) ? '<p style="clear:both">'.((isset($field['thumb']) && $field['thumb'] && $field['thumb']['pos'] == 'after') ? '<img src="'.$field['thumb']['file'].'" alt="'.$field['title'].'" title="'.$field['title'].'" style="float:left;" />' : '').$field['desc'].'</p>' : ''); ?>
+            <?php if (!in_array($field['type'], ['image', 'radio', 'container', 'container_end']) || isset($field['show'])) : ?>
+                </div></div>
+            <?php endif; ?>
+    <?php endforeach; ?>
+
+    <div align="center" style="margin-top: 20px;">
+        <input type="submit" value="'.$this->l('   Save   ', 'AdminPreferences').'" name="customSubmitAutoUpgrade" class="button" />
+    </div>
+    <?php echo ($required ? '<div class="small"><sup>*</sup> '.$this->l('Required field', 'AdminPreferences').'</div>' : ''); ?>
+</fieldset>
+<br/>
