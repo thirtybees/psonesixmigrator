@@ -23,7 +23,6 @@
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
-require_once realpath(__DIR__.'/../..').'/modules/psonesixmigrator/classes/autoload.php';
 
 if (function_exists('date_default_timezone_set')) {
     // date_default_timezone_get calls date_default_timezone_set, which can provide warning
@@ -32,9 +31,10 @@ if (function_exists('date_default_timezone_set')) {
 }
 
 require_once(realpath(__DIR__.'/../../config/config.inc.php'));
+require_once realpath(__DIR__.'/../..').'/modules/psonesixmigrator/classes/autoload.php';
 
 if (!defined('_PS_MODULE_DIR_')) {
-    define('_PS_MODULE_DIR_', realpath(dirname(__FILE__).'/../../').'/modules/');
+    define('_PS_MODULE_DIR_', realpath(__DIR__.'/../../').'/modules/');
 }
 
 define('AUTOUPGRADE_MODULE_DIR', _PS_MODULE_DIR_.'psonesixmigrator/');
@@ -48,16 +48,16 @@ if (!isset($_POST['dir'])) {
 // defines.inc.php can not exists (1.3.0.1 for example)
 // but we need _PS_ROOT_DIR_
 if (!defined('_PS_ROOT_DIR_')) {
-    define('_PS_ROOT_DIR_', realpath(dirname(__FILE__).'/../../'));
+    define('_PS_ROOT_DIR_', realpath(__DIR__.'/../../'));
 }
 
 $dir = Tools::safeOutput(Tools::getValue('dir'));
 
-if (realpath(dirname(__FILE__).'/../../').DIRECTORY_SEPARATOR.$dir !== realpath(realpath(dirname(__FILE__).'/../../').DIRECTORY_SEPARATOR.$dir)) {
+if (realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir !== realpath(realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir)) {
     die('wrong directory :'.(isset($_POST['dir']) ? $dir : ''));
 }
 
-define('_PS_ADMIN_DIR_', realpath(dirname(__FILE__).'/../../').DIRECTORY_SEPARATOR.$dir);
+define('_PS_ADMIN_DIR_', realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir);
 
 if (!defined('_MYSQL_ENGINE_')) {
     define('_MYSQL_ENGINE_', 'MyISAM');
@@ -74,39 +74,43 @@ include(AUTOUPGRADE_MODULE_DIR.'init.php');
 global $ajax;
 
 $ajax = true;
-if (!class_exists('AdminThirtyBeesMigrate')) {
-    require_once    AUTOUPGRADE_MODULE_DIR.'AdminThirtyBeesMigrate.php';
+if (!class_exists('AdminThirtyBeesMigrateController')) {
+    require_once AUTOUPGRADE_MODULE_DIR.'controllers/admin/AdminThirtyBeesMigrate.php';
 }
-$adminObj = new AdminThirtyBeesMigrate();
+$ajaxUpgrader = new PsOneSixMigrator\Ajax();
 
-if (is_object($adminObj)) {
-    $adminObj->optionDisplayErrors();
-    $adminObj->ajax = 1;
-    if ($adminObj->checkToken()) {
+if (is_object($ajaxUpgrader)) {
+    $ajaxUpgrader->optionDisplayErrors();
+    $ajaxUpgrader->ajax = 1;
+    if ($ajaxUpgrader->checkToken()) {
         // the differences with index.php is here
-        $adminObj->ajaxPreProcess();
+        $ajaxUpgrader->ajaxPreProcess();
         $action = Tools::getValue('action');
 
         // no need to use displayConf() here
 
-        if (!empty($action) && method_exists($adminObj, 'ajaxProcess'.$action)) {
-            $adminObj->{'ajaxProcess'.$action}();
+        if (!empty($action) && method_exists($ajaxUpgrader, 'ajaxProcess'.$action)) {
+            $ajaxUpgrader->{'ajaxProcess'.$action}();
         } else {
-            $adminObj->ajaxProcess();
+            die(json_encode([
+                'sucess' => false,
+                'error'  => 'Method not found',
+            ], JSON_PRETTY_PRINT));
         }
 
-        // @TODO We should use a displayAjaxError
-        $adminObj->displayErrors();
-        if (!empty($action) && method_exists($adminObj, 'displayAjax'.$action)) {
-            $adminObj->{'displayAjax'.$action}();
+        if (!empty($action) && method_exists($ajaxUpgrader, 'displayAjax'.$action)) {
+            $ajaxUpgrader->{'displayAjax'.$action}();
         } else {
-            $adminObj->displayAjax();
+            $ajaxUpgrader->displayAjax();
         }
     } else {
         // If this is an XSS attempt, then we should only display a simple, secure page
         if (ob_get_level() && ob_get_length() > 0) {
             ob_clean();
         }
-        die('{wrong token}');
+        die(json_encode([
+            'success' => false,
+            'error'   => 'Wrong token',
+        ], JSON_PRETTY_PRINT));
     }
 }

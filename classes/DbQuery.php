@@ -37,7 +37,7 @@ class DbQuery
      */
     protected $query = [
         'select' => [],
-        'from'   => '',
+        'from'   => [],
         'join'   => [],
         'where'  => [],
         'group'  => [],
@@ -66,6 +66,7 @@ class DbQuery
      * Set table for FROM clause
      *
      * @param string $table Table name
+     * @param null   $alias
      *
      * @return DbQuery
      */

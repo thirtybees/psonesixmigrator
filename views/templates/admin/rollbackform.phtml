@@ -1,13 +1,37 @@
 <?php
-/** @var AdminThirtyBeesMigrate $this */
+/**
+ * 2007-2016 PrestaShop
+ *
+ * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017 Thirty Bees
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@thirtybees.com so we can send you a copy immediately.
+ *
+ * @author    Thirty Bees <modules@thirtybees.com>
+ * @author    PrestaShop SA <contact@prestashop.com>
+ * @copyright 2017 Thirty Bees
+ * @copyright 2007-2016 PrestaShop SA
+ * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ * PrestaShop is an internationally registered trademark & property of PrestaShop SA
+ */
+
+/** @var AdminThirtyBeesMigrateController $this */
 $backupAvailable = array_intersect($this->getBackupDbAvailable(), $this->getBackupFilesAvailable());
 if (!$this->getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) && count($backupAvailable) && !in_array($this->backupName, $backupAvailable)) {
     $this->backupName = end($backupAvailable);
 }
 ?>
 
-<fieldset style="margin-top:10px">
-    <legend><img src="../img/admin/previous.gif"/><?php echo $this->l('Rollback'); ?></legend>
+<div class="panel col-lg-12">
+    <div class="panel-heading"><i class="icon icon-server"></i> <?php echo $this->l('Rollback'); ?></div>
     <div id="rollbackForm">
         <p>
             <?php echo $this->l('After upgrading your shop, you can rollback to the previous database and files. Use this function if your theme or an essential module is not working correctly.'); ?>
@@ -28,6 +52,5 @@ if (!$this->getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) && count
                 <?php endif; ?>
             </select>
         </div>
-        <div class="clear">&nbsp;</div>
     </div>
-</fieldset>';
+</div>

@@ -37,23 +37,22 @@ class Upgrader
 {
     const DEFAULT_CHECK_VERSION_DELAY_HOURS = 12;
     const DEFAULT_CHANNEL = 'stable';
-    // @todo channel handling :)
-    // @codingStandardsIgnoreStart
-    public static $default_channel = 'minor';
+
+    public static $defaultChannel = 'minor';
     public $addons_api = 'api.addons.prestashop.com';
-    public $rss_channel_link = 'https://api.prestashop.com/xml/channel17.xml';
-    public $rss_md5file_link_dir = 'https://api.prestashop.com/xml/md5-17/';
-    public $version_name;
-    public $version_num;
-    public $version_is_modified = null;
+    public $rssChannelLink = 'https://api.prestashop.com/xml/channel17.xml';
+    public $rssMd5FileLinkDir = 'https://api.prestashop.com/xml/md5-17/';
+    public $versionName;
+    public $versionNum;
+    public $versionIsModified = null;
     /**
      * @var string contains hte url where to download the file
      */
     public $link;
     public $autoupgrade;
-    public $autoupgrade_module;
-    public $autoupgrade_last_version;
-    public $autoupgrade_module_link;
+    public $autoupgradeModule;
+    public $autoupgradeLastVersion;
+    public $autoupgradeModuleLink;
     public $changelog;
     public $available;
     public $md5;
@@ -62,10 +61,9 @@ class Upgrader
     /**
      * @var boolean contains true if last version is not installed
      */
-    private $need_upgrade = false;
-    private $changed_files = [];
-    private $missing_files = [];
-    // @codingStandardsIgnoreEnd
+    private $needUpgrade = false;
+    private $changedFiles = [];
+    private $missingFiles = [];
 
     public function __construct($autoload = false)
     {
@@ -77,14 +75,14 @@ class Upgrader
                 $this->channel = \Configuration::get('PS_UPGRADE_CHANNEL');
             }
             if (empty($this->channel)) {
-                $this->channel = self::$default_channel;
+                $this->channel = static::$defaultChannel;
             }
             // checkPSVersion to get need_upgrade
             $this->checkPSVersion();
         }
         if (!extension_loaded('openssl')) {
-            $this->rss_channel_link = str_replace('https://', 'http://', $this->rss_channel_link);
-            $this->rss_md5file_link_dir = str_replace('https://', 'http://', $this->rss_md5file_link_dir);
+            $this->rssChannelLink = str_replace('https://', 'http://', $this->rssChannelLink);
+            $this->rssMd5FileLinkDir = str_replace('https://', 'http://', $this->rssMd5FileLinkDir);
         }
     }
 
@@ -123,9 +121,9 @@ class Upgrader
         }
 
         if ($feed) {
-            $this->autoupgrade_module = (int) $feed->autoupgrade_module;
-            $this->autoupgrade_last_version = (string) $feed->autoupgrade->last_version;
-            $this->autoupgrade_module_link = (string) $feed->autoupgrade->download->link;
+            $this->autoupgradeModule = (int) $feed->autoupgrade_module;
+            $this->autoupgradeLastVersion = (string) $feed->autoupgrade->last_version;
+            $this->autoupgradeModuleLink = (string) $feed->autoupgrade->download->link;
 
             foreach ($feed->channel as $channel) {
                 $channelAvailable = (string) $channel['available'];
@@ -150,7 +148,7 @@ class Upgrader
                         && version_compare($branchName, $this->branch, '>='))
                     ) {
                         // skip if $branch->num is inferior to a previous one, skip it
-                        if (version_compare((string) $branch->num, $this->version_num, '<')) {
+                        if (version_compare((string) $branch->num, $this->versionNum, '<')) {
                             continue;
                         }
                         // also skip if previous loop found an available upgrade and current is not
@@ -161,8 +159,8 @@ class Upgrader
                         if (in_array($this->channel, $array_no_major) && version_compare($branchName, $this->branch, '>')) {
                             continue;
                         }
-                        $this->version_name = (string) $branch->name;
-                        $this->version_num = (string) $branch->num;
+                        $this->versionName = (string) $branch->name;
+                        $this->versionNum = (string) $branch->num;
                         $this->link = (string) $branch->download->link;
                         $this->md5 = (string) $branch->download->md5;
                         $this->changelog = (string) $branch->changelog;
@@ -180,10 +178,10 @@ class Upgrader
         // retro-compatibility :
         // return array(name,link) if you don't use the last version
         // false otherwise
-        if (version_compare(_PS_VERSION_, $this->version_num, '<')) {
-            $this->need_upgrade = true;
+        if (version_compare(_PS_VERSION_, $this->versionNum, '<')) {
+            $this->needUpgrade = true;
 
-            return ['name' => $this->version_name, 'link' => $this->link];
+            return ['name' => $this->versionName, 'link' => $this->link];
         } else {
             return false;
         }
@@ -191,7 +189,7 @@ class Upgrader
 
     public function getXmlChannel($refresh = false)
     {
-        $xml = $this->getXmlFile(_PS_ROOT_DIR_.'/config/xml/channel.xml', $this->rss_channel_link, $refresh);
+        $xml = $this->getXmlFile(_PS_ROOT_DIR_.'/config/xml/channel.xml', $this->rssChannelLink, $refresh);
         if ($refresh) {
             if (class_exists('Configuration', false)) {
                 \Configuration::updateValue('PS_LAST_VERSION_CHECK', time());
@@ -236,7 +234,7 @@ class Upgrader
             $this->checkPSVersion();
         }
 
-        return $this->need_upgrade;
+        return $this->needUpgrade;
 
     }
 
@@ -371,7 +369,7 @@ class Upgrader
      */
     public function getXmlMd5File($version, $refresh = false)
     {
-        return $this->getXmlFIle(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml', $this->rss_md5file_link_dir.$version.'.xml', $refresh);
+        return $this->getXmlFIle(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml', $this->rssMd5FileLinkDir.$version.'.xml', $refresh);
     }
 
     public function md5FileAsArray($node, $dir = '/')
@@ -442,7 +440,7 @@ class Upgrader
 
         $this->getChangedFilesList($version, $refresh);
 
-        return !$this->version_is_modified;
+        return !$this->versionIsModified;
     }
 
     /**
@@ -456,16 +454,16 @@ class Upgrader
         if (empty($version)) {
             $version = _PS_VERSION_;
         }
-        if (is_array($this->changed_files) && count($this->changed_files) == 0) {
+        if (is_array($this->changedFiles) && count($this->changedFiles) == 0) {
             $checksum = $this->getXmlMd5File($version, $refresh);
             if ($checksum == false) {
-                $this->changed_files = false;
+                $this->changedFiles = false;
             } else {
                 $this->browseXmlAndCompare($checksum->ps_root_dir[0]);
             }
         }
 
-        return $this->changed_files;
+        return $this->changedFiles;
     }
 
     /**
@@ -514,8 +512,8 @@ class Upgrader
      */
     protected function addMissingFile($path)
     {
-        $this->version_is_modified = true;
-        $this->missing_files[] = $path;
+        $this->versionIsModified = true;
+        $this->missingFiles[] = $path;
     }
 
     protected function compareChecksum($filepath, $md5sum)
@@ -534,17 +532,17 @@ class Upgrader
      */
     protected function addChangedFile($path)
     {
-        $this->version_is_modified = true;
+        $this->versionIsModified = true;
 
         if (strpos($path, 'mails/') !== false) {
-            $this->changed_files['mail'][] = $path;
+            $this->changedFiles['mail'][] = $path;
         } elseif (strpos($path, '/en.php') !== false || strpos($path, '/fr.php') !== false
             || strpos($path, '/es.php') !== false || strpos($path, '/it.php') !== false
             || strpos($path, '/de.php') !== false || strpos($path, 'translations/') !== false
         ) {
-            $this->changed_files['translation'][] = $path;
+            $this->changedFiles['translation'][] = $path;
         } else {
-            $this->changed_files['core'][] = $path;
+            $this->changedFiles['core'][] = $path;
         }
     }
 }

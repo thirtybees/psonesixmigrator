@@ -227,7 +227,7 @@ abstract class Db
      *
      * @return array or result object
      */
-    public function executeS($sql, $array = true, $useCache = true)
+    public function executeS($sql, $array = true, $useCache = false)
     {
         if ($sql instanceof DbQuery) {
             $sql = $sql->build();
@@ -245,11 +245,6 @@ abstract class Db
 
         $this->result = false;
         $this->last_query = $sql;
-        if ($useCache && $this->isCacheEnabled && $array && ($result = \Cache::getInstance()->get(md5($sql)))) {
-            $this->last_cached = true;
-
-            return $result;
-        }
 
         $this->result = $this->query($sql);
         if (!$this->result) {
@@ -266,10 +261,6 @@ abstract class Db
             $resultArray[] = $row;
         }
 
-        if ($useCache && $this->isCacheEnabled) {
-            \Cache::getInstance()->setQuery($sql, $resultArray);
-        }
-
         return $resultArray;
     }
 
@@ -281,7 +272,7 @@ abstract class Db
      *
      * @return bool
      */
-    public function execute($sql, $useCache = true)
+    public function execute($sql, $useCache = false)
     {
         if ($sql instanceof DbQuery) {
             $sql = $sql->build();
@@ -292,9 +283,6 @@ abstract class Db
         }
 
         $this->result = $this->query($sql);
-        if ($useCache && $this->isCacheEnabled) {
-            \Cache::getInstance()->deleteQuery($sql);
-        }
 
         return (bool) $this->result;
     }
@@ -345,7 +333,6 @@ abstract class Db
         if ($webservice_call && $errno) {
             // @codingStandardsIgnoreEnd
             $dbg = debug_backtrace();
-            \WebserviceRequest::getInstance()->setError(500, '[SQL Error] '.$this->getMsgError().'. From '.(isset($dbg[3]['class']) ? $dbg[3]['class'] : '').'->'.$dbg[3]['function'].'() Query was : '.$sql, 97);
         } else {
             if (_PS_DEBUG_SQL_ && $errno && !defined('PS_INSTALLATION_IN_PROGRESS')) {
                 if ($sql) {
@@ -385,7 +372,7 @@ abstract class Db
     {
         static $id = 0;
 
-        $totalServers = count(self::$servers);
+        $totalServers = count(static::$servers);
         if ($master || $totalServers == 1) {
             $idServer = 0;
         } else {
@@ -393,17 +380,17 @@ abstract class Db
             $idServer = ($totalServers > 2 && ($id % $totalServers) != 0) ? $id : 1;
         }
 
-        if (!isset(self::$instance[$idServer])) {
+        if (!isset(static::$instance[$idServer])) {
             $class = Db::getClass();
-            self::$instance[$idServer] = new $class(
-                self::$servers[$idServer]['server'],
-                self::$servers[$idServer]['user'],
-                self::$servers[$idServer]['password'],
-                self::$servers[$idServer]['database']
+            static::$instance[$idServer] = new $class(
+                static::$servers[$idServer]['server'],
+                static::$servers[$idServer]['user'],
+                static::$servers[$idServer]['password'],
+                static::$servers[$idServer]['database']
             );
         }
 
-        return self::$instance[$idServer];
+        return static::$instance[$idServer];
     }
 
     /**
@@ -584,9 +571,6 @@ abstract class Db
 
         $this->result = false;
         $result = $this->query($sql);
-        if ($useCache && $this->isCacheEnabled) {
-            \Cache::getInstance()->deleteQuery($sql);
-        }
 
         return $result;
     }
@@ -655,9 +639,6 @@ abstract class Db
         $this->result = false;
         $sql = 'DELETE FROM `'.bqSQL($table).'`'.($where ? ' WHERE '.$where : '').($limit ? ' LIMIT '.(int) $limit : '');
         $res = $this->query($sql);
-        if ($useCache && $this->isCacheEnabled) {
-            \Cache::getInstance()->deleteQuery($sql);
-        }
 
         return (bool) $res;
     }
@@ -692,7 +673,7 @@ abstract class Db
      *
      * @return array associative array of (field=>value)
      */
-    public function getRow($sql, $useCache = true)
+    public function getRow($sql, $useCache = false)
     {
         if ($sql instanceof DbQuery) {
             $sql = $sql->build();
@@ -701,11 +682,6 @@ abstract class Db
         $sql .= ' LIMIT 1';
         $this->result = false;
         $this->last_query = $sql;
-        if ($useCache && $this->isCacheEnabled && ($result = \Cache::getInstance()->get(md5($sql)))) {
-            $this->last_cached = true;
-
-            return $result;
-        }
 
         $this->result = $this->query($sql);
         if (!$this->result) {
@@ -714,9 +690,6 @@ abstract class Db
 
         $this->last_cached = false;
         $result = $this->nextRow($this->result);
-        if ($useCache && $this->isCacheEnabled) {
-            \Cache::getInstance()->setQuery($sql, $result);
-        }
 
         return $result;
     }
@@ -730,15 +703,8 @@ abstract class Db
     {
         if (!$this->last_cached && $this->result) {
             $nrows = $this->_numRows($this->result);
-            if ($this->isCacheEnabled) {
-                \Cache::getInstance()->set(md5($this->last_query).'_nrows', $nrows);
-            }
 
             return $nrows;
-        } else {
-            if ($this->isCacheEnabled && $this->last_cached) {
-                return \Cache::getInstance()->get(md5($this->last_query).'_nrows');
-            }
         }
     }
 

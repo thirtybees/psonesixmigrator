@@ -21,7 +21,7 @@ spl_autoload_register(
     function ($class) {
         if (in_array($class, [
             'PsOneSixMigrator\\AbstractLogger',
-            'PsOneSixMigrator\\AdminSelfTab',
+            'PsOneSixMigrator\\Ajax',
             'PsOneSixMigrator\\ConfigurationTest',
             'PsOneSixMigrator\\Db',
             'PsOneSixMigrator\\DbPDO',

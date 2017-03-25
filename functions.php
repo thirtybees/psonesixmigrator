@@ -193,7 +193,7 @@ function recursiveTab($idTab)
 
 function checkingTab($tab)
 {
-    global $adminObj, $cookie;
+    global $ajaxUpgrader, $cookie;
 
     $tab = trim($tab);
     if (!Validate::isTabName($tab)) {
@@ -220,10 +220,10 @@ function checkingTab($tab)
 
         return false;
     }
-    $adminObj = new $tab;
-    if (!$adminObj->viewAccess()) {
-        $adminObj->_errors = [Tools::displayError('Access denied')];
-        echo $adminObj->displayErrors();
+    $ajaxUpgrader = new $tab;
+    if (!$ajaxUpgrader->viewAccess()) {
+        $ajaxUpgrader->_errors = [Tools::displayError('Access denied')];
+        echo $ajaxUpgrader->displayErrors();
 
         return false;
     }

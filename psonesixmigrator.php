@@ -20,7 +20,10 @@
  * @copyright 2017 Thirty Bees
  * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
- *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
+ * PrestaShop is an internationally registered trademark & property of PrestaShop SA
+ *
+ *
+ * Don't forget: It should be possible to parse this file on PHP 5.2+, the other files are allowed to be 5.5+
  */
 
 /**
@@ -48,18 +51,10 @@ class PsOneSixMigrator extends Module
 
         $this->multishop_context = Shop::CONTEXT_ALL;
 
-        if (!defined('_PS_ADMIN_DIR_')) {
-            if (defined('PS_ADMIN_DIR')) {
-                define('_PS_ADMIN_DIR_', PS_ADMIN_DIR);
-            } else {
-                $this->_errors[] = $this->l('This version of PrestaShop cannot be upgraded: the PS_ADMIN_DIR constant is missing.');
-            }
-        }
-
         $this->displayName = $this->l('1-Click Upgrade');
         $this->description = $this->l('Provides an automated method to upgrade your shop to the latest version of PrestaShop.');
 
-        $this->ps_versions_compliancy = ['min' => '1.6.0.0', 'max' => '1.6.999.999'];
+        $this->ps_versions_compliancy = array('min' => '1.6.0.0', 'max' => '1.6.999.999');
     }
 
     /**
@@ -76,13 +71,10 @@ class PsOneSixMigrator extends Module
             $tab->module = $this->name;
             $tab->id_parent = -1;
             foreach (Language::getLanguages(false) as $lang) {
-                $tab->name[(int) $lang['id_lang']] = 'thirty bees migrator';
+                $tab->name[(int) $lang['id_lang']] = 'thirty bees migration';
             }
             if (!$tab->save()) {
                 return $this->abortInstall($this->l('Unable to create the "AdminThirtyBeesMigrate" tab'));
-            }
-            if (!@copy(dirname(__FILE__).DIRECTORY_SEPARATOR.'logo.gif', _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR.'t'.DIRECTORY_SEPARATOR.'AdminThirtyBeesMigrate.gif')) {
-                return $this->abortInstall(sprintf($this->l('Unable to copy logo.gif in %s'), _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR.'t'.DIRECTORY_SEPARATOR));
             }
         } else {
             $tab = new Tab((int) $idTab);
@@ -150,7 +142,7 @@ class PsOneSixMigrator extends Module
         }
 
         /* Remove the 1-click upgrade working directory */
-        self::removeDirectory(_PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'autoupgrade');
+        static::removeDirectory(_PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'autoupgrade');
 
         return parent::uninstall();
     }
@@ -195,7 +187,7 @@ class PsOneSixMigrator extends Module
             while (false !== ($entry = @readdir($handle))) {
                 if ($entry != '.' && $entry != '..') {
                     if (is_dir($dir.DIRECTORY_SEPARATOR.$entry) === true) {
-                        self::removeDirectory($dir.DIRECTORY_SEPARATOR.$entry);
+                        static::removeDirectory($dir.DIRECTORY_SEPARATOR.$entry);
                     } else {
                         @unlink($dir.DIRECTORY_SEPARATOR.$entry);
                     }
