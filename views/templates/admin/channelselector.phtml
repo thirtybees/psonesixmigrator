@@ -24,6 +24,8 @@
  */
 
 /** @var AdminThirtyBeesMigrateController $this */
+
+$ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
 ?>
 <label class="label-small"><?php echo $this->l('Channel:'); ?></label>
 <select name="channel">
@@ -32,8 +34,8 @@
     <?php endforeach; ?>
 </select>
 <?php
-$upgradeInfo = $this->getInfoForChannel($selectedChannel);
-echo $this->divChannelInfos($upgradeInfo);
+$upgradeInfo = $ajaxProcessor->getInfoForChannel($selectedChannel);
+echo $ajaxProcessor->divChannelInfos($upgradeInfo);
 ?>
 
 <div id="for-useMinor" ><div class="margin-form margin-form-small"><?php echo $this->l('This option regroup all stable versions.'); ?></div></div>
@@ -50,7 +52,7 @@ echo $this->divChannelInfos($upgradeInfo);
 </div>
 
 <div id="for-useArchive">
-    <?php if ($channelDir !== false && count($channelDir) > 0) : ?>
+	<?php if ($channelDir !== false && count($channelDir) > 0) : ?>
     <label class="label-small"><?php echo $this->l('Archive to use:'); ?></label>
         <select name="archive_prestashop">
             <option value=""><?php echo $this->l('choose an archive'); ?></option>

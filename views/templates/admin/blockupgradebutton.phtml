@@ -39,11 +39,11 @@ $channel = $this->getConfig('channel');
 
     <?php if ($this->configOk()) : ?>
         <?php $showBigButtonNewVersion = false; ?>
-        <?php if (count(AdminThirtyBeesMigrateController::$skipAction) > 0) : ?>
+        <?php if (count(\PsOneSixMigrator\AjaxProcessor::$skipAction) > 0) : ?>
 			<div id="skipAction-list" class="alert alert-warning">
                 <?php echo $this->l('The following action are automatically replaced'); ?>
 				<ul>
-                    <?php foreach (AdminThirtyBeesMigrateController::$skipAction as $k => $v) : ?>
+                    <?php foreach (\PsOneSixMigrator\AjaxProcessor::$skipAction as $k => $v) : ?>
 						<li><?php echo sprintf($this->l('%1$s will be replaced by %2$s'), '<b>'.$k.'</b>', '<b>'.$v.'</b>'); ?></li>
                     <?php endforeach; ?>
 				</ul>

@@ -29,10 +29,11 @@ $currentPsConfig = $this->getcheckCurrentPsConfig();
 $picOk = '<i class="icon icon-check" style="color: limegreen"></i>';
 $picNok = '<i class="icon icon-times" style="color: firebrick">';
 $picWarn = '<i class="icon icon-checkmark" style="color: orange">';
-$adminDir = trim(str_replace($this->prodRootDir, '', $this->adminDir), DIRECTORY_SEPARATOR);
+$adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
 $maxExecTime = ini_get('max_execution_time');
 $report = '';
-PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$this->autoupgradeDir, true, $report);
+$tools = \PsOneSixMigrator\UpgraderTools::getInstance();
+PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
 ?>
 
 <div id="currentConfigurationBlock" class="panel col-lg-6">
@@ -46,13 +47,13 @@ PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$this
         <table class="table" cellpadding="0" cellspacing="0">
             <tr>
                 <td><?php echo sprintf($this->l('The 1-click upgrade module is up-to-date (your current version is v%s)'), $this->getModuleVersion()); ?>
-                    <?php echo ($currentPsConfig['module_version_ok'] ? '' : '&nbsp;&nbsp;'.(version_compare(_PS_VERSION_, '1.5.3.0', '>') ? '<strong><a href="index.php?controller=AdminModules&amp;token='.Tools::getAdminTokenLite('AdminModules').'&update=autoupgrade">'.$this->l('Update').'</a></strong> - ' : '').'<strong><a class="_blank" href="http://addons.prestashop.com/en/administration-tools-prestashop-modules/5496-1-click-upgrade-autoupgrade.html">'.$this->l('Download').'</a><strong> '); ?>
+                    <?php echo ($currentPsConfig['module_version_ok'] ? '' : '&nbsp;&nbsp;'.(version_compare(_PS_VERSION_, '1.5.3.0', '>') ? '<strong><a href="'.Context::getContext()->link->getAdminLink('AdminModules', true).'&update=psonesixmigrator">'.$this->l('Update').'</a></strong> - ' : '').'<strong><a class="_blank" href="http://addons.prestashop.com/en/administration-tools-prestashop-modules/5496-1-click-upgrade-autoupgrade.html">'.$this->l('Download').'</a><strong> '); ?>
                 </td>
                 <td><?php echo ($currentPsConfig['module_version_ok'] ? $picOk : $picNok); ?></td>
             </tr>
             <tr>
                 <td><?php echo $this->l('Your store\'s root directory is writable (with appropriate CHMOD permissions)'); ?></td>
-                <td><?php echo ($currentPsConfig['root_writable'] ? $picOk : $picNok.' '.$this->root_writable_report); ?></td>
+                <td><?php echo ($currentPsConfig['root_writable'] ? $picOk : $picNok.' '.$tools->root_writable_report); ?></td>
             </tr>
 
             <?php if ($report) : ?>
@@ -78,7 +79,7 @@ PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$this
                 <td><?php echo ((PsOneSixMigrator\ConfigurationTest::test_fopen() || PsOneSixMigrator\ConfigurationTest::test_curl()) ? $picOk : $picNok); ?></td>
             </tr>
             <tr>
-                <td><?php echo $this->l('Your store is in maintenance mode').' '.(!$currentPsConfig['shop_deactivated'] ? '<br><form method="post" action="'.$this->currentIndex.'&token='.$this->token.'"><input type="submit" class="button" name="putUnderMaintenance" value="'.$this->l('Click here to put your shop under maintenance').'"></form>' : ''); ?></td>
+                <td><?php echo $this->l('Your store is in maintenance mode').' '.(!$currentPsConfig['shop_deactivated'] ? '<br><form method="post" action="'.static::$currentIndex.'&token='.$this->token.'"><input type="submit" class="button" name="putUnderMaintenance" value="'.$this->l('Click here to put your shop under maintenance').'"></form>' : ''); ?></td>
                 <td><?php echo ($currentPsConfig['shop_deactivated'] ? $picOk : $picNok); ?></td>
             </tr>
             <tr>

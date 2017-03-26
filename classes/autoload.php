@@ -21,15 +21,15 @@ spl_autoload_register(
     function ($class) {
         if (in_array($class, [
             'PsOneSixMigrator\\AbstractLogger',
-            'PsOneSixMigrator\\Ajax',
+            'PsOneSixMigrator\\AjaxProcessor',
             'PsOneSixMigrator\\ConfigurationTest',
             'PsOneSixMigrator\\Db',
             'PsOneSixMigrator\\DbPDO',
             'PsOneSixMigrator\\DbQuery',
             'PsOneSixMigrator\\FileLogger',
-            'PsOneSixMigrator\\PclZip',
             'PsOneSixMigrator\\Tools',
             'PsOneSixMigrator\\Upgrader',
+            'PsOneSixMigrator\\UpgraderTools',
         ])) {
             // project-specific namespace prefix
             $prefix = 'PsOneSixMigrator\\';

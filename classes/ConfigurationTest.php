@@ -140,7 +140,8 @@ class ConfigurationTest
     {
         $dir = rtrim(_PS_ROOT_DIR_, '\\/').DIRECTORY_SEPARATOR.trim($relativeDir, '\\/');
         if (!file_exists($dir) || !$dh = opendir($dir)) {
-            $fullReport = sprintf('Directory %s does not exists or is not writable', $dir); // sprintf for future translation
+            $fullReport = sprintf('Directory %s does not exist or is not writable', $dir); // sprintf for future translation
+
             return false;
         }
         $dummy = rtrim($dir, '\\/').DIRECTORY_SEPARATOR.uniqid();

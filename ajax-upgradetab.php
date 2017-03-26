@@ -77,7 +77,7 @@ $ajax = true;
 if (!class_exists('AdminThirtyBeesMigrateController')) {
     require_once AUTOUPGRADE_MODULE_DIR.'controllers/admin/AdminThirtyBeesMigrate.php';
 }
-$ajaxUpgrader = new PsOneSixMigrator\Ajax();
+$ajaxUpgrader = PsOneSixMigrator\AjaxProcessor::getInstance();
 
 if (is_object($ajaxUpgrader)) {
     $ajaxUpgrader->optionDisplayErrors();
