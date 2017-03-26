@@ -28,6 +28,7 @@ namespace PsOneSixMigrator;
 
 use PsOneSixMigrator\GuzzleHttp\Client;
 use PsOneSixMigrator\GuzzleHttp\Promise;
+use PsOneSixMigrator\SemVer\Expression;
 use PsOneSixMigrator\SemVer\Version;
 
 /**
@@ -88,7 +89,7 @@ class Upgrader
      */
     public function checkTbVersion($forceRefresh = false)
     {
-        if ($forceRefresh || !$this->allChannelsAreCached() || $this->shouldRefresh()) {
+        if ($forceRefresh || !$this->allChannelsAreCached()) { // || $this->shouldRefresh()) {
             $versionBreakdown = explode('.', _PS_VERSION_);
             if (count($versionBreakdown) < 2) {
                 return false;
@@ -470,6 +471,8 @@ class Upgrader
     {
         $latestVersion = '0.0.0';
         $channelWithLatest = false;
+        // FIXME: replace with migration module version
+        $semver = new Version('1.0.0');
 
         $checkVersions = [];
         foreach (['stable', 'rc', 'beta', 'alpha'] as $type) {
@@ -482,7 +485,7 @@ class Upgrader
         foreach ($this->versionInfo as $type => $versionInfo) {
             if (in_array($type, $checkVersions) && isset($versionInfo['version'])) {
                 $compareVersion = $versionInfo['version'];
-                if (Version::gt($compareVersion, $latestVersion)) {
+                if (Version::gt($compareVersion, $latestVersion) && $semver->satisfies(new Expression($versionInfo['compatibility']))) {
                     $latestVersion = $compareVersion;
                     $channelWithLatest = $type;
                 }
