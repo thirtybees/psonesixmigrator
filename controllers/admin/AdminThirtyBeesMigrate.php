@@ -173,18 +173,18 @@ class AdminThirtyBeesMigrateController extends AdminController
             case 'archive':
                 $this->installVersion = static::getConfig('archive.version_num');
                 $this->tools->destDownloadFilename = static::getConfig('archive.filename');
-                $upgrader->checkPSVersion(true, ['archive']);
+                $upgrader->checkTbVersion(true, ['archive']);
                 break;
             case 'directory':
                 $this->installVersion = static::getConfig('directory.version_num');
-                $upgrader->checkPSVersion(true, ['directory']);
+                $upgrader->checkTbVersion(true, ['directory']);
                 break;
             default:
                 $upgrader->channel = $channel;
                 if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
-                    $upgrader->checkPSVersion(true, ['private', 'minor']);
+                    $upgrader->checkTbVersion(true, ['private', 'minor']);
                 } else {
-                    $upgrader->checkPSVersion(true, ['minor']);
+                    $upgrader->checkTbVersion(true, ['minor']);
                 }
                 $this->installVersion = $upgrader->versionNum;
         }
@@ -461,7 +461,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         $tools = UpgraderTools::getInstance();
         if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
             $this->upgrader->channel = $newConfig['channel'];
-            $this->upgrader->checkPSVersion();
+            $this->upgrader->checkTbVersion();
             $this->installVersion = $this->upgrader->versionNum;
 
             return $this->resetConfig($newConfig);
@@ -735,17 +735,17 @@ class AdminThirtyBeesMigrateController extends AdminController
                     $upgrader->clearXmlMd5File(_PS_VERSION_);
                     $upgrader->clearXmlMd5File($upgrader->versionNum);
                     if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
-                        $upgrader->checkPSVersion(true, ['private', 'minor']);
+                        $upgrader->checkTbVersion(true, ['private', 'minor']);
                     } else {
-                        $upgrader->checkPSVersion(true, ['minor']);
+                        $upgrader->checkTbVersion(true, ['minor']);
                     }
 
                     Tools::redirectAdmin(self::$currentIndex.'&conf=5&token='.Tools::getValue('token'));
                 } else {
                     if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
-                        $upgrader->checkPSVersion(false, ['private', 'minor']);
+                        $upgrader->checkTbVersion(false, ['private', 'minor']);
                     } else {
-                        $upgrader->checkPSVersion(false, ['minor']);
+                        $upgrader->checkTbVersion(false, ['minor']);
                     }
                 }
         }

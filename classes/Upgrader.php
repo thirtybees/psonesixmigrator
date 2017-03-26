@@ -26,6 +26,10 @@
 
 namespace PsOneSixMigrator;
 
+use PsOneSixMigrator\GuzzleHttp\Client;
+use PsOneSixMigrator\GuzzleHttp\Promise;
+use PsOneSixMigrator\SemVer\Version;
+
 /**
  * Class Upgrader
  *
@@ -37,18 +41,12 @@ class Upgrader
 {
     const DEFAULT_CHECK_VERSION_DELAY_HOURS = 12;
     const DEFAULT_CHANNEL = 'stable';
+    const CHANNELS_BASE_URI = 'https://api.thirtybees.com/migration/channels/';
 
-    public static $defaultChannel = 'minor';
-    public $addons_api = 'api.addons.prestashop.com';
-    public $rssChannelLink = 'https://api.prestashop.com/xml/channel17.xml';
-    public $rssMd5FileLinkDir = 'https://api.prestashop.com/xml/md5-17/';
-    public $versionName;
-    public $versionNum;
-    public $versionIsModified = null;
+    public static $defaultChannel = 'stable';
     /**
      * @var string contains hte url where to download the file
      */
-    public $link;
     public $autoupgrade;
     public $autoupgradeModule;
     public $autoupgradeLastVersion;
@@ -59,183 +57,147 @@ class Upgrader
     public $channel = '';
     public $branch = '';
     /**
+     * Contains the JSON files for this version of PrestaShop
+     * Contains four channels:
+     *   - alpha
+     *   - beta
+     *   - rc
+     *   - stable
+     *
+     * @var array $versionInfo
+     */
+    public $versionInfo = [];
+    /**
      * @var boolean contains true if last version is not installed
      */
     private $needUpgrade = false;
     private $changedFiles = [];
     private $missingFiles = [];
 
-    public function __construct($autoload = false)
+    public function __construct()
     {
-        if ($autoload) {
-            $matches = [];
-            preg_match('#([0-9]+\.[0-9]+)\.[0-9]+\.[0-9]+#', _PS_VERSION_, $matches);
-            $this->branch = $matches[1];
-            if (class_exists('Configuration', false)) {
-                $this->channel = \Configuration::get('PS_UPGRADE_CHANNEL');
-            }
-            if (empty($this->channel)) {
-                $this->channel = static::$defaultChannel;
-            }
-            // checkPSVersion to get need_upgrade
-            $this->checkPSVersion();
-        }
-        if (!extension_loaded('openssl')) {
-            $this->rssChannelLink = str_replace('https://', 'http://', $this->rssChannelLink);
-            $this->rssMd5FileLinkDir = str_replace('https://', 'http://', $this->rssMd5FileLinkDir);
-        }
+        $this->checkTbVersion();
     }
 
     /**
-     * checkPSVersion ask to prestashop.com if there is a new version. return an array if yes, false otherwise
+     * CheckTBVersion checks for the latest thirty bees version available according to the channel settings
      *
-     * @param boolean $refresh        if set to true, will force to download channel.xml
-     * @param array   $array_no_major array of channels which will return only the immediate next version number.
+     * @param bool  $forceRefresh   If set to true, will force to download channel info
      *
-     * @return mixed
+     * @return bool
      */
-    public function checkPSVersion($refresh = false, $array_no_major = ['minor'])
+    public function checkTbVersion($forceRefresh = false)
     {
-        // if we use the autoupgrade process, we will never refresh it
-        // except if no check has been done before
-        $feed = $this->getXmlChannel($refresh);
+        if ($forceRefresh || !$this->allChannelsAreCached() || $this->shouldRefresh()) {
+            $versionBreakdown = explode('.', _PS_VERSION_);
+            if (count($versionBreakdown) < 2) {
+                return false;
+            }
 
-        // channel hierarchy :
-        // if you follow private, you follow stable release
-        // if you follow rc, you also follow stable
-        // if you follow beta, you also follow rc
-        // et caetera
-        $followedChannels = [];
-        $followedChannels[] = $this->channel;
-        switch ($this->channel) {
-            case 'alpha':
-                $followedChannels[] = 'beta';
-            case 'beta':
-                $followedChannels[] = 'rc';
-            case 'rc':
-                $followedChannels[] = 'stable';
-            case 'minor':
-            case 'major':
-            case 'private':
-                $followedChannels[] = 'stable';
-        }
+            $remoteVersion = $versionBreakdown[0].$versionBreakdown[1];
 
-        if ($feed) {
-            $this->autoupgradeModule = (int) $feed->autoupgrade_module;
-            $this->autoupgradeLastVersion = (string) $feed->autoupgrade->last_version;
-            $this->autoupgradeModuleLink = (string) $feed->autoupgrade->download->link;
+            $guzzle = new Client(
+                [
+                    'base_uri' => self::CHANNELS_BASE_URI,
+                    'timeout'  => 10,
+                    'verify'   => __DIR__.'/../cacert.pem',
+                ]
+            );
 
-            foreach ($feed->channel as $channel) {
-                $channelAvailable = (string) $channel['available'];
+            $promises = [
+                'alpha'  => $guzzle->getAsync("alpha.json"),
+                'beta'   => $guzzle->getAsync("beta.json"),
+                'rc'     => $guzzle->getAsync("rc.json"),
+                'stable' => $guzzle->getAsync("stable.json"),
+            ];
 
-                $channelName = (string) $channel['name'];
-                // stable means major and minor
-                // boolean algebra
-                // skip if one of theses props are true:
-                // - "stable" in xml, "minor" or "major" in configuration
-                // - channel in xml is not channel in configuration
-                if (!(in_array($channelName, $followedChannels))) {
-                    continue;
-                }
-                // now we are on the correct channel (minor, major, ...)
-                foreach ($channel as $branch) {
-                    // branch name = which version
-                    $branchName = (string) $branch['name'];
-                    // if channel is "minor" in configuration, do not allow something else than current branch
-                    // otherwise, allow superior or equal
-                    if (
-                    (in_array($this->channel, $followedChannels)
-                        && version_compare($branchName, $this->branch, '>='))
-                    ) {
-                        // skip if $branch->num is inferior to a previous one, skip it
-                        if (version_compare((string) $branch->num, $this->versionNum, '<')) {
-                            continue;
-                        }
-                        // also skip if previous loop found an available upgrade and current is not
-                        if ($this->available && !($channelAvailable && (string) $branch['available'])) {
-                            continue;
-                        }
-                        // also skip if chosen channel is minor, and xml branch name is superior to current
-                        if (in_array($this->channel, $array_no_major) && version_compare($branchName, $this->branch, '>')) {
-                            continue;
-                        }
-                        $this->versionName = (string) $branch->name;
-                        $this->versionNum = (string) $branch->num;
-                        $this->link = (string) $branch->download->link;
-                        $this->md5 = (string) $branch->download->md5;
-                        $this->changelog = (string) $branch->changelog;
-                        if (extension_loaded('openssl')) {
-                            $this->link = str_replace('http://', 'https://', $this->link);
-                            $this->changelog = str_replace('http://', 'https://', $this->changelog);
-                        }
-                        $this->available = $channelAvailable && (string) $branch['available'];
+            $results = Promise\settle($promises)->wait();
+            foreach ($results as $key => $result) {
+                $success = false;
+                if (isset($result['value']) && $result['value'] instanceof GuzzleHttp\Psr7\Response) {
+                    $versionInfo = (string) $result['value']->getBody();
+                    $versionInfo = json_decode($versionInfo, true);
+                    if (isset($versionInfo[$remoteVersion]['latest'])) {
+                        $this->versionInfo[$key] = $versionInfo[$remoteVersion]['latest'];
+                        $success = true;
                     }
                 }
+
+                if (!$success) {
+                    $this->versionInfo[$key] = [];
+                }
             }
+            $this->saveVersionInfo();
         } else {
-            return false;
+            $this->versionInfo = [
+                'alpha'  => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/alpha.json'), true),
+                'beta'   => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/beta.json'), true),
+                'rc'     => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/rc.json'), true),
+                'stable' => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/stable.json'), true),
+            ];
         }
+
+        $latestVersion = $this->findChannelWithLatestVersion('beta');
+        ddd($latestVersion);
+
+//        foreach ($feed->channel as $channel) {
+//            $channelAvailable = (string) $channel['available'];
+//
+//            $channelName = (string) $channel['name'];
+//            // stable means major and minor
+//            // boolean algebra
+//            // skip if one of theses props are true:
+//            // - "stable" in xml, "minor" or "major" in configuration
+//            // - channel in xml is not channel in configuration
+//            if (!(in_array($channelName, $followedChannels))) {
+//                continue;
+//            }
+//            // now we are on the correct channel (minor, major, ...)
+//            foreach ($channel as $branch) {
+//                // branch name = which version
+//                $branchName = (string) $branch['name'];
+//                // if channel is "minor" in configuration, do not allow something else than current branch
+//                // otherwise, allow superior or equal
+//                if (
+//                (in_array($this->channel, $followedChannels)
+//                    && version_compare($branchName, $this->branch, '>='))
+//                ) {
+//                    // skip if $branch->num is inferior to a previous one, skip it
+//                    if (version_compare((string) $branch->num, $this->versionNum, '<')) {
+//                        continue;
+//                    }
+//                    // also skip if previous loop found an available upgrade and current is not
+//                    if ($this->available && !($channelAvailable && (string) $branch['available'])) {
+//                        continue;
+//                    }
+//                    // also skip if chosen channel is minor, and xml branch name is superior to current
+//                    if (in_array($this->channel, $array_no_major) && version_compare($branchName, $this->branch, '>')) {
+//                        continue;
+//                    }
+//                    $this->versionName = (string) $branch->name;
+//                    $this->versionNum = (string) $branch->num;
+//                    $this->link = (string) $branch->download->link;
+//                    $this->md5 = (string) $branch->download->md5;
+//                    $this->changelog = (string) $branch->changelog;
+//                    if (extension_loaded('openssl')) {
+//                        $this->link = str_replace('http://', 'https://', $this->link);
+//                        $this->changelog = str_replace('http://', 'https://', $this->changelog);
+//                    }
+//                    $this->available = $channelAvailable && (string) $branch['available'];
+//                }
+//            }
+//        }
+
         // retro-compatibility :
         // return array(name,link) if you don't use the last version
         // false otherwise
-        if (version_compare(_PS_VERSION_, $this->versionNum, '<')) {
-            $this->needUpgrade = true;
-
-            return ['name' => $this->versionName, 'link' => $this->link];
-        } else {
-            return false;
-        }
-    }
-
-    public function getXmlChannel($refresh = false)
-    {
-        $xml = $this->getXmlFile(_PS_ROOT_DIR_.'/config/xml/channel.xml', $this->rssChannelLink, $refresh);
-        if ($refresh) {
-            if (class_exists('Configuration', false)) {
-                \Configuration::updateValue('PS_LAST_VERSION_CHECK', time());
-            }
-        }
-
-        return $xml;
-    }
-
-    public function getXmlFile($xmlLocalfile, $xml_remotefile, $refresh = false)
-    {
-        // @TODO : this has to be moved in autoupgrade.php > install method
-        if (!is_dir(_PS_ROOT_DIR_.'/config/xml')) {
-            if (is_file(_PS_ROOT_DIR_.'/config/xml')) {
-                unlink(_PS_ROOT_DIR_.'/config/xml');
-            }
-            mkdir(_PS_ROOT_DIR_.'/config/xml', 0777);
-        }
-        if ($refresh || !file_exists($xmlLocalfile) || @filemtime($xmlLocalfile) < (time() - (3600 * Upgrader::DEFAULT_CHECK_VERSION_DELAY_HOURS))) {
-            $xmlString = Tools::file_get_contents($xml_remotefile, false, stream_context_create(['http' => ['timeout' => 10]]));
-            $xml = @simplexml_load_string($xmlString);
-            if ($xml !== false) {
-                file_put_contents($xmlLocalfile, $xmlString);
-            }
-        } else {
-            $xml = @simplexml_load_file($xmlLocalfile);
-        }
-
-        return $xml;
-    }
-
-    public function __get($var)
-    {
-        if ($var == 'need_upgrade') {
-            return $this->isLastVersion();
-        }
-    }
-
-    public function isLastVersion()
-    {
-        if (empty($this->link)) {
-            $this->checkPSVersion();
-        }
-
-        return $this->needUpgrade;
-
+//        if (version_compare(_PS_VERSION_, $this->versionNum, '<')) {
+//            $this->needUpgrade = true;
+//
+//            return ['name' => $this->versionName, 'link' => $this->link];
+//        } else {
+//            return false;
+//        }
     }
 
     /**
@@ -251,7 +213,7 @@ class Upgrader
     public function downloadLast($dest, $filename = 'prestashop.zip')
     {
         if (empty($this->link)) {
-            $this->checkPSVersion();
+            $this->checkTbVersion();
         }
 
         $destPath = realpath($dest).DIRECTORY_SEPARATOR.$filename;
@@ -369,7 +331,7 @@ class Upgrader
      */
     public function getXmlMd5File($version, $refresh = false)
     {
-        return $this->getXmlFIle(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml', $this->rssMd5FileLinkDir.$version.'.xml', $refresh);
+        return $this->getJsonFile(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml', $this->rssMd5FileLinkDir.$version.'.xml', $refresh);
     }
 
     public function md5FileAsArray($node, $dir = '/')
@@ -390,57 +352,6 @@ class Upgrader
         }
 
         return $array;
-    }
-
-    /**
-     * returns an array of files which
-     *
-     * @param array   $v1         result of method $this->md5FileAsArray()
-     * @param array   $v2         result of method $this->md5FileAsArray()
-     * @param boolean $showModif  if set to false, the method will only
-     *                            list deleted files
-     * @param string  $path
-     *                            deleted files in version $v2. Otherwise, only deleted.
-     *
-     * @return array('modified' => array(files..), 'deleted' => array(files..)
-     */
-    public function compareReleases($v1, $v2, $showModif = true, $path = '/')
-    {
-        // in that array the list of files present in v1 deleted in v2
-        static $deletedFiles = [];
-        // in that array the list of files present in v1 modified in v2
-        static $modifiedFiles = [];
-
-        foreach ($v1 as $file => $md5) {
-            if (is_array($md5)) {
-                $subpath = $path.$file;
-                if (isset($v2[$file]) && is_array($v2[$file])) {
-                    $this->compareReleases($md5, $v2[$file], $showModif, $path.$file.'/');
-                } else // also remove old dir
-                {
-                    $deletedFiles[] = $subpath;
-                }
-            } else {
-                if (in_array($file, array_keys($v2))) {
-                    if ($showModif && ($v1[$file] != $v2[$file])) {
-                        $modifiedFiles[] = $path.$file;
-                    }
-                    $exists = true;
-                } else {
-                    $deletedFiles[] = $path.$file;
-                }
-            }
-        }
-
-        return ['deleted' => $deletedFiles, 'modified' => $modifiedFiles];
-    }
-
-    public function isAuthenticPrestashopVersion($version = null, $refresh = false)
-    {
-
-        $this->getChangedFilesList($version, $refresh);
-
-        return !$this->versionIsModified;
     }
 
     /**
@@ -544,5 +455,82 @@ class Upgrader
         } else {
             $this->changedFiles['core'][] = $path;
         }
+    }
+
+    /**
+     * Find the latest version available for download that satisfies the given channel
+     *
+     * @param string $channel Chosen channel
+     *
+     * @return false|string Channel with latest version
+     *
+     * @since 1.0.0
+     */
+    protected function findChannelWithLatestVersion($channel)
+    {
+        $latestVersion = '0.0.0';
+        $channelWithLatest = false;
+
+        $checkVersions = [];
+        foreach (['stable', 'rc', 'beta', 'alpha'] as $type) {
+            $checkVersions[] = $type;
+            if ($type == $channel) {
+                break;
+            }
+        }
+
+        foreach ($this->versionInfo as $type => $versionInfo) {
+            if (in_array($type, $checkVersions) && isset($versionInfo['version'])) {
+                $compareVersion = $versionInfo['version'];
+                if (Version::gt($compareVersion, $latestVersion)) {
+                    $latestVersion = $compareVersion;
+                    $channelWithLatest = $type;
+                }
+            }
+        }
+
+        return $channelWithLatest;
+    }
+
+    /**
+     * Save version info
+     *
+     * @return bool
+     *
+     * @since 1.0.0
+     */
+    protected function saveVersionInfo()
+    {
+        $success = true;
+        foreach ($this->versionInfo as $type => $version) {
+            $success &= (bool) @file_put_contents(_PS_CONFIG_DIR_."json/{$type}.json", json_encode($version), JSON_PRETTY_PRINT);
+        }
+
+        return $success;
+    }
+
+    /**
+     * Check if all channel info is locally available
+     *
+     * @return bool
+     *
+     * @since 1.0.0
+     */
+    protected function allChannelsAreCached()
+    {
+        $cached = true;
+
+        $types = [
+            'alpha',
+            'beta',
+            'rc',
+            'stable',
+        ];
+
+        foreach ($types as $type) {
+            $cached &= @file_exists(_PS_CONFIG_DIR_."json/{$type}.json");
+        }
+
+        return $cached;
     }
 }

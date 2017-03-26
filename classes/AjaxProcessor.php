@@ -118,6 +118,8 @@ class AjaxProcessor
                 $this->{$prop} = isset($this->currentParams[$prop]) ? $this->currentParams[$prop] : '';
             }
         }
+
+        $this->initializeFiles();
     }
 
     /**
@@ -313,7 +315,7 @@ class AjaxProcessor
         $tools = UpgraderTools::getInstance();
         if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
             $this->upgrader->channel = $newConfig['channel'];
-            $this->upgrader->checkPSVersion();
+            $this->upgrader->checkTbVersion();
             $this->installVersion = $this->upgrader->versionNum;
 
             return $this->resetConfig($newConfig);
@@ -388,9 +390,9 @@ class AjaxProcessor
         $upgrader->channel = $channel;
         if (in_array($channel, $publicChannel)) {
             if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-                $upgrader->checkPSVersion(false, ['private', 'minor']);
+                $upgrader->checkTbVersion(false, ['private', 'minor']);
             } else {
-                $upgrader->checkPSVersion(false, ['minor']);
+                $upgrader->checkTbVersion(false, ['minor']);
             }
 
             $upgradeInfo = [];
@@ -405,9 +407,9 @@ class AjaxProcessor
             switch ($channel) {
                 case 'private':
                     if (!AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-                        $upgrader->checkPSVersion(false, ['private', 'minor']);
+                        $upgrader->checkTbVersion(false, ['private', 'minor']);
                     } else {
-                        $upgrader->checkPSVersion(false, ['minor']);
+                        $upgrader->checkTbVersion(false, ['minor']);
                     }
 
                     $upgradeInfo['available'] = $upgrader->available;
@@ -503,9 +505,9 @@ class AjaxProcessor
                 $this->upgrader->branch = $matches[1];
                 $this->upgrader->channel = $channel;
                 if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-                    $this->upgrader->checkPSVersion(false, ['private', 'minor']);
+                    $this->upgrader->checkTbVersion(false, ['private', 'minor']);
                 } else {
-                    $this->upgrader->checkPSVersion(false, ['minor']);
+                    $this->upgrader->checkTbVersion(false, ['minor']);
                 }
                 $version = $this->upgrader->versionNum;
         }
@@ -602,9 +604,9 @@ class AjaxProcessor
         $this->upgrader->branch = $matches[1];
         $this->upgrader->channel = $channel;
         if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-            $this->upgrader->checkPSVersion(false, ['private', 'minor']);
+            $this->upgrader->checkTbVersion(false, ['private', 'minor']);
         } else {
-            $this->upgrader->checkPSVersion(false, ['minor']);
+            $this->upgrader->checkTbVersion(false, ['minor']);
         }
 
         switch ($channel) {
@@ -988,7 +990,7 @@ class AjaxProcessor
         $mysqlEngine = (defined('_MYSQL_ENGINE_') ? _MYSQL_ENGINE_ : 'MyISAM');
 
         //old version detection
-        global $oldversion, $logger;
+        global $oldversion;
         $oldversion = false;
         if (file_exists(SETTINGS_FILE)) {
             include_once(SETTINGS_FILE);
@@ -1714,7 +1716,6 @@ class AjaxProcessor
 
         $oldLevel = error_reporting(E_ALL);
         //refresh conf file
-        require_once(_PS_ROOT_DIR_.'/modules/autoupgrade/classes/AddConfToFile.php');
         copy(SETTINGS_FILE, str_replace('.php', '.old.php', SETTINGS_FILE));
         $confFile = new AddConfToFile(SETTINGS_FILE, 'w');
         if ($confFile->error) {
@@ -1761,14 +1762,8 @@ class AjaxProcessor
             define('_MYSQL_ENGINE_', 'MyISAM');
         }
 
-        // if install version is before 1.5
-        if (version_compare(INSTALL_VERSION, '1.5.0.0', '<=')) {
-            $datas[] = ['_DB_TYPE_', _DB_TYPE_];
-            $datas[] = ['__PS_BASE_URI__', __PS_BASE_URI__];
-            $datas[] = ['_THEME_NAME_', _THEME_NAME_];
-        } else {
-            $datas[] = ['_PS_DIRECTORY_', __PS_BASE_URI__];
-        }
+        $datas[] = ['_PS_DIRECTORY_', __PS_BASE_URI__];
+
         foreach ($datas as $data) {
             $confFile->writeInFile($data[0], $data[1]);
         }
@@ -1819,15 +1814,15 @@ class AjaxProcessor
     public function ajaxProcessCleanDatabase()
     {
         /* Clean tabs order */
-        foreach ($this->db->ExecuteS('SELECT DISTINCT id_parent FROM '._DB_PREFIX_.'tab') as $parent) {
+        foreach ($this->db->executeS('SELECT DISTINCT id_parent FROM '._DB_PREFIX_.'tab') as $parent) {
             $i = 1;
-            foreach ($this->db->ExecuteS('SELECT id_tab FROM '._DB_PREFIX_.'tab WHERE id_parent = '.(int) $parent['id_parent'].' ORDER BY IF(class_name IN ("AdminHome", "AdminDashboard"), 1, 2), position ASC') as $child) {
-                $this->db->Execute('UPDATE '._DB_PREFIX_.'tab SET position = '.(int) ($i++).' WHERE id_tab = '.(int) $child['id_tab'].' AND id_parent = '.(int) $parent['id_parent']);
+            foreach ($this->db->executeS('SELECT id_tab FROM '._DB_PREFIX_.'tab WHERE id_parent = '.(int) $parent['id_parent'].' ORDER BY IF(class_name IN ("AdminHome", "AdminDashboard"), 1, 2), position ASC') as $child) {
+                $this->db->execute('UPDATE '._DB_PREFIX_.'tab SET position = '.(int) ($i++).' WHERE id_tab = '.(int) $child['id_tab'].' AND id_parent = '.(int) $parent['id_parent']);
             }
         }
 
         /* Clean configuration integrity */
-        $this->db->Execute('DELETE FROM `'._DB_PREFIX_.'configuration_lang` WHERE (`value` IS NULL AND `date_upd` IS NULL) OR `value` LIKE ""', false);
+        $this->db->execute('DELETE FROM `'._DB_PREFIX_.'configuration_lang` WHERE (`value` IS NULL AND `date_upd` IS NULL) OR `value` LIKE ""', false);
 
         $this->status = 'ok';
         $this->next = 'upgradeComplete';
@@ -1911,7 +1906,7 @@ class AjaxProcessor
      * ajaxProcessRestoreFiles restore the previously saved files,
      * and delete files that weren't archived
      *
-     * @return bool true if succeed
+     * @return bool
      *
      * @since 1.0.0
      */
@@ -2978,9 +2973,9 @@ class AjaxProcessor
             $this->upgrader->channel = AdminThirtyBeesMigrateController::getConfig('channel');
             $this->upgrader->branch = $matches[1];
             if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-                $this->upgrader->checkPSVersion(false, ['private', 'minor']);
+                $this->upgrader->checkTbVersion(false, ['private', 'minor']);
             } else {
-                $this->upgrader->checkPSVersion(false, ['minor']);
+                $this->upgrader->checkTbVersion(false, ['minor']);
             }
 
             if ($this->upgrader->channel == 'private') {
@@ -3526,7 +3521,6 @@ class AjaxProcessor
         $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
         $cookiePath = __PS_BASE_URI__.$adminDir;
         setcookie('id_employee', $idEmployee, 0, $cookiePath);
-        setcookie('id_tab', $this->id, 0, $cookiePath);
         setcookie('iso_code', $isoCode, 0, $cookiePath);
         setcookie('autoupgrade', Tools::encrypt($idEmployee), 0, $cookiePath);
 
