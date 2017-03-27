@@ -44,19 +44,56 @@ class Upgrader
     const DEFAULT_CHANNEL = 'stable';
     const CHANNELS_BASE_URI = 'https://api.thirtybees.com/migration/channels/';
 
-    public static $defaultChannel = 'stable';
     /**
-     * @var string contains hte url where to download the file
+     * Channel with the latest version
+     *
+     * @var string $channel
      */
-    public $autoupgrade;
-    public $autoupgradeModule;
-    public $autoupgradeLastVersion;
-    public $autoupgradeModuleLink;
-    public $changelog;
-    public $available;
-    public $md5;
     public $channel = '';
-    public $branch = '';
+    /**
+     * The channel as selected by the user
+     *
+     * @var string $selectedChannel
+     */
+    public $selectedChannel = 'stable';
+    /**
+     * Latest version
+     *
+     * @var string $version
+     */
+    public $version = '';
+    /** @var string Changelog link */
+    public $changelog;
+    /**
+     * Link to core package
+     *
+     * @var string $coreLink
+     */
+    public $coreLink;
+    /**
+     * Link to package with upgrade files
+     *
+     * @var string $extraLink
+     */
+    public $extraLink;
+    /**
+     * Link to md5 JSON
+     *
+     * @var string $md5Link
+     */
+    public $md5Link;
+    /**
+     * List of files that will be affected
+     *
+     * @var array $changedFiles
+     */
+    private $changedFiles = [];
+    /**
+     * Missing files
+     *
+     * @var array $missingFiles
+     */
+    private $missingFiles = [];
     /**
      * Contains the JSON files for this version of PrestaShop
      * Contains four channels:
@@ -68,24 +105,47 @@ class Upgrader
      * @var array $versionInfo
      */
     public $versionInfo = [];
-    /**
-     * @var boolean contains true if last version is not installed
-     */
-    private $needUpgrade = false;
-    private $changedFiles = [];
-    private $missingFiles = [];
 
-    public function __construct()
+    /** @var Upgrader $instance */
+    protected static $instance;
+
+    /**
+     * @return Upgrader
+     *
+     * @since 1.0.0
+     */
+    public static function getInstance()
     {
-        $this->checkTbVersion();
+        if (!isset(static::$instance)) {
+            static::$instance = new static();
+        }
+
+        return static::$instance;
+    }
+
+    /**
+     * Upgrader constructor.
+     *
+     * @since 1.0.0
+     */
+    protected function __construct()
+    {
+        $this->selectedChannel = \AdminThirtyBeesMigrateController::getConfig('channel');
+        if (!in_array($this->selectedChannel, ['stable', 'rc', 'beta', 'alpha'])) {
+            $this->selectedChannel = 'stable';
+        }
+
+        $this->checkTbVersion(false);
     }
 
     /**
      * CheckTBVersion checks for the latest thirty bees version available according to the channel settings
      *
-     * @param bool  $forceRefresh   If set to true, will force to download channel info
+     * @param bool $forceRefresh If set to true, will force to download channel info
      *
-     * @return bool
+     * @return bool Indicates whether the check was successful
+     *
+     * @since 1.0.0
      */
     public function checkTbVersion($forceRefresh = false)
     {
@@ -131,74 +191,24 @@ class Upgrader
             $this->saveVersionInfo();
         } else {
             $this->versionInfo = [
-                'alpha'  => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/alpha.json'), true),
-                'beta'   => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/beta.json'), true),
-                'rc'     => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/rc.json'), true),
-                'stable' => json_decode(file_get_contents(_PS_CONFIG_DIR_.'json/stable.json'), true),
+                'alpha'  => json_decode(file_get_contents(_PS_MODULE_DIR_.'psonesixmigrator/json/thirtybees-alpha.json'), true),
+                'beta'   => json_decode(file_get_contents(_PS_MODULE_DIR_.'psonesixmigrator/json/thirtybees-beta.json'), true),
+                'rc'     => json_decode(file_get_contents(_PS_MODULE_DIR_.'psonesixmigrator/json/thirtybees-rc.json'), true),
+                'stable' => json_decode(file_get_contents(_PS_MODULE_DIR_.'psonesixmigrator/json/thirtybees-stable.json'), true),
             ];
         }
 
-        $latestVersion = $this->findChannelWithLatestVersion('beta');
-        ddd($latestVersion);
+        $channelWithLatestVersion = $this->findChannelWithLatestVersion($this->selectedChannel);
+        if (!$channelWithLatestVersion) {
+            return false;
+        }
+        $versionInfo = $this->versionInfo[$channelWithLatestVersion];
+        $this->version = $versionInfo['version'];
+        $this->coreLink = $versionInfo['core'];
+        $this->extraLink = $versionInfo['extra'];
+        $this->md5Link = $versionInfo['md5'];
 
-//        foreach ($feed->channel as $channel) {
-//            $channelAvailable = (string) $channel['available'];
-//
-//            $channelName = (string) $channel['name'];
-//            // stable means major and minor
-//            // boolean algebra
-//            // skip if one of theses props are true:
-//            // - "stable" in xml, "minor" or "major" in configuration
-//            // - channel in xml is not channel in configuration
-//            if (!(in_array($channelName, $followedChannels))) {
-//                continue;
-//            }
-//            // now we are on the correct channel (minor, major, ...)
-//            foreach ($channel as $branch) {
-//                // branch name = which version
-//                $branchName = (string) $branch['name'];
-//                // if channel is "minor" in configuration, do not allow something else than current branch
-//                // otherwise, allow superior or equal
-//                if (
-//                (in_array($this->channel, $followedChannels)
-//                    && version_compare($branchName, $this->branch, '>='))
-//                ) {
-//                    // skip if $branch->num is inferior to a previous one, skip it
-//                    if (version_compare((string) $branch->num, $this->versionNum, '<')) {
-//                        continue;
-//                    }
-//                    // also skip if previous loop found an available upgrade and current is not
-//                    if ($this->available && !($channelAvailable && (string) $branch['available'])) {
-//                        continue;
-//                    }
-//                    // also skip if chosen channel is minor, and xml branch name is superior to current
-//                    if (in_array($this->channel, $array_no_major) && version_compare($branchName, $this->branch, '>')) {
-//                        continue;
-//                    }
-//                    $this->versionName = (string) $branch->name;
-//                    $this->versionNum = (string) $branch->num;
-//                    $this->link = (string) $branch->download->link;
-//                    $this->md5 = (string) $branch->download->md5;
-//                    $this->changelog = (string) $branch->changelog;
-//                    if (extension_loaded('openssl')) {
-//                        $this->link = str_replace('http://', 'https://', $this->link);
-//                        $this->changelog = str_replace('http://', 'https://', $this->changelog);
-//                    }
-//                    $this->available = $channelAvailable && (string) $branch['available'];
-//                }
-//            }
-//        }
-
-        // retro-compatibility :
-        // return array(name,link) if you don't use the last version
-        // false otherwise
-//        if (version_compare(_PS_VERSION_, $this->versionNum, '<')) {
-//            $this->needUpgrade = true;
-//
-//            return ['name' => $this->versionName, 'link' => $this->link];
-//        } else {
-//            return false;
-//        }
+        return true;
     }
 
     /**
@@ -211,7 +221,7 @@ class Upgrader
      *
      * @TODO ftp if copy is not possible (safe_mode for example)
      */
-    public function downloadLast($dest, $filename = 'prestashop.zip')
+    public function downloadLast($dest, $filename = 'thirtybees.zip')
     {
         if (empty($this->link)) {
             $this->checkTbVersion();
@@ -241,66 +251,15 @@ class Upgrader
     }
 
     /**
-     * use the addons api to get xml files
-     *
-     * @param mixed $xmlLocalfile
-     * @param mixed $postData
-     * @param mixed $refresh
-     *
-     * @access public
-     * @return void
-     */
-    public function getApiAddons($xmlLocalfile, $postData, $refresh = false)
-    {
-        if (!is_dir(_PS_ROOT_DIR_.'/config/xml')) {
-            if (is_file(_PS_ROOT_DIR_.'/config/xml')) {
-                unlink(_PS_ROOT_DIR_.'/config/xml');
-            }
-            mkdir(_PS_ROOT_DIR_.'/config/xml', 0777);
-        }
-        if ($refresh || !file_exists($xmlLocalfile) || @filemtime($xmlLocalfile) < (time() - (3600 * Upgrader::DEFAULT_CHECK_VERSION_DELAY_HOURS))) {
-            $protocolsList = ['https://' => 443, 'http://' => 80];
-            if (!extension_loaded('openssl')) {
-                unset($protocolsList['https://']);
-            }
-            // Make the request
-            $opts = [
-                'http' => [
-                    'method'  => 'POST',
-                    'content' => $postData,
-                    'header'  => 'Content-type: application/x-www-form-urlencoded',
-                    'timeout' => 10,
-                ],
-            ];
-            $context = stream_context_create($opts);
-            $xml = false;
-            foreach ($protocolsList as $protocol => $port) {
-                $xmlString = Tools::file_get_contents($protocol.$this->addons_api, false, $context);
-                if ($xmlString) {
-                    $xml = @simplexml_load_string($xmlString);
-                    break;
-                }
-            }
-            if ($xml !== false) {
-                file_put_contents($xmlLocalfile, $xmlString);
-            }
-        } else {
-            $xml = @simplexml_load_file($xmlLocalfile);
-        }
-
-        return $xml;
-    }
-
-    /**
      * getDiffFilesList
      *
      * @param string  $version1
      * @param string  $version2
-     * @param boolean $show_modif
+     * @param boolean $showModif
      *
      * @return array array('modified'=>array(...), 'deleted'=>array(...))
      */
-    public function getDiffFilesList($version1, $version2, $show_modif = true, $refresh = false)
+    public function getDiffFilesList($version1, $version2, $showModif = true, $refresh = false)
     {
         $checksum1 = $this->getXmlMd5File($version1, $refresh);
         $checksum2 = $this->getXmlMd5File($version2, $refresh);
@@ -313,8 +272,8 @@ class Upgrader
         if (empty($v1) || empty($v2)) {
             return false;
         }
-        $filesList = $this->compareReleases($v1, $v2, $show_modif);
-        if (!$show_modif) {
+        $filesList = $this->compareReleases($v1, $v2, $showModif);
+        if (!$showModif) {
             return $filesList['deleted'];
         }
 
@@ -328,7 +287,7 @@ class Upgrader
      *
      * @param string $version
      *
-     * @return SimpleXMLElement or false if error
+     * @return \SimpleXMLElement or false if error
      */
     public function getXmlMd5File($version, $refresh = false)
     {
@@ -343,8 +302,8 @@ class Upgrader
                 $dir = (string) $child['name'];
                 // $current_path = $dir.(string)$child['name'];
                 // @todo : something else than array pop ?
-                $dir_content = $this->md5FileAsArray($child, $dir);
-                $array[$dir] = $dir_content;
+                $dirContent = $this->md5FileAsArray($child, $dir);
+                $array[$dir] = $dirContent;
             } else {
                 if (is_object($child) && $child->getName() == 'md5file') {
                     $array[(string) $child['name']] = (string) $child;
@@ -506,7 +465,7 @@ class Upgrader
     {
         $success = true;
         foreach ($this->versionInfo as $type => $version) {
-            $success &= (bool) @file_put_contents(_PS_CONFIG_DIR_."json/{$type}.json", json_encode($version), JSON_PRETTY_PRINT);
+            $success &= (bool) @file_put_contents(_PS_MODULE_DIR_."psonesixmigrat/json/thirtybees-{$type}.json", json_encode($version), JSON_PRETTY_PRINT);
         }
 
         return $success;
@@ -531,7 +490,7 @@ class Upgrader
         ];
 
         foreach ($types as $type) {
-            $cached &= @file_exists(_PS_CONFIG_DIR_."json/{$type}.json");
+            $cached &= @file_exists(_PS_MODULE_DIR_."psonesixmigrator/json/thirtybees-{$type}.json");
         }
 
         return $cached;

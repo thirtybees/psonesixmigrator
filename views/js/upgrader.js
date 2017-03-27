@@ -53,17 +53,17 @@
 
 // js initialization : prepare upgrade and rollback buttons
     $(document).ready(function () {
-      $("select[name=channel]").change(function (e) {
-        $("select[name=channel]").find("option").each(function () {
-          if ($(this).is(":selected")) {
-            $("#for-" + $(this).attr("id")).show();
-          } else {
-            $("#for-" + $(this).attr("id")).hide();
-          }
-        });
-
-        refreshChannelInfos();
-      });
+      // $("select[name=channel]").change(function (e) {
+      //   $("select[name=channel]").find("option").each(function () {
+      //     if ($(this).is(":selected")) {
+      //       $("#for-" + $(this).attr("id")).show();
+      //     } else {
+      //       $("#for-" + $(this).attr("id")).hide();
+      //     }
+      //   });
+      //
+      //   refreshChannelInfos();
+      // });
 
       function refreshChannelInfos() {
         var val = $("select[name=channel]").find("option:selected").val();

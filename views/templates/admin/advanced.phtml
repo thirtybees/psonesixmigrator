@@ -24,10 +24,23 @@
  */
 
 /** @var AdminThirtyBeesMigrateController $this */
-$config = $this->getConfig();
-$channel = $config['channel'];
-if (empty($channel)) {
-    $channel = PsOneSixMigrator\Upgrader::DEFAULT_CHANNEL;
-}
+$upgrader = \PsOneSixMigrator\Upgrader::getInstance();
 ?>
+<div class="clearfix">
+	<strong><?php echo $this->l('Selected channel'); ?>:</strong> <em><?php echo $upgrader->channel; ?></em><br />
+	<strong><?php echo $this->l('Going to migrate to thirty bees version'); ?>:</strong> <em><?php echo $upgrader->version ?: $this->l('Nothing available'); ?></em>
+</div>
+<form name="channelSelect" class="margin-form" action="<?php echo static::$currentIndex.'&token='.$this->token; ?>" method="post">
+	<label for="channelSelect"><?php echo $this->l('Channel:'); ?></label>
+	<select id="channelSelect" name="channel">
+        <?php foreach (['stable', 'rc', 'beta', 'alpha'] as $channel) : ?>
+		<option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"<?php echo ($channel === $upgrader->channel) ? 'class="current" selected="selected">'.$channel.'*' : '>'.$channel ?></option>
+        <?php endforeach; ?>
+	</select>
+	<div class="margin-form" style="">
+		<button type="submit" class="btn btn-default"><i class="icon icon-save"></i> <?php echo $this->l('Save'); ?></button>
+	</div>
+	<p style="clear:both">Unless you are using a dedicated server, select "Low".<br>A high value can cause the upgrade to fail if your server is not powerful enough to process the upgrade tasks in a short amount of time.</p>
+</form>
+
 <div id="configResult">&nbsp;</div>

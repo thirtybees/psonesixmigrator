@@ -31,6 +31,8 @@
 
 namespace PsOneSixMigrator;
 
+use PsOneSixMigrator\GuzzleHttp\Client;
+
 /**
  * Class Tools
  * @since 1.0.0
@@ -200,7 +202,7 @@ class Tools
     public static function redirect($url, $baseUri = __PS_BASE_URI__, \Link $link = null, $headers = null)
     {
         if (!$link) {
-            $link = Context::getContext()->link;
+            $link = \Context::getContext()->link;
         }
 
         if (strpos($url, 'http://') === false && strpos($url, 'https://') === false && $link) {
@@ -209,7 +211,7 @@ class Tools
             }
             if (strpos($url, 'index.php?controller=') !== false && strpos($url, 'index.php/') == 0) {
                 $url = substr($url, strlen('index.php?controller='));
-                if (Configuration::get('PS_REWRITING_SETTINGS')) {
+                if (\Configuration::get('PS_REWRITING_SETTINGS')) {
                     $url = static::strReplaceFirst('&', '?', $url);
                 }
             }
@@ -273,7 +275,7 @@ class Tools
                 $url = substr($url, strlen('index.php?controller='));
             }
             $explode = explode('?', $url);
-            $url = Context::getContext()->link->getPageLink($explode[0]);
+            $url = \Context::getContext()->link->getPageLink($explode[0]);
             if (isset($explode[1])) {
                 $url .= '?'.$explode[1];
             }
@@ -307,7 +309,7 @@ class Tools
      */
     public static function getShopProtocol()
     {
-        $protocol = (Configuration::get('PS_SSL_ENABLED') || (!empty($_SERVER['HTTPS'])
+        $protocol = (\Configuration::get('PS_SSL_ENABLED') || (!empty($_SERVER['HTTPS'])
                 && static::strtolower($_SERVER['HTTPS']) != 'off')) ? 'https://' : 'http://';
 
         return $protocol;
@@ -508,20 +510,20 @@ class Tools
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
-    public static function setCookieLanguage(Cookie $cookie = null)
+    public static function setCookieLanguage(\Cookie $cookie = null)
     {
         if (!$cookie) {
-            $cookie = Context::getContext()->cookie;
+            $cookie = \Context::getContext()->cookie;
         }
         /* If language does not exist or is disabled, erase it */
         if ($cookie->id_lang) {
-            $lang = new Language((int) $cookie->id_lang);
-            if (!Validate::isLoadedObject($lang) || !$lang->active || !$lang->isAssociatedToShop()) {
+            $lang = new \Language((int) $cookie->id_lang);
+            if (!\Validate::isLoadedObject($lang) || !$lang->active || !$lang->isAssociatedToShop()) {
                 $cookie->id_lang = null;
             }
         }
 
-        if (!Configuration::get('PS_DETECT_LANG')) {
+        if (!\Configuration::get('PS_DETECT_LANG')) {
             unset($cookie->detect_language);
         }
 
@@ -532,10 +534,10 @@ class Tools
             $array = explode(',', static::strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']));
             $string = $array[0];
 
-            if (Validate::isLanguageCode($string)) {
-                $lang = Language::getLanguageByIETFCode($string);
-                if (Validate::isLoadedObject($lang) && $lang->active && $lang->isAssociatedToShop()) {
-                    Context::getContext()->language = $lang;
+            if (\Validate::isLanguageCode($string)) {
+                $lang = \Language::getLanguageByIETFCode($string);
+                if (\Validate::isLoadedObject($lang) && $lang->active && $lang->isAssociatedToShop()) {
+                    \Context::getContext()->language = $lang;
                     $cookie->id_lang = (int) $lang->id;
                 }
             }
@@ -546,11 +548,11 @@ class Tools
         }
 
         /* If language file not present, you must use default language file */
-        if (!$cookie->id_lang || !Validate::isUnsignedId($cookie->id_lang)) {
-            $cookie->id_lang = (int) Configuration::get('PS_LANG_DEFAULT');
+        if (!$cookie->id_lang || !\Validate::isUnsignedId($cookie->id_lang)) {
+            $cookie->id_lang = (int) \Configuration::get('PS_LANG_DEFAULT');
         }
 
-        $iso = Language::getIsoById((int) $cookie->id_lang);
+        $iso = \Language::getIsoById((int) $cookie->id_lang);
         @include_once(_PS_THEME_DIR_.'lang/'.$iso.'.php');
 
         return $iso;
@@ -586,15 +588,15 @@ class Tools
     /**
      * Set cookie id_lang
      *
-     * @param Context $context
+     * @param \Context $context
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
-    public static function switchLanguage(Context $context = null)
+    public static function switchLanguage(\Context $context = null)
     {
         if (!$context) {
-            $context = Context::getContext();
+            $context = \Context::getContext();
         }
 
         // Install call the dispatcher and so the switchLanguage
@@ -603,25 +605,25 @@ class Tools
             return;
         }
 
-        if (($iso = static::getValue('isolang')) && Validate::isLanguageIsoCode($iso) && ($idLang = (int) Language::getIdByIso($iso))) {
+        if (($iso = static::getValue('isolang')) && \Validate::isLanguageIsoCode($iso) && ($idLang = (int) \Language::getIdByIso($iso))) {
             $_GET['id_lang'] = $idLang;
         }
 
         // update language only if new id is different from old id
         // or if default language changed
         $cookieIdLang = $context->cookie->id_lang;
-        $configurationIdLang = Configuration::get('PS_LANG_DEFAULT');
-        if ((($idLang = (int) static::getValue('id_lang')) && Validate::isUnsignedId($idLang) && $cookieIdLang != (int) $idLang)
-            || (($idLang == $configurationIdLang) && Validate::isUnsignedId($idLang) && $idLang != $cookieIdLang)
+        $configurationIdLang = \Configuration::get('PS_LANG_DEFAULT');
+        if ((($idLang = (int) static::getValue('id_lang')) && \Validate::isUnsignedId($idLang) && $cookieIdLang != (int) $idLang)
+            || (($idLang == $configurationIdLang) && \Validate::isUnsignedId($idLang) && $idLang != $cookieIdLang)
         ) {
             $context->cookie->id_lang = $idLang;
-            $language = new Language($idLang);
-            if (Validate::isLoadedObject($language) && $language->active) {
+            $language = new \Language($idLang);
+            if (\Validate::isLoadedObject($language) && $language->active) {
                 $context->language = $language;
             }
 
             $params = $_GET;
-            if (Configuration::get('PS_REWRITING_SETTINGS') || !Language::isMultiLanguageActivated()) {
+            if (\Configuration::get('PS_REWRITING_SETTINGS') || !\Language::isMultiLanguageActivated()) {
                 unset($params['id_lang']);
             }
         }
@@ -638,18 +640,18 @@ class Tools
     public static function getCountry($address = null)
     {
         $idCountry = (int) static::getValue('id_country');
-        if ($idCountry && Validate::isInt($idCountry)) {
+        if ($idCountry && \Validate::isInt($idCountry)) {
             return (int) $idCountry;
         } elseif (!$idCountry && isset($address) && isset($address->id_country) && $address->id_country) {
             $idCountry = (int) $address->id_country;
-        } elseif (Configuration::get('PS_DETECT_COUNTRY') && isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+        } elseif (\Configuration::get('PS_DETECT_COUNTRY') && isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
             preg_match('#(?<=-)\w\w|\w\w(?!-)#', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $array);
-            if (is_array($array) && isset($array[0]) && Validate::isLanguageIsoCode($array[0])) {
-                $idCountry = (int) Country::getByIso($array[0], true);
+            if (is_array($array) && isset($array[0]) && \Validate::isLanguageIsoCode($array[0])) {
+                $idCountry = (int) \Country::getByIso($array[0], true);
             }
         }
         if (!isset($idCountry) || !$idCountry) {
-            $idCountry = (int) Configuration::get('PS_COUNTRY_DEFAULT');
+            $idCountry = (int) \Configuration::get('PS_COUNTRY_DEFAULT');
         }
 
         return (int) $idCountry;
@@ -710,7 +712,7 @@ class Tools
     {
         if ($roundMode === null) {
             if (static::$round_mode == null) {
-                static::$round_mode = (int) Configuration::get('PS_PRICE_ROUND_MODE');
+                static::$round_mode = (int) \Configuration::get('PS_PRICE_ROUND_MODE');
             }
 
             $roundMode = static::$round_mode;
@@ -964,11 +966,11 @@ class Tools
             return '';
         }
 
-        if (!Validate::isDate($date) || !Validate::isBool($full)) {
+        if (!\Validate::isDate($date) || !\Validate::isBool($full)) {
             throw new \Exception('Invalid date');
         }
 
-        $context = Context::getContext();
+        $context = \Context::getContext();
         $dateFormat = ($full ? $context->language->date_format_full : $context->language->date_format_lite);
 
         return date($dateFormat, $time);
@@ -1280,10 +1282,10 @@ class Tools
      *
      * @param string $token token to encrypt
      */
-    public static function getToken($page = true, Context $context = null)
+    public static function getToken($page = true, \Context $context = null)
     {
         if (!$context) {
-            $context = Context::getContext();
+            $context = \Context::getContext();
         }
         if ($page === true) {
             return (static::encrypt($context->customer->id.$context->customer->passwd.$_SERVER['SCRIPT_NAME']));
@@ -1302,13 +1304,13 @@ class Tools
         return md5(_COOKIE_KEY_.$passwd);
     }
 
-    public static function getAdminTokenLite($tab, Context $context = null)
+    public static function getAdminTokenLite($tab, \Context $context = null)
     {
         if (!$context) {
-            $context = Context::getContext();
+            $context = \Context::getContext();
         }
 
-        return static::getAdminToken($tab.(int) Tab::getIdFromClassName($tab).(int) $context->employee->id);
+        return static::getAdminToken($tab.(int) \Tab::getIdFromClassName($tab).(int) $context->employee->id);
     }
 
     /**
@@ -1325,8 +1327,8 @@ class Tools
     }
 
     /**
-     * @param $params
-     * @param $smarty
+     * @param array   $params
+     * @param \Smarty $smarty
      *
      * @return bool|string
      *
@@ -1335,9 +1337,9 @@ class Tools
      */
     public static function getAdminTokenLiteSmarty($params, &$smarty)
     {
-        $context = Context::getContext();
+        $context = \Context::getContext();
 
-        return static::getAdminToken($params['tab'].(int) Tab::getIdFromClassName($params['tab']).(int) $context->employee->id);
+        return static::getAdminToken($params['tab'].(int) \Tab::getIdFromClassName($params['tab']).(int) $context->employee->id);
     }
 
     /**
@@ -1408,7 +1410,7 @@ class Tools
             $host = htmlspecialchars($host, ENT_COMPAT, 'UTF-8');
         }
         if ($http) {
-            $host = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://').$host;
+            $host = (\Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://').$host;
         }
 
         return $host;
@@ -1455,20 +1457,20 @@ class Tools
     /**
      * Display an error according to an error code
      *
-     * @param string  $string       Error message
-     * @param bool    $htmlentities By default at true for parsing error message with htmlentities
-     * @param Context $context
+     * @param string   $string       Error message
+     * @param bool     $htmlentities By default at true for parsing error message with htmlentities
+     * @param \Context $context
      *
      * @return array|mixed|string
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
-    public static function displayError($string = 'Fatal error', $htmlentities = true, Context $context = null)
+    public static function displayError($string = 'Fatal error', $htmlentities = true, \Context $context = null)
     {
         global $_ERRORS;
 
         if (is_null($context)) {
-            $context = Context::getContext();
+            $context = \Context::getContext();
         }
 
         @include_once(_PS_TRANSLATIONS_DIR_.$context->language->iso_code.'/errors.php');
@@ -1539,7 +1541,7 @@ class Tools
         }
 
         if ($allowAccentedChars === null) {
-            $allowAccentedChars = Configuration::get('PS_ALLOW_ACCENTED_CHARS_URL');
+            $allowAccentedChars = \Configuration::get('PS_ALLOW_ACCENTED_CHARS_URL');
         }
 
         $returnStr = trim($str);
@@ -1896,14 +1898,14 @@ class Tools
 
                 if (!empty($droppedTags)) {
                     if (!empty($openTags)) {
-                        foreach ($droppedTags as $closing_tag) {
-                            if (!in_array($closing_tag[1], $openTags)) {
-                                array_unshift($openTags, $closing_tag[1]);
+                        foreach ($droppedTags as $closingTag) {
+                            if (!in_array($closingTag[1], $openTags)) {
+                                array_unshift($openTags, $closingTag[1]);
                             }
                         }
                     } else {
-                        foreach ($droppedTags as $closing_tag) {
-                            $openTags[] = $closing_tag[1];
+                        foreach ($droppedTags as $closingTag) {
+                            $openTags[] = $closingTag[1];
                         }
                     }
                 }
@@ -2267,7 +2269,7 @@ class Tools
      */
     public static function simplexml_load_file($url, $className = null)
     {
-        $file = self::file_get_content($url);
+        $file = static::file_get_contents($url);
 
         return @simplexml_load_string($file, $className);
     }
@@ -2277,18 +2279,25 @@ class Tools
      * @param      $destination
      * @param null $streamContext
      *
-     * @return bool|int
+     * @return bool
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
     public static function copy($source, $destination, $streamContext = null)
     {
-        if (is_null($streamContext) && !preg_match('/^https?:\/\//', $source)) {
-            return @copy($source, $destination);
+        $guzzle = new Client([
+            'verify'   => __DIR__.'/../cacert.pem',
+            'timeout'  => 60,
+        ]);
+
+        try {
+            $guzzle->get($source, ['sink' => $destination]);
+        } catch (\Exception $e) {
+            return false;
         }
 
-        return @file_put_contents($destination, static::file_get_contents($source, false, $streamContext));
+        return true;
     }
 
     /**
@@ -2298,7 +2307,7 @@ class Tools
     {
         static::displayAsDeprecated();
 
-        return Media::minifyHTML($htmlContent);
+        return \Media::minifyHTML($htmlContent);
     }
 
     /**
@@ -2405,7 +2414,7 @@ class Tools
      */
     public static function parserSQL($sql)
     {
-        if (strlen($sql) > 0) {
+        if (class_exists('\PHPSQLParser') && strlen($sql) > 0) {
             $parser = new \PHPSQLParser($sql);
 
             return $parser->parsed;
@@ -2455,14 +2464,14 @@ class Tools
      */
     public static function getShopDomainSsl($http = false, $entities = false)
     {
-        if (!$domain = ShopUrl::getMainShopDomainSSL()) {
+        if (!$domain = \ShopUrl::getMainShopDomainSSL()) {
             $domain = static::getHttpHost();
         }
         if ($entities) {
             $domain = htmlspecialchars($domain, ENT_COMPAT, 'UTF-8');
         }
         if ($http) {
-            $domain = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://').$domain;
+            $domain = (\Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://').$domain;
         }
 
         return $domain;
@@ -2481,7 +2490,7 @@ class Tools
      */
     public static function getShopDomain($http = false, $entities = false)
     {
-        if (!$domain = ShopUrl::getMainShopDomain()) {
+        if (!$domain = \ShopUrl::getMainShopDomain()) {
             $domain = static::getHttpHost();
         }
         if ($entities) {
@@ -2520,14 +2529,14 @@ class Tools
         }
 
         if (is_null($cache_control)) {
-            $cache_control = (int) Configuration::get('PS_HTACCESS_CACHE_CONTROL');
+            $cache_control = (int) \Configuration::get('PS_HTACCESS_CACHE_CONTROL');
         }
         if (is_null($disable_multiviews)) {
-            $disable_multiviews = (int) Configuration::get('PS_HTACCESS_DISABLE_MULTIVIEWS');
+            $disable_multiviews = (int) \Configuration::get('PS_HTACCESS_DISABLE_MULTIVIEWS');
         }
 
         if ($disable_modsec === null) {
-            $disable_modsec = (int) Configuration::get('PS_HTACCESS_DISABLE_MODSEC');
+            $disable_modsec = (int) \Configuration::get('PS_HTACCESS_DISABLE_MODSEC');
         }
 
         // Check current content of .htaccess and save all code outside of thirty bees comments
@@ -2560,8 +2569,8 @@ class Tools
         }
 
         $domains = [];
-        foreach (ShopUrl::getShopUrls() as $shop_url) {
-            /** @var ShopUrl $shop_url */
+        foreach (\ShopUrl::getShopUrls() as $shop_url) {
+            /** @var \ShopUrl $shop_url */
             if (!isset($domains[$shop_url->domain])) {
                 $domains[$shop_url->domain] = [];
             }
@@ -2611,14 +2620,14 @@ class Tools
 
         fwrite($write_fd, "RewriteEngine on\n");
 
-        if (!$medias && Configuration::getMultiShopValues('PS_MEDIA_SERVER_1')
-            && Configuration::getMultiShopValues('PS_MEDIA_SERVER_2')
-            && Configuration::getMultiShopValues('PS_MEDIA_SERVER_3')
+        if (!$medias && \Configuration::getMultiShopValues('PS_MEDIA_SERVER_1')
+            && \Configuration::getMultiShopValues('PS_MEDIA_SERVER_2')
+            && \Configuration::getMultiShopValues('PS_MEDIA_SERVER_3')
         ) {
             $medias = [
-                Configuration::getMultiShopValues('PS_MEDIA_SERVER_1'),
-                Configuration::getMultiShopValues('PS_MEDIA_SERVER_2'),
-                Configuration::getMultiShopValues('PS_MEDIA_SERVER_3'),
+                \Configuration::getMultiShopValues('PS_MEDIA_SERVER_1'),
+                \Configuration::getMultiShopValues('PS_MEDIA_SERVER_2'),
+                \Configuration::getMultiShopValues('PS_MEDIA_SERVER_3'),
             ];
         }
 
@@ -2631,7 +2640,7 @@ class Tools
             }
         }
 
-        if (Configuration::get('PS_WEBSERVICE_CGI_HOST')) {
+        if (\Configuration::get('PS_WEBSERVICE_CGI_HOST')) {
             fwrite($write_fd, "RewriteCond %{HTTP:Authorization} ^(.*)\nRewriteRule . - [E=HTTP_AUTHORIZATION:%1]\n\n");
         }
 
@@ -2639,7 +2648,7 @@ class Tools
             $physicals = [];
             foreach ($list_uri as $uri) {
                 fwrite($write_fd, PHP_EOL.PHP_EOL.'#Domain: '.$domain.PHP_EOL);
-                if (Shop::isFeatureActive()) {
+                if (\Shop::isFeatureActive()) {
                     fwrite($write_fd, 'RewriteCond %{HTTP_HOST} ^'.$domain.'$'."\n");
                 }
                 fwrite($write_fd, 'RewriteRule . - [E=REWRITEBASE:'.$uri['physical'].']'."\n");
@@ -2649,7 +2658,7 @@ class Tools
                 fwrite($write_fd, 'RewriteRule ^api/(.*)$ %{ENV:REWRITEBASE}webservice/dispatcher.php?url=$1 [QSA,L]'."\n\n");
 
                 if (!$rewrite_settings) {
-                    $rewrite_settings = (int) Configuration::get('PS_REWRITING_SETTINGS', null, null, (int) $uri['id_shop']);
+                    $rewrite_settings = (int) \Configuration::get('PS_REWRITING_SETTINGS', null, null, (int) $uri['id_shop']);
                 }
 
                 $domain_rewrite_cond = 'RewriteCond %{HTTP_HOST} ^'.$domain.'$'."\n";
@@ -2657,19 +2666,19 @@ class Tools
                 if ($uri['virtual']) {
                     if (!$rewrite_settings) {
                         fwrite($write_fd, $media_domains);
-                        if (Shop::isFeatureActive()) {
+                        if (\Shop::isFeatureActive()) {
                             fwrite($write_fd, $domain_rewrite_cond);
                         }
                         fwrite($write_fd, 'RewriteRule ^'.trim($uri['virtual'], '/').'/?$ '.$uri['physical'].$uri['virtual']."index.php [L,R]\n");
                     } else {
                         fwrite($write_fd, $media_domains);
-                        if (Shop::isFeatureActive()) {
+                        if (\Shop::isFeatureActive()) {
                             fwrite($write_fd, $domain_rewrite_cond);
                         }
                         fwrite($write_fd, 'RewriteRule ^'.trim($uri['virtual'], '/').'$ '.$uri['physical'].$uri['virtual']." [L,R]\n");
                     }
                     fwrite($write_fd, $media_domains);
-                    if (Shop::isFeatureActive()) {
+                    if (\Shop::isFeatureActive()) {
                         fwrite($write_fd, $domain_rewrite_cond);
                     }
                     fwrite($write_fd, 'RewriteRule ^'.ltrim($uri['virtual'], '/').'(.*) '.$uri['physical']."$1 [L]\n\n");
@@ -2678,14 +2687,14 @@ class Tools
                 if ($rewrite_settings) {
                     // Compatibility with the old image filesystem
                     fwrite($write_fd, "# Images\n");
-                    if (Configuration::get('PS_LEGACY_IMAGES')) {
+                    if (\Configuration::get('PS_LEGACY_IMAGES')) {
                         fwrite($write_fd, $media_domains);
-                        if (Shop::isFeatureActive()) {
+                        if (\Shop::isFeatureActive()) {
                             fwrite($write_fd, $domain_rewrite_cond);
                         }
                         fwrite($write_fd, 'RewriteRule ^([a-z0-9]+)\-([a-z0-9]+)(\-[_a-zA-Z0-9-]*)(-[0-9]+)?/.+\.jpg$ %{ENV:REWRITEBASE}img/p/$1-$2$3$4.jpg [L]'."\n");
                         fwrite($write_fd, $media_domains);
-                        if (Shop::isFeatureActive()) {
+                        if (\Shop::isFeatureActive()) {
                             fwrite($write_fd, $domain_rewrite_cond);
                         }
                         fwrite($write_fd, 'RewriteRule ^([0-9]+)\-([0-9]+)(-[0-9]+)?/.+\.jpg$ %{ENV:REWRITEBASE}img/p/$1-$2$3.jpg [L]'."\n");
@@ -2700,25 +2709,25 @@ class Tools
                         }
                         $img_name .= '$'.$j;
                         fwrite($write_fd, $media_domains);
-                        if (Shop::isFeatureActive()) {
+                        if (\Shop::isFeatureActive()) {
                             fwrite($write_fd, $domain_rewrite_cond);
                         }
                         fwrite($write_fd, 'RewriteRule ^'.str_repeat('([0-9])', $i).'(\-[_a-zA-Z0-9-]*)?(-[0-9]+)?/.+\.jpg$ %{ENV:REWRITEBASE}img/p/'.$img_path.$img_name.'$'.($j + 1).".jpg [L]\n");
                     }
                     fwrite($write_fd, $media_domains);
-                    if (Shop::isFeatureActive()) {
+                    if (\Shop::isFeatureActive()) {
                         fwrite($write_fd, $domain_rewrite_cond);
                     }
                     fwrite($write_fd, 'RewriteRule ^c/([0-9]+)(\-[\.*_a-zA-Z0-9-]*)(-[0-9]+)?/.+\.jpg$ %{ENV:REWRITEBASE}img/c/$1$2$3.jpg [L]'."\n");
                     fwrite($write_fd, $media_domains);
-                    if (Shop::isFeatureActive()) {
+                    if (\Shop::isFeatureActive()) {
                         fwrite($write_fd, $domain_rewrite_cond);
                     }
                     fwrite($write_fd, 'RewriteRule ^c/([a-zA-Z_-]+)(-[0-9]+)?/.+\.jpg$ %{ENV:REWRITEBASE}img/c/$1$2.jpg [L]'."\n");
                 }
 
                 fwrite($write_fd, "# AlphaImageLoader for IE and fancybox\n");
-                if (Shop::isFeatureActive()) {
+                if (\Shop::isFeatureActive()) {
                     fwrite($write_fd, $domain_rewrite_cond);
                 }
                 fwrite($write_fd, 'RewriteRule ^images_ie/?([^/]+)\.(jpe?g|png|gif)$ js/jquery/plugins/fancybox/images/$1.$2 [L]'."\n");
@@ -2729,11 +2738,11 @@ class Tools
                 fwrite($write_fd, "RewriteCond %{REQUEST_FILENAME} -s [OR]\n");
                 fwrite($write_fd, "RewriteCond %{REQUEST_FILENAME} -l [OR]\n");
                 fwrite($write_fd, "RewriteCond %{REQUEST_FILENAME} -d\n");
-                if (Shop::isFeatureActive()) {
+                if (\Shop::isFeatureActive()) {
                     fwrite($write_fd, $domain_rewrite_cond);
                 }
                 fwrite($write_fd, "RewriteRule ^.*$ - [NC,L]\n");
-                if (Shop::isFeatureActive()) {
+                if (\Shop::isFeatureActive()) {
                     fwrite($write_fd, $domain_rewrite_cond);
                 }
                 fwrite($write_fd, "RewriteRule ^.*\$ %{ENV:REWRITEBASE}index.php [NC,L]\n");
@@ -2813,7 +2822,7 @@ FileETag none
      */
     public static function generateIndex()
     {
-        if (defined('_DB_PREFIX_') && Configuration::get('PS_DISABLE_OVERRIDES')) {
+        if (defined('_DB_PREFIX_') && \Configuration::get('PS_DISABLE_OVERRIDES')) {
             \PrestaShopAutoload::getInstance()->_include_override_path = false;
         }
         \PrestaShopAutoload::getInstance()->generateIndex();
@@ -2914,18 +2923,18 @@ exit;
 
     /**
      * @param int           $level
-     * @param Context|null $context
+     * @param \Context|null $context
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
-    public static function enableCache($level = 1, Context $context = null)
+    public static function enableCache($level = 1, \Context $context = null)
     {
         if (!$context) {
-            $context = Context::getContext();
+            $context = \Context::getContext();
         }
         $smarty = $context->smarty;
-        if (!Configuration::get('PS_SMARTY_CACHE')) {
+        if (!\Configuration::get('PS_SMARTY_CACHE')) {
             return;
         }
         if ($smarty->force_compile == 0 && $smarty->caching == $level) {
@@ -2939,15 +2948,15 @@ exit;
     }
 
     /**
-     * @param Context|null $context
+     * @param \Context|null $context
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
-    public static function restoreCacheSettings(Context $context = null)
+    public static function restoreCacheSettings(\Context $context = null)
     {
         if (!$context) {
-            $context = Context::getContext();
+            $context = \Context::getContext();
         }
 
         if (isset(self::$_forceCompile)) {
@@ -3172,7 +3181,7 @@ exit;
         switch ($type) {
             case 'by':
                 $list = [0 => 'name', 1 => 'price', 2 => 'date_add', 3 => 'date_upd', 4 => 'position', 5 => 'manufacturer_name', 6 => 'quantity', 7 => 'reference'];
-                $value = (is_null($value) || $value === false || $value === '') ? (int) Configuration::get('PS_PRODUCTS_ORDER_BY') : $value;
+                $value = (is_null($value) || $value === false || $value === '') ? (int) \Configuration::get('PS_PRODUCTS_ORDER_BY') : $value;
                 $value = (isset($list[$value])) ? $list[$value] : ((in_array($value, $list)) ? $value : 'position');
                 $order_by_prefix = '';
                 if ($prefix) {
@@ -3192,7 +3201,7 @@ exit;
                 break;
 
             case 'way':
-                $value = (is_null($value) || $value === false || $value === '') ? (int) Configuration::get('PS_PRODUCTS_ORDER_WAY') : $value;
+                $value = (is_null($value) || $value === false || $value === '') ? (int) \Configuration::get('PS_PRODUCTS_ORDER_WAY') : $value;
                 $list = [0 => 'asc', 1 => 'desc'];
 
                 return ((isset($list[$value])) ? $list[$value] : ((in_array($value, $list)) ? $value : 'asc'));
@@ -3268,7 +3277,7 @@ exit;
      */
     public static function clearSmartyCache()
     {
-        $smarty = Context::getContext()->smarty;
+        $smarty = \Context::getContext()->smarty;
         static::clearCache($smarty);
         static::clearCompile($smarty);
     }
@@ -3284,7 +3293,7 @@ exit;
     public static function clearCache($smarty = null, $tpl = false, $cacheId = null, $compileId = null)
     {
         if ($smarty === null) {
-            $smarty = Context::getContext()->smarty;
+            $smarty = \Context::getContext()->smarty;
         }
 
         if ($smarty === null) {
@@ -3307,7 +3316,7 @@ exit;
     public static function clearCompile($smarty = null)
     {
         if ($smarty === null) {
-            $smarty = Context::getContext()->smarty;
+            $smarty = \Context::getContext()->smarty;
         }
 
         if ($smarty === null) {
@@ -3326,10 +3335,10 @@ exit;
     public static function clearColorListCache($id_product = false)
     {
         // Change template dir if called from the BackOffice
-        $current_template_dir = Context::getContext()->smarty->getTemplateDir();
-        Context::getContext()->smarty->setTemplateDir(_PS_THEME_DIR_);
-        static::clearCache(null, _PS_THEME_DIR_.'product-list-colors.tpl', Product::getColorsListCacheId((int) $id_product, false));
-        Context::getContext()->smarty->setTemplateDir($current_template_dir);
+        $current_template_dir = \Context::getContext()->smarty->getTemplateDir();
+        \Context::getContext()->smarty->setTemplateDir(_PS_THEME_DIR_);
+        static::clearCache(null, _PS_THEME_DIR_.'product-list-colors.tpl', \Product::getColorsListCacheId((int) $id_product, false));
+        \Context::getContext()->smarty->setTemplateDir($current_template_dir);
     }
 
     /**
@@ -3960,12 +3969,12 @@ exit;
         static $use_html_purifier = null;
         static $purifier = null;
 
-        if (defined('TB_INSTALLATION_IN_PROGRESS') || !Configuration::configurationIsLoaded()) {
+        if (defined('TB_INSTALLATION_IN_PROGRESS') || !\Configuration::configurationIsLoaded()) {
             return $html;
         }
 
         if ($use_html_purifier === null) {
-            $use_html_purifier = (bool) Configuration::get('PS_USE_HTMLPURIFIER');
+            $use_html_purifier = (bool) \Configuration::get('PS_USE_HTMLPURIFIER');
         }
 
         if ($use_html_purifier) {
@@ -3980,13 +3989,13 @@ exit;
                     $config->set('URI.UnescapeCharacters', implode('', $uri_unescape));
                 }
 
-                if (Configuration::get('PS_ALLOW_HTML_IFRAME')) {
+                if (\Configuration::get('PS_ALLOW_HTML_IFRAME')) {
                     $config->set('HTML.SafeIframe', true);
                     $config->set('HTML.SafeObject', true);
                     $config->set('URI.SafeIframeRegexp', '/.*/');
                 }
 
-                /** @var HTMLPurifier_HTMLDefinition|HTMLPurifier_HTMLModule $def */
+                /** @var \HTMLPurifier_HTMLDefinition|\HTMLPurifier_HTMLModule $def */
                 // http://developers.whatwg.org/the-video-element.html#the-video-element
                 if ($def = $config->getHTMLDefinition(true)) {
                     $def->addElement(

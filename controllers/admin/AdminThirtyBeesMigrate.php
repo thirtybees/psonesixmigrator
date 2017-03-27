@@ -53,13 +53,10 @@ class AdminThirtyBeesMigrateController extends AdminController
     public $ajax = false;
     public $nextResponseType = 'json';
     public $next = 'N/A';
-    /** @var PsOneSixMigrator\Upgrader $upgrader */
-    public $upgrader;
 
     public $standalone = true;
 
     public $bootstrap = true;
-
 
     /** @var array $templateVars */
     public $templateVars = [];
@@ -75,7 +72,10 @@ class AdminThirtyBeesMigrateController extends AdminController
     public $_fieldsUpgradeOptions = [];
     public $_fieldsBackupOptions = [];
     protected $_includeContainer = true;
+    /** @var UpgraderTools $tool */
     protected $tools;
+    /** @var Upgrader $upgrader */
+    protected $upgrader;
     private $install_autoupgrade_dir; // 15 Mo
     private $restoreIgnoreFiles = [];
     private $restoreIgnoreAbsoluteFiles = []; // 4096 ko
@@ -130,13 +130,12 @@ class AdminThirtyBeesMigrateController extends AdminController
             $this->ajax = true;
         }
 
-        $this->tools = UpgraderTools::getInstance();
-
         parent::__construct();
 
         // Database instantiation (need to be cached because there will be at least 100k calls in the upgrade process
         $this->db = Db::getInstance();
         $this->tools = UpgraderTools::getInstance();
+        $this->upgrader = Upgrader::getInstance();
 
         $fileTab = @filemtime($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php');
         $file = @filemtime(_PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.$this->tools->autoupgradeDir.DIRECTORY_SEPARATOR.'ajax-upgradetab.php');
@@ -154,45 +153,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * init to build informations we need
-     *
-     * @return void
-     */
-    public function init()
-    {
-        parent::init();
-
-        // test writable recursively
-        $upgrader = new Upgrader();
-        preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-        if (isset($matches[1])) {
-            $upgrader->branch = $matches[1];
-        }
-        $channel = static::getConfig('channel');
-        switch ($channel) {
-            case 'archive':
-                $this->installVersion = static::getConfig('archive.version_num');
-                $this->tools->destDownloadFilename = static::getConfig('archive.filename');
-                $upgrader->checkTbVersion(true, ['archive']);
-                break;
-            case 'directory':
-                $this->installVersion = static::getConfig('directory.version_num');
-                $upgrader->checkTbVersion(true, ['directory']);
-                break;
-            default:
-                $upgrader->channel = $channel;
-                if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
-                    $upgrader->checkTbVersion(true, ['private', 'minor']);
-                } else {
-                    $upgrader->checkTbVersion(true, ['minor']);
-                }
-                $this->installVersion = $upgrader->versionNum;
-        }
-
-        $this->upgrader = $upgrader;
-    }
-
-    /**
      * @return void
      *
      * @since 1.0.0
@@ -200,8 +160,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     public function initContent()
     {
         parent::initContent();
-
-        $tools = UpgraderTools::getInstance();
 
         /* PrestaShop demo mode */
         if (defined('_PS_MODE_DEMO_') && _PS_MODE_DEMO_) {
@@ -212,7 +170,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             return;
         }
 
-        if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php')) {
+        if (!file_exists($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.'ajax-upgradetab.php')) {
             $html = '<div class="alert alert-danger">'.$this->l('[TECHNICAL ERROR] ajax-upgradetab.php is missing. Please reinstall or reset the module.').'</div>';
             $this->context->smarty->assign('updaterContent', $html);
             $this->context->smarty->assign('content', $html);
@@ -322,7 +280,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         if (count($config) == 0) {
             $tools = UpgraderTools::getInstance();
             if (file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
-                $configContent = Tools::file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
+                $configContent = file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
                 $config = @unserialize(base64_decode($configContent));
             } else {
                 $config = [];
@@ -407,6 +365,13 @@ class AdminThirtyBeesMigrateController extends AdminController
             Configuration::updateValue('PS_SHOP_ENABLE', 0);
         }
 
+        if (Tools::isSubmit('channel')) {
+            $channel = Tools::getValue('channel');
+            if (in_array($channel, ['stable', 'rc', 'beta', 'alpha'])) {
+                $this->writeConfig(['channel' => Tools::getValue('channel')]);
+            }
+        }
+
         if (Tools::isSubmit('customSubmitAutoUpgrade')) {
             $configKeys = array_keys(array_merge($this->_fieldsUpgradeOptions, $this->_fieldsBackupOptions));
             $config = [];
@@ -444,6 +409,7 @@ class AdminThirtyBeesMigrateController extends AdminController
                 $this->_errors[] = sprintf($this->l('Error when trying to delete backups %s'), $name);
             }
         }
+
         parent::postProcess();
     }
 
@@ -462,7 +428,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
             $this->upgrader->channel = $newConfig['channel'];
             $this->upgrader->checkTbVersion();
-            $this->installVersion = $this->upgrader->versionNum;
+            $this->installVersion = $this->upgrader->version;
 
             return $this->resetConfig($newConfig);
         }
@@ -493,9 +459,7 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     public function resetConfig($newConfig)
     {
-        $tools = UpgraderTools::getInstance();
-
-        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($newConfig)));
+        return (bool) file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($newConfig)));
     }
 
     /**
@@ -715,42 +679,36 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     protected function generateMainForm()
     {
-        $upgrader = new Upgrader();
-        preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-        $upgrader->branch = $matches[1];
-        $channel = static::getConfig('channel');
-        switch ($channel) {
-            case 'archive':
-                $upgrader->channel = 'archive';
-                $upgrader->versionNum = static::getConfig('archive.version_num');
-                break;
-            case 'directory':
-                $upgrader->channel = 'directory';
-                $upgrader->versionNum = static::getConfig('directory.version_num');
-                break;
-            default:
-                $upgrader->channel = $channel;
-                if (Tools::getIsset('refreshCurrentVersion')) {
-                    // delete the potential xml files we saved in config/xml (from last release and from current)
-                    $upgrader->clearXmlMd5File(_PS_VERSION_);
-                    $upgrader->clearXmlMd5File($upgrader->versionNum);
-                    if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
-                        $upgrader->checkTbVersion(true, ['private', 'minor']);
-                    } else {
-                        $upgrader->checkTbVersion(true, ['minor']);
-                    }
-
-                    Tools::redirectAdmin(self::$currentIndex.'&conf=5&token='.Tools::getValue('token'));
-                } else {
-                    if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
-                        $upgrader->checkTbVersion(false, ['private', 'minor']);
-                    } else {
-                        $upgrader->checkTbVersion(false, ['minor']);
-                    }
-                }
-        }
-
-        $this->upgrader = $upgrader;
+//        $channel = static::getConfig('channel');
+//        switch ($channel) {
+//            case 'archive':
+//                $upgrader->channel = 'archive';
+//                $upgrader->versionNum = static::getConfig('archive.version_num');
+//                break;
+//            case 'directory':
+//                $upgrader->channel = 'directory';
+//                $upgrader->versionNum = static::getConfig('directory.version_num');
+//                break;
+//            default:
+//                if (Tools::getIsset('refreshCurrentVersion')) {
+//                    // delete the potential xml files we saved in config/xml (from last release and from current)
+//                    $upgrader->clearXmlMd5File(_PS_VERSION_);
+//                    $upgrader->clearXmlMd5File($upgrader->versionNum);
+//                    if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
+//                        $upgrader->checkTbVersion(true, ['private', 'minor']);
+//                    } else {
+//                        $upgrader->checkTbVersion(true, ['minor']);
+//                    }
+//
+//                    Tools::redirectAdmin(self::$currentIndex.'&conf=5&token='.Tools::getValue('token'));
+//                } else {
+//                    if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
+//                        $upgrader->checkTbVersion(false, ['private', 'minor']);
+//                    } else {
+//                        $upgrader->checkTbVersion(false, ['minor']);
+//                    }
+//                }
+//        }
 
         /* Make sure the user has configured the upgrade options, or set default values */
         $configurationKeys = [

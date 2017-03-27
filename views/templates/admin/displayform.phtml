@@ -11,7 +11,7 @@ $required = false;
             $required = true;
         }
 
-        if ((isset($field['disabled']) && $field['disabled']) || version_compare($this->upgrader->versionNum, '1.7.1.0', '>=')) {
+        if ((isset($field['disabled']) && $field['disabled']) || version_compare($this->upgrader->version, '1.7.1.0', '>=')) {
             $disabled = true;
         } else {
             $disabled = false;

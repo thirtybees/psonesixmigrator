@@ -56,19 +56,19 @@ $channel = $this->getConfig('channel');
 			<strong><?php echo $this->l('Are you ready for thirty bees?'); ?></strong>
 			<p class="clearfix">
 				<a href="" id="upgradeNow" class="upgradestep btn btn-primary btn-lg">
-					<i class="icon icon-wrench"></i> <?php echo sprintf($this->l('Migrate to thirty bees'), $this->upgrader->versionNum); ?>
+					<i class="icon icon-wrench"></i> <?php echo sprintf($this->l('Migrate to thirty bees'), $this->upgrader->version); ?>
 				</a>
 			</p>
 			<div class="clearfix"></div>
 			<a class="btn btn-default" href="<?php echo AdminThirtyBeesMigrateController::$currentIndex; ?>&token=<?php echo $this->token; ?>&refreshCurrentVersion=1">
 				<i class="icon icon-refresh"></i> <?php echo $this->l('refresh the page'); ?>
 			</a>
-			<div>
-				<span><?php echo sprintf($this->l('Last check: %s'), date('Y-m-d H:i:s', \Configuration::get('PS_LAST_VERSION_CHECK'))); ?></span>
-			</div>
         <?php endif; ?>
         <?php echo $this->getBlockConfigurationAdvanced(); ?>
     <?php endif; ?>
+	<div>
+		<span><?php echo sprintf($this->l('Last check: %s'), date('Y-m-d H:i:s', \Configuration::get('PS_LAST_VERSION_CHECK'))); ?></span>
+	</div>
 </div>
 
 <?php if ($this->manualMode) : ?>

@@ -110,7 +110,7 @@ class AjaxProcessor
         $this->currentParams = empty($_REQUEST['params']) ? null : $_REQUEST['params'];
 
         $this->tools = UpgraderTools::getInstance();
-        $this->upgrader = new Upgrader();
+        $this->upgrader = Upgrader::getInstance();
         $this->latestRootDir = $this->tools->latestPath.DIRECTORY_SEPARATOR.'prestashop';
 
         foreach ($this->ajaxParams as $prop) {
@@ -384,7 +384,7 @@ class AjaxProcessor
     {
         $upgradeInfo = [];
         $publicChannel = ['minor', 'major', 'rc', 'beta', 'alpha'];
-        $upgrader = new Upgrader();
+        $upgrader = Upgrader::getInstance();
         preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
         $upgrader->branch = $matches[1];
         $upgrader->channel = $channel;
@@ -401,7 +401,7 @@ class AjaxProcessor
             $upgradeInfo['version_num'] = $upgrader->versionNum;
             $upgradeInfo['version_name'] = $upgrader->versionName;
             $upgradeInfo['link'] = $upgrader->link;
-            $upgradeInfo['md5'] = $upgrader->md5;
+            $upgradeInfo['md5'] = $upgrader->md5Link;
             $upgradeInfo['changelog'] = $upgrader->changelog;
         } else {
             switch ($channel) {
@@ -492,7 +492,7 @@ class AjaxProcessor
         // do nothing after this request (see javascript function doAjaxRequest )
         $this->next = '';
         $channel = AdminThirtyBeesMigrateController::getConfig('channel');
-        $this->upgrader = new Upgrader();
+        $this->upgrader = Upgrader::getInstance();
         switch ($channel) {
             case 'archive':
                 $version = AdminThirtyBeesMigrateController::getConfig('archive.version_num');
@@ -504,12 +504,8 @@ class AjaxProcessor
                 preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
                 $this->upgrader->branch = $matches[1];
                 $this->upgrader->channel = $channel;
-                if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-                    $this->upgrader->checkTbVersion(false, ['private', 'minor']);
-                } else {
-                    $this->upgrader->checkTbVersion(false, ['minor']);
-                }
-                $version = $this->upgrader->versionNum;
+
+                $version = $this->upgrader->version;
         }
 
         $diffFileList = $this->upgrader->getDiffFilesList(_PS_VERSION_, $version);
@@ -542,22 +538,16 @@ class AjaxProcessor
     {
         // do nothing after this request (see javascript function doAjaxRequest )
         $this->next = '';
-        $this->upgrader = new Upgrader();
+        $this->upgrader = Upgrader::getInstance();
 
         $changedFileList = $this->upgrader->getChangedFilesList();
-        if ($this->upgrader->isAuthenticPrestashopVersion() === true
-            && !is_array($changedFileList)
+        if (!is_array($changedFileList)
         ) {
             $this->nextParams['status'] = 'error';
             $this->nextParams['msg'] = $this->l('Unable to check files for the installed version of PrestaShop.');
         } else {
-            if ($this->upgrader->isAuthenticPrestashopVersion() === true) {
-                $this->nextParams['status'] = 'ok';
-                $testOrigCore = true;
-            } else {
-                $testOrigCore = false;
-                $this->nextParams['status'] = 'warn';
-            }
+            $this->nextParams['status'] = 'ok';
+            $testOrigCore = true;
 
             if (!isset($changedFileList['core'])) {
                 $changedFileList['core'] = [];
@@ -585,8 +575,8 @@ class AjaxProcessor
     }
 
     /**
-     * very first step of the upgrade process. The only thing done is the selection
-     * of the next step
+     * The very first step of the upgrade process.
+     * The only thing done here is the selection of the next step.
      *
      * @return void
      *
@@ -595,42 +585,14 @@ class AjaxProcessor
     public function ajaxProcessUpgradeNow()
     {
         $this->nextDesc = $this->l('Starting upgrade...');
-        $channel = AdminThirtyBeesMigrateController::getConfig('channel');
         $this->next = 'download';
-        if (!is_object($this->upgrader)) {
-            $this->upgrader = new Upgrader();
-        }
         preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-        $this->upgrader->branch = $matches[1];
-        $this->upgrader->channel = $channel;
-        if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
-            $this->upgrader->checkTbVersion(false, ['private', 'minor']);
-        } else {
-            $this->upgrader->checkTbVersion(false, ['minor']);
-        }
 
-        switch ($channel) {
-            case 'directory':
-                // if channel directory is chosen, we assume it's "ready for use" (samples already removed for example)
-                $this->next = 'removeSamples';
-                $this->nextQuickInfo[] = $this->l('Skip downloading and unziping steps, upgrade process will now remove sample data.');
-                $this->nextDesc = $this->l('Shop deactivated. Removing sample files...');
-                break;
-            case 'archive':
-                $this->next = 'unzip';
-                $this->nextQuickInfo[] = $this->l('Skip downloading step, upgrade process will now unzip the local archive.');
-                $this->nextDesc = $this->l('Shop deactivated. Extracting files...');
-                break;
-            default:
-                $this->next = 'download';
-                $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
-                if ($this->upgrader->channel == 'private') {
-                    $this->upgrader->link = AdminThirtyBeesMigrateController::getConfig('private_release_link');
-                    $this->upgrader->md5 = AdminThirtyBeesMigrateController::getConfig('private_release_md5');
-                }
-                $this->nextQuickInfo[] = sprintf($this->l('Downloaded archive will come from %s'), $this->upgrader->link);
-                $this->nextQuickInfo[] = sprintf($this->l('MD5 hash will be checked against %s'), $this->upgrader->md5);
-        }
+        $this->next = 'download';
+        $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
+
+        $this->nextQuickInfo[] = sprintf($this->l('Downloaded archive will come from %s'), $this->upgrader->coreLink);
+        $this->nextQuickInfo[] = sprintf($this->l('MD5 hash will be checked against %s'), $this->upgrader->md5Link);
     }
 
     /**
@@ -2075,7 +2037,7 @@ class AjaxProcessor
         }
 
         if (!$this->upgrader) {
-            $this->upgrader = new Upgrader();
+            $this->upgrader = Upgrader::getInstance();
         }
 
         $toRemove = false;
@@ -2966,7 +2928,7 @@ class AjaxProcessor
     {
         if (ConfigurationTest::test_fopen() || ConfigurationTest::test_curl()) {
             if (!is_object($this->upgrader)) {
-                $this->upgrader = new Upgrader();
+                $this->upgrader = Upgrader::getInstance();
             }
             // regex optimization
             preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
@@ -2980,7 +2942,7 @@ class AjaxProcessor
 
             if ($this->upgrader->channel == 'private') {
                 $this->upgrader->link = AdminThirtyBeesMigrateController::getConfig('private_release_link');
-                $this->upgrader->md5 = AdminThirtyBeesMigrateController::getConfig('private_release_md5');
+                $this->upgrader->md5Link = AdminThirtyBeesMigrateController::getConfig('private_release_md5');
             }
             $this->nextQuickInfo[] = sprintf($this->l('downloading from %s'), $this->upgrader->link);
             $this->nextQuickInfo[] = sprintf($this->l('file will be saved in %s'), $this->getFilePath());
@@ -2994,7 +2956,7 @@ class AjaxProcessor
                 $res = $this->upgrader->downloadLast($this->tools->downloadPath, $this->tools->destDownloadFilename);
                 if ($res) {
                     $md5file = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR.$this->tools->destDownloadFilename);
-                    if ($md5file == $this->upgrader->md5) {
+                    if ($md5file == $this->upgrader->md5Link) {
                         $this->nextQuickInfo[] = $this->l('Download complete.');
                         $this->next = 'unzip';
                         $this->nextDesc = $this->l('Download complete. Now extracting...');
