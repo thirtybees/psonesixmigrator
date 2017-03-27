@@ -573,121 +573,121 @@
         return true;
       }
 
-      $(document).ready(function () {
-        $.ajax({
-          type: "POST",
-          url: window.upgrader.ajaxLocation,
-          async: true,
-          data: {
-            dir: window.upgrader.dir,
-            token: window.upgrader.token,
-            autoupgradeDir: window.upgrader.autoupgradeDir,
-            tab: window.upgrader.tab,
-            action: "checkFilesVersion",
-            ajax: "1",
-            params: {}
-          },
-          success: function (res, textStatus, jqXHR) {
-            if (isJsonString(res)) {
-              res = $.parseJSON(res);
-            } else {
-              res = { nextParams: { status: "error" } };
-            }
-            var answer = res.nextParams;
-            $("#checkPrestaShopFilesVersion").html("<span> " + answer.msg + " </span> ");
-            if ((answer.status == "error") || (typeof(answer.result) == "undefined")) {
-              $("#checkPrestaShopFilesVersion").prepend("<img src=\"../img/admin/warning.gif\" /> ");
-            } else {
-              $("#checkPrestaShopFilesVersion").prepend("<img src=\"../img/admin/warning.gif\" /> ");
-              $("#checkPrestaShopFilesVersion").append("<a id=\"toggleChangedList\" class=\"button\" href=\"\">See or hide the list</a><br/>");
-              $("#checkPrestaShopFilesVersion").append("<div id=\"changedList\" style=\"display:none \"><br/>");
-              if (answer.result.core.length) {
-                addModifiedFileList("Core file(s)'", answer.result.core, "changedImportant", "#changedList");
-              }
-              if (answer.result.mail.length) {
-                addModifiedFileList("Mail file(s)", answer.result.mail, "changedNotice", "#changedList");
-              }
-              if (answer.result.translation.length) {
-                addModifiedFileList("Translation file(s)", answer.result.translation, "changedNotice", "#changedList");
-              }
-
-              $("#toggleChangedList").bind("click", function (e) {
-                e.preventDefault();
-                $("#changedList").toggle();
-              });
-              $(".toggleSublist").die().live("click", function (e) {
-                e.preventDefault();
-                $(this).parent().next().toggle();
-              });
-            }
-          }
-          ,
-          error: function (res, textStatus, jqXHR) {
-            if (textStatus == "timeout" && action == "download") {
-              updateInfoStep("Your server cannot download the file. Please upload it to your FTP server, and put it in your /[admin]/autoupgrade directory.");
-            }
-            else {
-              // technical error : no translation needed
-              $("#checkPrestaShopFilesVersion").html("<img src=\"../img/admin/warning.gif\" /> Error: Unable to check md5 files");
-            }
-          }
-        });
-        $.ajax({
-          type: "POST",
-          url: window.upgrader.ajaxLocation,
-          async: true,
-          data: {
-            dir: window.upgrader.dir,
-            token: window.upgrader.token,
-            autoupgradeDir: window.upgrader.autoupgradeDir,
-            tab: window.upgrader.tab,
-            action: "compareReleases",
-            ajax: "1",
-            params: {}
-          },
-          success: function (res, textStatus, jqXHR) {
-            if (isJsonString(res)) {
-              res = $.parseJSON(res);
-            } else {
-              res = { nextParams: { status: "error" } };
-            }
-            var answer = res.nextParams;
-            $("#checkPrestaShopModifiedFiles").html("<span> " + answer.msg + " </span> ");
-            if ((answer.status == "error") || (typeof(answer.result) == "undefined")) {
-              $("#checkPrestaShopModifiedFiles").prepend("<img src=\"../img/admin/warning.gif\" /> ");
-            } else {
-              $("#checkPrestaShopModifiedFiles").prepend("<img src=\"../img/admin/warning.gif\" /> ");
-              $("#checkPrestaShopModifiedFiles").append("<a id=\"toggleDiffList\" class=\"button\" href=\"\">See or hide the list</a><br/>");
-              $("#checkPrestaShopModifiedFiles").append("<div id=\"diffList\" style=\"display:none \"><br/>");
-              if (answer.result.deleted.length) {
-                addModifiedFileList("These files will be deleted", answer.result.deleted, "diffImportant", "#diffList");
-              }
-              if (answer.result.modified.length) {
-                addModifiedFileList("These files will be modified", answer.result.modified, "diffImportant", "#diffList");
-              }
-
-              $("#toggleDiffList").bind("click", function (e) {
-                e.preventDefault();
-                $("#diffList").toggle();
-              });
-              $(".toggleSublist").die().live("click", function (e) {
-                e.preventDefault();
-                // this=a, parent=h3, next=ul
-                $(this).parent().next().toggle();
-              });
-            }
-          },
-          error: function (res, textStatus, jqXHR) {
-            if (textStatus == "timeout" && action == "download") {
-              updateInfoStep("Your server cannot download the file. Please upload it first by ftp in your admin/autoupgrade directory");
-            }
-            else {
-              // technical error : no translation needed
-              $("#checkPrestaShopFilesVersion").html("<img src=\"../img/admin/warning.gif\" /> Error: Unable to check md5 files");
-            }
-          }
-        })
-      });
+      // $(document).ready(function () {
+      //   $.ajax({
+      //     type: "POST",
+      //     url: window.upgrader.ajaxLocation,
+      //     async: true,
+      //     data: {
+      //       dir: window.upgrader.dir,
+      //       token: window.upgrader.token,
+      //       autoupgradeDir: window.upgrader.autoupgradeDir,
+      //       tab: window.upgrader.tab,
+      //       action: "checkFilesVersion",
+      //       ajax: "1",
+      //       params: {}
+      //     },
+      //     success: function (res, textStatus, jqXHR) {
+      //       if (isJsonString(res)) {
+      //         res = $.parseJSON(res);
+      //       } else {
+      //         res = { nextParams: { status: "error" } };
+      //       }
+      //       var answer = res.nextParams;
+      //       $("#checkPrestaShopFilesVersion").html("<span> " + answer.msg + " </span> ");
+      //       if ((answer.status == "error") || (typeof(answer.result) == "undefined")) {
+      //         $("#checkPrestaShopFilesVersion").prepend("<img src=\"../img/admin/warning.gif\" /> ");
+      //       } else {
+      //         $("#checkPrestaShopFilesVersion").prepend("<img src=\"../img/admin/warning.gif\" /> ");
+      //         $("#checkPrestaShopFilesVersion").append("<a id=\"toggleChangedList\" class=\"button\" href=\"\">See or hide the list</a><br/>");
+      //         $("#checkPrestaShopFilesVersion").append("<div id=\"changedList\" style=\"display:none \"><br/>");
+      //         if (answer.result.core.length) {
+      //           addModifiedFileList("Core file(s)'", answer.result.core, "changedImportant", "#changedList");
+      //         }
+      //         if (answer.result.mail.length) {
+      //           addModifiedFileList("Mail file(s)", answer.result.mail, "changedNotice", "#changedList");
+      //         }
+      //         if (answer.result.translation.length) {
+      //           addModifiedFileList("Translation file(s)", answer.result.translation, "changedNotice", "#changedList");
+      //         }
+      //
+      //         $("#toggleChangedList").bind("click", function (e) {
+      //           e.preventDefault();
+      //           $("#changedList").toggle();
+      //         });
+      //         $(".toggleSublist").die().live("click", function (e) {
+      //           e.preventDefault();
+      //           $(this).parent().next().toggle();
+      //         });
+      //       }
+      //     }
+      //     ,
+      //     error: function (res, textStatus, jqXHR) {
+      //       if (textStatus == "timeout" && action == "download") {
+      //         updateInfoStep("Your server cannot download the file. Please upload it to your FTP server, and put it in your /[admin]/autoupgrade directory.");
+      //       }
+      //       else {
+      //         // technical error : no translation needed
+      //         $("#checkPrestaShopFilesVersion").html("<img src=\"../img/admin/warning.gif\" /> Error: Unable to check md5 files");
+      //       }
+      //     }
+      //   });
+      //   $.ajax({
+      //     type: "POST",
+      //     url: window.upgrader.ajaxLocation,
+      //     async: true,
+      //     data: {
+      //       dir: window.upgrader.dir,
+      //       token: window.upgrader.token,
+      //       autoupgradeDir: window.upgrader.autoupgradeDir,
+      //       tab: window.upgrader.tab,
+      //       action: "compareReleases",
+      //       ajax: "1",
+      //       params: {}
+      //     },
+      //     success: function (res, textStatus, jqXHR) {
+      //       if (isJsonString(res)) {
+      //         res = $.parseJSON(res);
+      //       } else {
+      //         res = { nextParams: { status: "error" } };
+      //       }
+      //       var answer = res.nextParams;
+      //       $("#checkPrestaShopModifiedFiles").html("<span> " + answer.msg + " </span> ");
+      //       if ((answer.status == "error") || (typeof(answer.result) == "undefined")) {
+      //         $("#checkPrestaShopModifiedFiles").prepend("<img src=\"../img/admin/warning.gif\" /> ");
+      //       } else {
+      //         $("#checkPrestaShopModifiedFiles").prepend("<img src=\"../img/admin/warning.gif\" /> ");
+      //         $("#checkPrestaShopModifiedFiles").append("<a id=\"toggleDiffList\" class=\"button\" href=\"\">See or hide the list</a><br/>");
+      //         $("#checkPrestaShopModifiedFiles").append("<div id=\"diffList\" style=\"display:none \"><br/>");
+      //         if (answer.result.deleted.length) {
+      //           addModifiedFileList("These files will be deleted", answer.result.deleted, "diffImportant", "#diffList");
+      //         }
+      //         if (answer.result.modified.length) {
+      //           addModifiedFileList("These files will be modified", answer.result.modified, "diffImportant", "#diffList");
+      //         }
+      //
+      //         $("#toggleDiffList").bind("click", function (e) {
+      //           e.preventDefault();
+      //           $("#diffList").toggle();
+      //         });
+      //         $(".toggleSublist").die().live("click", function (e) {
+      //           e.preventDefault();
+      //           // this=a, parent=h3, next=ul
+      //           $(this).parent().next().toggle();
+      //         });
+      //       }
+      //     },
+      //     error: function (res, textStatus, jqXHR) {
+      //       if (textStatus == "timeout" && action == "download") {
+      //         updateInfoStep("Your server cannot download the file. Please upload it first by ftp in your admin/autoupgrade directory");
+      //       }
+      //       else {
+      //         // technical error : no translation needed
+      //         $("#checkPrestaShopFilesVersion").html("<img src=\"../img/admin/warning.gif\" /> Error: Unable to check md5 files");
+      //       }
+      //     }
+      //   })
+      // });
     }
 
 // advanced/normal mode

@@ -382,7 +382,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             }
             $res = $this->writeConfig($config);
             if ($res) {
-                Tools::redirectAdmin($this->currentIndex.'&conf=6&token='.Tools::getValue('token'));
+                Tools::redirectAdmin(self::$currentIndex.'&conf=6&token='.Tools::getValue('token'));
             }
         }
 
@@ -390,8 +390,8 @@ class AdminThirtyBeesMigrateController extends AdminController
             $res = false;
             $name = Tools::getValue('name');
             $tools = UpgraderTools::getInstance();
-            $filelist = scandir($tools->backupPath);
-            foreach ($filelist as $filename) {
+            $fileList = scandir($tools->backupPath);
+            foreach ($fileList as $filename) {
                 // the following will match file or dir related to the selected backup
                 if (!empty($filename) && $filename[0] != '.' && $filename != 'index.php' && $filename != '.htaccess'
                     && preg_match('#^(auto-backupfiles_|)'.preg_quote($name).'(\.zip|)$#', $filename, $matches)
@@ -406,7 +406,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             if ($res) {
                 Tools::redirectAdmin(static::$currentIndex.'&conf=1&token='.Tools::getValue('token'));
             } else {
-                $this->_errors[] = sprintf($this->l('Error when trying to delete backups %s'), $name);
+                $this->errors[] = sprintf($this->l('Error when trying to delete backups %s'), $name);
             }
         }
 
@@ -443,7 +443,6 @@ class AdminThirtyBeesMigrateController extends AdminController
         foreach ($newConfig as $key => $val) {
             $config[$key] = $val;
         }
-        $this->next_desc = $this->l('Configuration successfully updated.').' <strong>'.$this->l('This page will now be reloaded and the module will check if a new version is available.').'</strong>';
 
         return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($config)));
     }

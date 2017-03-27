@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp;
+namespace PsOneSixMigrator\GuzzleHttp;
 
 use PsOneSixMigrator\GuzzleHttp\Handler\CurlHandler;
 use PsOneSixMigrator\GuzzleHttp\Handler\CurlMultiHandler;
