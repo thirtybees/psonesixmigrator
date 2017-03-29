@@ -42,10 +42,10 @@ $channel = UpgraderTools::getConfig('channel');
         <?php $showBigButtonNewVersion = false; ?>
         <?php if (count(\PsOneSixMigrator\AjaxProcessor::$skipAction) > 0) : ?>
 			<div id="skipAction-list" class="alert alert-warning">
-                <?php echo $this->l('The following action are automatically replaced'); ?>
+                <?php echo $this->l('The following actions will be automatically replaced'); ?>
 				<ul>
                     <?php foreach (\PsOneSixMigrator\AjaxProcessor::$skipAction as $k => $v) : ?>
-						<li><?php echo sprintf($this->l('%1$s will be replaced with %2$s'), '<b>'.$k.'</b>', '<b>'.$v.'</b>'); ?></li>
+						<li><?php echo sprintf($this->l('%1$s will be replaced with %2$s'), '<strong>'.$k.'</strong>', '<b>'.$v.'</b>'); ?></li>
                     <?php endforeach; ?>
 				</ul>
 				<p><?php echo $this->l('To change this behavior, you need to manually edit your php files'); ?></p>

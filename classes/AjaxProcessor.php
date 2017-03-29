@@ -3490,6 +3490,6 @@ class AjaxProcessor
 
         $tokenShouldBe = $blowfish->encrypt('thirtybees1337H4ck0rzz');
 
-        return $ajaxToken === $tokenShouldBe;
+        return $tokenShouldBe && $ajaxToken === $tokenShouldBe;
     }
 }

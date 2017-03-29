@@ -119,6 +119,8 @@
 
     $(document).ready(function () {
       var $channelSelect = $('#channelSelect');
+      var $restoreNameSelect = $('select[name=restoreName]');
+
       $channelSelect.change(function () {
         refreshChannelInfo();
       });
@@ -149,7 +151,6 @@
       /**
        * reset rollbackParams js array (used to init rollback button)
        */
-      $restoreNameSelect = $('select[name=restore]');
       $restoreNameSelect.change(function () {
         var rollbackParams;
 
@@ -334,7 +335,6 @@
     }
 
     function afterRollbackComplete(res) {
-      var params = res.nextParams;
       $('#pleaseWait').hide();
       $('#upgradeResultCheck')
         .addClass('ok')
@@ -423,15 +423,18 @@
           $.xhrPool.pop();
           // $(window).unbind('beforeunload');
         },
-        success: function (resd, textStatus) {
+        success: function (res, textStatus) {
           var $action = $('#' + action);
           var response;
 
           $('#pleaseWait').hide();
           try {
-            response = $.parseJSON(res);
+            response = JSON.parse(res);
           } catch (e) {
-            response = { status: 'error', nextParams: nextParams };
+            response = {
+              status: 'error',
+              nextParams: nextParams
+            };
             alert('Javascript error (parseJSON) detected for action "' + action + '"Starting recovery process...');
           }
           addQuickInfo(res.nextQuickInfo);

@@ -33,7 +33,7 @@ $upgrader = \PsOneSixMigrator\Upgrader::getInstance();
 	<label for="channelSelect"><?php echo $this->l('Channel:'); ?></label>
 	<select id="channelSelect" name="channel" class="form-control fixed-width-xxl">
 		<?php foreach (['stable', 'rc', 'beta', 'alpha'] as $channel) : ?>
-		<option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"<?php echo ($channel === $upgrader->channel) ? 'class="current" selected="selected">'.$channel.'*' : '>'.$channel ?></option>
+		<option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"><?php echo $channel; ?></option>
 		<?php endforeach; ?>
 	</select>
 	<div id="channelSelectErrors" class="alert alert-danger" style="display:none"></div>
