@@ -25,8 +25,6 @@
 
 namespace PsOneSixMigrator;
 
-use AdminThirtyBeesMigrateController;
-
 /**
  * Class AjaxProcessor
  *
@@ -143,7 +141,7 @@ class AjaxProcessor
      */
     public function optionDisplayErrors()
     {
-        if (\AdminThirtyBeesMigrateController::getConfig('PS_DISPLAY_ERRORS')) {
+        if (UpgraderTools::getConfig('PS_DISPLAY_ERRORS')) {
             error_reporting(E_ALL);
             ini_set('display_errors', 'on');
         } else {
@@ -212,13 +210,13 @@ class AjaxProcessor
         }
         $this->next = '';
 
-        if (AdminThirtyBeesMigrateController::getConfig('channel') != 'archive' && file_exists($this->getFilePath()) && unlink($this->getFilePath())) {
+        if (UpgraderTools::getConfig('channel') != 'archive' && file_exists($this->getFilePath()) && unlink($this->getFilePath())) {
             $this->nextQuickInfo[] = sprintf($this->l('%s removed'), $this->getFilePath());
         } elseif (is_file($this->getFilePath())) {
             $this->nextQuickInfo[] = '<strong>'.sprintf($this->l('Please remove %s by FTP'), $this->getFilePath()).'</strong>';
         }
 
-        if (AdminThirtyBeesMigrateController::getConfig('channel') != 'directory' && file_exists($this->latestRootDir) && Tools::deleteDirectory($this->latestRootDir, true)) {
+        if (UpgraderTools::getConfig('channel') != 'directory' && file_exists($this->latestRootDir) && Tools::deleteDirectory($this->latestRootDir, true)) {
             $this->nextQuickInfo[] = sprintf($this->l('%s removed'), $this->latestRootDir);
         } elseif (is_dir($this->latestRootDir)) {
             $this->nextQuickInfo[] = '<strong>'.sprintf($this->l('Please remove %s by FTP'), $this->latestRootDir).'</strong>';
@@ -366,10 +364,19 @@ class AjaxProcessor
         $this->next = '';
 
         $channel = $this->currentParams['channel'];
-        $upgradeInfo = $this->getInfoForChannel($channel);
-        $this->nextParams['result']['available'] = isset($upgradeInfo['available']) ? $upgradeInfo['available'] : false;
+        $upgrader = Upgrader::getInstance();
+        $upgrader->selectedChannel = $channel;
+        $upgrader->checkTbVersion(true);
 
-        $this->nextParams['result']['div'] = $this->divChannelInfos($upgradeInfo);
+        $this->nextParams['result'] = [
+            'version'   => $upgrader->version,
+            'channel'   => $upgrader->channel,
+            'coreLink'  => $upgrader->coreLink,
+            'extraLink' => $upgrader->extraLink,
+            'md5Link'   => $upgrader->md5Link,
+            'changelog' => $upgrader->changelogLink,
+            'available' => (bool) $upgrader->version,
+        ];
     }
 
     /** returns an array containing information related to the channel $channel
@@ -389,24 +396,17 @@ class AjaxProcessor
         $upgrader->branch = $matches[1];
         $upgrader->channel = $channel;
         if (in_array($channel, $publicChannel)) {
-            if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
+            if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
                 $upgrader->checkTbVersion(false, ['private', 'minor']);
             } else {
                 $upgrader->checkTbVersion(false, ['minor']);
             }
 
-            $upgradeInfo = [];
-            $upgradeInfo['branch'] = $upgrader->branch;
-            $upgradeInfo['available'] = $upgrader->available;
-            $upgradeInfo['version_num'] = $upgrader->versionNum;
-            $upgradeInfo['version_name'] = $upgrader->versionName;
-            $upgradeInfo['link'] = $upgrader->link;
-            $upgradeInfo['md5'] = $upgrader->md5Link;
-            $upgradeInfo['changelog'] = $upgrader->changelog;
+
         } else {
             switch ($channel) {
                 case 'private':
-                    if (!AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
+                    if (!UpgraderTools::getConfig('private_allow_major')) {
                         $upgrader->checkTbVersion(false, ['private', 'minor']);
                     } else {
                         $upgrader->checkTbVersion(false, ['minor']);
@@ -416,9 +416,9 @@ class AjaxProcessor
                     $upgradeInfo['branch'] = $upgrader->branch;
                     $upgradeInfo['version_num'] = $upgrader->versionNum;
                     $upgradeInfo['version_name'] = $upgrader->versionName;
-                    $upgradeInfo['link'] = AdminThirtyBeesMigrateController::getConfig('private_release_link');
-                    $upgradeInfo['md5'] = AdminThirtyBeesMigrateController::getConfig('private_release_md5');
-                    $upgradeInfo['changelog'] = $upgrader->changelog;
+                    $upgradeInfo['link'] = UpgraderTools::getConfig('private_release_link');
+                    $upgradeInfo['md5'] = UpgraderTools::getConfig('private_release_md5');
+                    $upgradeInfo['changelog'] = $upgrader->changelogLink;
                     break;
                 case 'archive':
                     $upgradeInfo['available'] = true;
@@ -433,53 +433,6 @@ class AjaxProcessor
     }
 
     /**
-     * @param array $upgradeInfo
-     *
-     * @return string
-     *
-     * @since 1.0.0
-     */
-    public function divChannelInfos($upgradeInfo)
-    {
-        if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private') {
-            $upgradeInfo['link'] = AdminThirtyBeesMigrateController::getConfig('private_release_link');
-            $upgradeInfo['md5'] = AdminThirtyBeesMigrateController::getConfig('private_release_md5');
-        }
-
-        return $this->displayAdminTemplate(__DIR__.'/../views/templates/admin/channelinfo.phtml', ['upgradeInfo' => $upgradeInfo]);
-    }
-
-    /**
-     * Display a phtml template file
-     *
-     * @param string $file
-     * @param array  $params
-     *
-     * @return string Content
-     *
-     * @since 1.0.0
-     *
-     * @todo  : remove, this function really shouldn't be here
-     */
-    private function displayAdminTemplate($file, $params = [])
-    {
-        foreach ($params as $name => $param) {
-            $$name = $param;
-        }
-
-        ob_start();
-
-        include($file);
-
-        $content = ob_get_contents();
-        if (ob_get_level() && ob_get_length() > 0) {
-            ob_end_clean();
-        }
-
-        return $content;
-    }
-
-    /**
      * get the list of all modified and deleted files between current version
      * and target version (according to channel configuration)
      *
@@ -491,14 +444,14 @@ class AjaxProcessor
     {
         // do nothing after this request (see javascript function doAjaxRequest )
         $this->next = '';
-        $channel = AdminThirtyBeesMigrateController::getConfig('channel');
+        $channel = UpgraderTools::getConfig('channel');
         $this->upgrader = Upgrader::getInstance();
         switch ($channel) {
             case 'archive':
-                $version = AdminThirtyBeesMigrateController::getConfig('archive.version_num');
+                $version = UpgraderTools::getConfig('archive.version_num');
                 break;
             case 'directory':
-                $version = AdminThirtyBeesMigrateController::getConfig('directory.version_num');
+                $version = UpgraderTools::getConfig('directory.version_num');
                 break;
             default:
                 preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
@@ -2150,7 +2103,7 @@ class AjaxProcessor
             case 'upgrade':
                 // keep mail : will skip only if already exists
                 /* If set to false, we will not upgrade/replace the "mails" directory */
-                if (!AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_KEEP_MAILS')) {
+                if (!UpgraderTools::getConfig('PS_AUTOUP_KEEP_MAILS')) {
                     if (strpos(str_replace('/', DIRECTORY_SEPARATOR, $fullpath), DIRECTORY_SEPARATOR.'mails'.DIRECTORY_SEPARATOR)) {
                         return true;
                     }
@@ -2385,7 +2338,7 @@ class AjaxProcessor
      */
     public function ajaxProcessBackupDb()
     {
-        if (!AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->versionNum, '1.7.0.0', '<')) {
+        if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->versionNum, '1.7.0.0', '<')) {
             $this->stepDone = true;
             $this->nextParams['dbStep'] = 0;
             $this->nextDesc = sprintf($this->l('Database backup skipped. Now upgrading files...'), $this->backupName);
@@ -2666,7 +2619,7 @@ class AjaxProcessor
      */
     public function ajaxProcessBackupFiles()
     {
-        if (!AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->versionNum, '1.7.0.0', '<')) {
+        if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->versionNum, '1.7.0.0', '<')) {
             $this->stepDone = true;
             $this->next = 'backupDb';
             $this->nextDesc = 'File backup skipped.';
@@ -2832,7 +2785,7 @@ class AjaxProcessor
         for ($i = 0; $i < UpgraderTools::$loopRemoveSamples; $i++) {
             if (count($this->nextParams['removeList']) <= 0) {
                 $this->stepDone = true;
-                if (AdminThirtyBeesMigrateController::getConfig('skip_backup')) {
+                if (UpgraderTools::getConfig('skip_backup')) {
                     $this->next = 'upgradeFiles';
                     $this->nextDesc = $this->l('All sample files removed. Backup process skipped. Now upgrading files.');
                 } else {
@@ -2932,17 +2885,17 @@ class AjaxProcessor
             }
             // regex optimization
             preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-            $this->upgrader->channel = AdminThirtyBeesMigrateController::getConfig('channel');
+            $this->upgrader->channel = UpgraderTools::getConfig('channel');
             $this->upgrader->branch = $matches[1];
-            if (AdminThirtyBeesMigrateController::getConfig('channel') == 'private' && !AdminThirtyBeesMigrateController::getConfig('private_allow_major')) {
+            if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
                 $this->upgrader->checkTbVersion(false, ['private', 'minor']);
             } else {
                 $this->upgrader->checkTbVersion(false, ['minor']);
             }
 
             if ($this->upgrader->channel == 'private') {
-                $this->upgrader->link = AdminThirtyBeesMigrateController::getConfig('private_release_link');
-                $this->upgrader->md5Link = AdminThirtyBeesMigrateController::getConfig('private_release_md5');
+                $this->upgrader->link = UpgraderTools::getConfig('private_release_link');
+                $this->upgrader->md5Link = UpgraderTools::getConfig('private_release_md5');
             }
             $this->nextQuickInfo[] = sprintf($this->l('downloading from %s'), $this->upgrader->link);
             $this->nextQuickInfo[] = sprintf($this->l('file will be saved in %s'), $this->getFilePath());
@@ -3034,7 +2987,7 @@ class AjaxProcessor
      */
     public function displayAjax()
     {
-        echo $this->buildAjaxResult();
+        die($this->buildAjaxResult());
     }
 
     /**
@@ -3046,13 +2999,13 @@ class AjaxProcessor
     {
         $return = [];
 
-        $return['error'] = $this->error;
+        $return['error'] = (bool) $this->error;
         $return['stepDone'] = $this->stepDone;
         $return['next'] = $this->next;
         $return['status'] = $this->next == 'error' ? 'error' : 'ok';
         $return['next_desc'] = $this->nextDesc;
 
-        $this->nextParams['config'] = AdminThirtyBeesMigrateController::getConfig();
+        $this->nextParams['config'] = UpgraderTools::getConfig();
 
         foreach ($this->ajaxParams as $v) {
             if (property_exists($this, $v)) {
@@ -3403,12 +3356,12 @@ class AjaxProcessor
         // removing temporary files
         $this->cleanTmpFiles();
 
-        $this->keepImages = AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_KEEP_IMAGES');
-        $this->updateDefaultTheme = AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_UPDATE_DEFAULT_THEME');
-        $this->changeToDefaultTheme = AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_CHANGE_DEFAULT_THEME');
-        $this->keepMails = AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_KEEP_MAILS');
-        $this->manualMode = (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) ? (bool) AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_MANUAL_MODE') : false;
-        $this->deactivateCustomModule = AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_CUSTOM_MOD_DESACT');
+        $this->keepImages = UpgraderTools::getConfig('PS_AUTOUP_KEEP_IMAGES');
+        $this->updateDefaultTheme = UpgraderTools::getConfig('PS_AUTOUP_UPDATE_DEFAULT_THEME');
+        $this->changeToDefaultTheme = UpgraderTools::getConfig('PS_AUTOUP_CHANGE_DEFAULT_THEME');
+        $this->keepMails = UpgraderTools::getConfig('PS_AUTOUP_KEEP_MAILS');
+        $this->manualMode = (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) ? (bool) UpgraderTools::getConfig('PS_AUTOUP_MANUAL_MODE') : false;
+        $this->deactivateCustomModule = UpgraderTools::getConfig('PS_AUTOUP_CUSTOM_MOD_DESACT');
 
         // during restoration, do not remove :
         $this->restoreIgnoreAbsoluteFiles[] = '/config/settings.inc.php';
@@ -3516,5 +3469,27 @@ class AjaxProcessor
                 unlink($tools->autoupgradePath.DIRECTORY_SEPARATOR.$tmpFile);
             }
         }
+    }
+
+    /**
+     * Verify thirty bees token
+     *
+     * @return bool
+     */
+    public function verifyToken()
+    {
+        if (isset($_SERVER['HTTP_X_THIRTYBEES_AUTH'])) {
+            $ajaxToken = $_SERVER['HTTP_X_THIRTYBEES_AUTH'];
+        } elseif (isset($_POST['ajaxToken'])) {
+            $ajaxToken = $_POST['ajaxToken'];
+        } else {
+            return false;
+        }
+
+        $blowfish = new Blowfish(_COOKIE_KEY_, _COOKIE_IV_);
+
+        $tokenShouldBe = $blowfish->encrypt('thirtybees1337H4ck0rzz');
+
+        return $ajaxToken === $tokenShouldBe;
     }
 }

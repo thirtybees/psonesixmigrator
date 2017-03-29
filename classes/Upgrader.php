@@ -63,7 +63,7 @@ class Upgrader
      */
     public $version = '';
     /** @var string Changelog link */
-    public $changelog;
+    public $changelogLink;
     /**
      * Link to core package
      *
@@ -130,7 +130,7 @@ class Upgrader
      */
     protected function __construct()
     {
-        $this->selectedChannel = \AdminThirtyBeesMigrateController::getConfig('channel');
+        $this->selectedChannel = UpgraderTools::getConfig('channel');
         if (!in_array($this->selectedChannel, ['stable', 'rc', 'beta', 'alpha'])) {
             $this->selectedChannel = 'stable';
         }
@@ -204,6 +204,7 @@ class Upgrader
         }
         $versionInfo = $this->versionInfo[$channelWithLatestVersion];
         $this->version = $versionInfo['version'];
+        $this->channel = $versionInfo['channel'];
         $this->coreLink = $versionInfo['core'];
         $this->extraLink = $versionInfo['extra'];
         $this->md5Link = $versionInfo['md5'];

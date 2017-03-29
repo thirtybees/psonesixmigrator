@@ -83,6 +83,8 @@ class UpgraderTools
      * @var array
      * @access public
      */
+    /** @var  $lCache */
+    public static $lCache;
     public $modules_addons = [];
     public $downloadPath;
     public $backupPath;
@@ -233,7 +235,7 @@ class UpgraderTools
             'loopUpgradeModulesTime' => [       6,       12,       25],
             'loopRemoveSamples'      => [     400,      800,     1600],
         ];
-        switch (\AdminThirtyBeesMigrateController::getConfig('PS_AUTOUP_PERFORMANCE')) {
+        switch (static::getConfig('PS_AUTOUP_PERFORMANCE')) {
             case 3:
                 foreach ($perfArray as $property => $values) {
                     self::$$property = $values[2];
@@ -250,6 +252,40 @@ class UpgraderTools
                     self::$$property = $values[0];
                 }
         }
+    }
+
+    /**
+     * return the value of $key, configuration saved in `CONFIG_FILENAME`.
+     * if $key is empty, will return an array with all configuration;
+     *
+     * @param string $key
+     *
+     * @access public
+     * @return false|array|string
+     *
+     * @since 1.0.0
+     *
+     * @todo: move to `UpgraderTools`
+     */
+    public static function getConfig($key = '')
+    {
+        static $config = [];
+        if (count($config) == 0) {
+            $tools = UpgraderTools::getInstance();
+            if (file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
+                $configContent = file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
+                $config = @unserialize(base64_decode($configContent));
+            } else {
+                $config = [];
+            }
+        }
+        if (empty($key)) {
+            return $config;
+        } elseif (isset($config[$key])) {
+            return trim($config[$key]);
+        }
+
+        return false;
     }
 
     /**
@@ -270,5 +306,70 @@ class UpgraderTools
         $str = $addslashes ? addslashes($str) : stripslashes($str);
 
         return $str;
+    }
+
+    /**
+     * findTranslation (initially in Module class), to make translations works
+     *
+     * @param string $name   module name
+     * @param string $string string to translate
+     * @param string $source current class
+     *
+     * @return string translated string
+     *
+     * @since 1.0.0
+     */
+    public static function findTranslation($name, $string, $source)
+    {
+        static $_MODULES;
+
+        $string = str_replace('\'', '\\\'', $string);
+
+        if (!is_array($_MODULES)) {
+            // note: $_COOKIE[iso_code] is set in createCustomToken();
+            $filesToTry = [];
+            if (isset($_COOKIE['iso_code']) && $_COOKIE['iso_code']) {
+                $filesToTry = [
+                    _PS_MODULE_DIR_.'psonesixmigrator'.DIRECTORY_SEPARATOR.'translations'.DIRECTORY_SEPARATOR.$_COOKIE['iso_code'].'.php', // 1.5
+                    _PS_MODULE_DIR_.'psonesixmigrator'.DIRECTORY_SEPARATOR.$_COOKIE['iso_code'].'.php', // 1.4
+                ];
+            }
+            // translations may be in "autoupgrade/translations/iso_code.php" or "autoupgrade/iso_code.php",
+            // try both locations.
+            foreach ($filesToTry as $file) {
+                if (file_exists($file) && include($file) && isset($_MODULE)) {
+                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
+                    break;
+                }
+            }
+        }
+        $cacheKey = $name.'|'.$string.'|'.$source;
+
+        if (!isset(static::$lCache[$cacheKey])) {
+            if (!is_array($_MODULES)) {
+                return $string;
+            }
+            // set array key to lowercase for 1.3 compatibility
+            $_MODULES = array_change_key_case($_MODULES);
+            // note : we should use a variable to define the default theme (instead of "prestashop")
+            $defaultKey = '<{'.strtolower($name).'}prestashop>'.strtolower($source).'_'.md5($string);
+            $currentKey = $defaultKey;
+
+            if (isset($_MODULES[$currentKey])) {
+                $ret = stripslashes($_MODULES[$currentKey]);
+            } elseif (isset($_MODULES[strtolower($currentKey)])) {
+                $ret = stripslashes($_MODULES[strtolower($currentKey)]);
+            } elseif (isset($_MODULES[$defaultKey])) {
+                $ret = stripslashes($_MODULES[$defaultKey]);
+            } elseif (isset($_MODULES[strtolower($defaultKey)])) {
+                $ret = stripslashes($_MODULES[strtolower($defaultKey)]);
+            } else {
+                $ret = stripslashes($string);
+            }
+
+            static::$lCache[$cacheKey] = $ret;
+        }
+
+        return static::$lCache[$cacheKey];
     }
 }

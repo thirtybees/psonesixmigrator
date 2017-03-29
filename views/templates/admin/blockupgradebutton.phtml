@@ -22,9 +22,10 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  * PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
+use PsOneSixMigrator\UpgraderTools;
 
 /** @var AdminThirtyBeesMigrateController $this */
-$channel = $this->getConfig('channel');
+$channel = UpgraderTools::getConfig('channel');
 ?>
 
 <div id="upgradeButtonBlock" class="panel col-lg-12">
@@ -44,7 +45,7 @@ $channel = $this->getConfig('channel');
                 <?php echo $this->l('The following action are automatically replaced'); ?>
 				<ul>
                     <?php foreach (\PsOneSixMigrator\AjaxProcessor::$skipAction as $k => $v) : ?>
-						<li><?php echo sprintf($this->l('%1$s will be replaced by %2$s'), '<b>'.$k.'</b>', '<b>'.$v.'</b>'); ?></li>
+						<li><?php echo sprintf($this->l('%1$s will be replaced with %2$s'), '<b>'.$k.'</b>', '<b>'.$v.'</b>'); ?></li>
                     <?php endforeach; ?>
 				</ul>
 				<p><?php echo $this->l('To change this behavior, you need to manually edit your php files'); ?></p>
@@ -53,22 +54,15 @@ $channel = $this->getConfig('channel');
             <?php $showBigButtonNewVersion = true; ?>
         <?php endif; ?>
         <?php if ($this->configOk()) : ?>
-			<strong><?php echo $this->l('Are you ready for thirty bees?'); ?></strong>
-			<p class="clearfix">
+			<strong class="configOk"><?php echo $this->l('Are you ready for thirty bees?'); ?></strong>
+			<p class="clearfix configOk">
 				<a href="" id="upgradeNow" class="upgradestep btn btn-primary btn-lg">
 					<i class="icon icon-wrench"></i> <?php echo sprintf($this->l('Migrate to thirty bees'), $this->upgrader->version); ?>
 				</a>
 			</p>
-			<div class="clearfix"></div>
-			<a class="btn btn-default" href="<?php echo AdminThirtyBeesMigrateController::$currentIndex; ?>&token=<?php echo $this->token; ?>&refreshCurrentVersion=1">
-				<i class="icon icon-refresh"></i> <?php echo $this->l('refresh the page'); ?>
-			</a>
         <?php endif; ?>
-        <?php echo $this->getBlockConfigurationAdvanced(); ?>
+        <?php echo $this->displayAdminTemplate(__DIR__.'/advanced.phtml'); ?>
     <?php endif; ?>
-	<div>
-		<span><?php echo sprintf($this->l('Last check: %s'), date('Y-m-d H:i:s', \Configuration::get('PS_LAST_VERSION_CHECK'))); ?></span>
-	</div>
 </div>
 
 <?php if ($this->manualMode) : ?>

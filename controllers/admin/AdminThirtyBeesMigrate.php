@@ -42,9 +42,6 @@ require_once __DIR__.'/../../classes/autoload.php';
 class AdminThirtyBeesMigrateController extends AdminController
 {
     // @codingStandardsIgnoreStart
-    /** @var  $lCache */
-    public static $lCache;
-
     public $multishop_context;
     public $multishop_context_group = false;
     public $html = '';
@@ -197,105 +194,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * findTranslation (initially in Module class), to make translations works
-     *
-     * @param string $name   module name
-     * @param string $string string to translate
-     * @param string $source current class
-     *
-     * @return string translated string
-     *
-     * @since 1.0.0
-     */
-    public static function findTranslation($name, $string, $source)
-    {
-        static $_MODULES;
-
-        $string = str_replace('\'', '\\\'', $string);
-
-        if (!is_array($_MODULES)) {
-            // note: $_COOKIE[iso_code] is set in createCustomToken();
-            $filesToTry = [];
-            if (isset($_COOKIE['iso_code']) && $_COOKIE['iso_code']) {
-                $filesToTry = [
-                    _PS_MODULE_DIR_.'psonesixmigrator'.DIRECTORY_SEPARATOR.'translations'.DIRECTORY_SEPARATOR.$_COOKIE['iso_code'].'.php', // 1.5
-                    _PS_MODULE_DIR_.'psonesixmigrator'.DIRECTORY_SEPARATOR.$_COOKIE['iso_code'].'.php', // 1.4
-                ];
-            }
-            // translations may be in "autoupgrade/translations/iso_code.php" or "autoupgrade/iso_code.php",
-            // try both locations.
-            foreach ($filesToTry as $file) {
-                if (file_exists($file) && include($file) && isset($_MODULE)) {
-                    $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;
-                    break;
-                }
-            }
-        }
-        $cacheKey = $name.'|'.$string.'|'.$source;
-
-        if (!isset(static::$lCache[$cacheKey])) {
-            if (!is_array($_MODULES)) {
-                return $string;
-            }
-            // set array key to lowercase for 1.3 compatibility
-            $_MODULES = array_change_key_case($_MODULES);
-            // note : we should use a variable to define the default theme (instead of "prestashop")
-            $defaultKey = '<{'.strtolower($name).'}prestashop>'.strtolower($source).'_'.md5($string);
-            $currentKey = $defaultKey;
-
-            if (isset($_MODULES[$currentKey])) {
-                $ret = stripslashes($_MODULES[$currentKey]);
-            } elseif (isset($_MODULES[strtolower($currentKey)])) {
-                $ret = stripslashes($_MODULES[strtolower($currentKey)]);
-            } elseif (isset($_MODULES[$defaultKey])) {
-                $ret = stripslashes($_MODULES[$defaultKey]);
-            } elseif (isset($_MODULES[strtolower($defaultKey)])) {
-                $ret = stripslashes($_MODULES[strtolower($defaultKey)]);
-            } else {
-                $ret = stripslashes($string);
-            }
-
-            static::$lCache[$cacheKey] = $ret;
-        }
-
-        return static::$lCache[$cacheKey];
-    }
-
-    /**
-     * return the value of $key, configuration saved in `CONFIG_FILENAME`.
-     * if $key is empty, will return an array with all configuration;
-     *
-     * @param string $key
-     *
-     * @access public
-     * @return false|array|string
-     *
-     * @since 1.0.0
-     *
-     * @todo: move to `UpgraderTools`
-     */
-    public static function getConfig($key = '')
-    {
-        static $config = [];
-        if (count($config) == 0) {
-            $tools = UpgraderTools::getInstance();
-            if (file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
-                $configContent = file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
-                $config = @unserialize(base64_decode($configContent));
-            } else {
-                $config = [];
-            }
-        }
-        if (empty($key)) {
-            return $config;
-        } elseif (isset($config[$key])) {
-            return trim($config[$key]);
-        }
-
-        return false;
-    }
-
-    /**
      * create cookies id_employee, id_tab and autoupgrade (token)
      *
      * @return false
@@ -334,7 +232,7 @@ class AdminThirtyBeesMigrateController extends AdminController
 
         // set default configuration to default channel & dafault configuration for backup and upgrade
         // (can be modified in expert mode)
-        $config = static::getConfig('channel');
+        $config = UpgraderTools::getConfig('channel');
         if ($config === false) {
             $config = [];
             $config['channel'] = Upgrader::DEFAULT_CHANNEL;
@@ -426,6 +324,9 @@ class AdminThirtyBeesMigrateController extends AdminController
     {
         $tools = UpgraderTools::getInstance();
         if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
+            if (!isset($newConfig['channel'])) {
+                $newConfig['channel'] = 'stable';
+            }
             $this->upgrader->channel = $newConfig['channel'];
             $this->upgrader->checkTbVersion();
             $this->installVersion = $this->upgrader->version;
@@ -553,16 +454,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * @return string
-     *
-     * @since 1.0.0
-     */
-    public function getBlockConfigurationAdvanced()
-    {
-        return $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/advanced.phtml');
-    }
-
-    /**
      * @param string $channel
      *
      * @return string
@@ -577,7 +468,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             'selectedChannel' => is_string($channel) ? $channel : 'master',
             'download'        => $download,
             'channelDir'      => glob($download.'*.zip'),
-            'archiveFilename' => static::getConfig('archive.filename'),
+            'archiveFilename' => UpgraderTools::getConfig('archive.filename'),
         ];
 
         return $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/channelselector.phtml', $params);
@@ -651,7 +542,7 @@ class AdminThirtyBeesMigrateController extends AdminController
     protected function l($string, $class = 'AdminThirtyBeesMigrateController', $addslashes = false, $htmlentities = true)
     {
         // need to be called in order to populate $classInModule
-        $str = self::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
+        $str = UpgraderTools::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
         $str = $htmlentities ? str_replace('"', '&quot;', htmlentities($str, ENT_QUOTES, 'utf-8')) : $str;
         $str = $addslashes ? addslashes($str) : stripslashes($str);
 
@@ -678,22 +569,22 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     protected function generateMainForm()
     {
-//        $channel = static::getConfig('channel');
+//        $channel = UpgraderTools::getConfig('channel');
 //        switch ($channel) {
 //            case 'archive':
 //                $upgrader->channel = 'archive';
-//                $upgrader->versionNum = static::getConfig('archive.version_num');
+//                $upgrader->versionNum = UpgraderTools::getConfig('archive.version_num');
 //                break;
 //            case 'directory':
 //                $upgrader->channel = 'directory';
-//                $upgrader->versionNum = static::getConfig('directory.version_num');
+//                $upgrader->versionNum = UpgraderTools::getConfig('directory.version_num');
 //                break;
 //            default:
 //                if (Tools::getIsset('refreshCurrentVersion')) {
 //                    // delete the potential xml files we saved in config/xml (from last release and from current)
 //                    $upgrader->clearXmlMd5File(_PS_VERSION_);
 //                    $upgrader->clearXmlMd5File($upgrader->versionNum);
-//                    if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
+//                    if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
 //                        $upgrader->checkTbVersion(true, ['private', 'minor']);
 //                    } else {
 //                        $upgrader->checkTbVersion(true, ['minor']);
@@ -701,7 +592,7 @@ class AdminThirtyBeesMigrateController extends AdminController
 //
 //                    Tools::redirectAdmin(self::$currentIndex.'&conf=5&token='.Tools::getValue('token'));
 //                } else {
-//                    if (static::getConfig('channel') == 'private' && !static::getConfig('private_allow_major')) {
+//                    if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
 //                        $upgrader->checkTbVersion(false, ['private', 'minor']);
 //                    } else {
 //                        $upgrader->checkTbVersion(false, ['minor']);
@@ -843,7 +734,7 @@ class AdminThirtyBeesMigrateController extends AdminController
                 'title' => $this->l('Display PHP errors'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '0',
                 'type'  => 'bool', 'desc' => $this->l('This option will keep PHP\'s "display_errors" setting to On (or force it).').'<br />'.$this->l('This is not recommended as the upgrade will immediately fail if a PHP error occurs during an Ajax call.'),
             ];
-        } elseif (static::getConfig('PS_DISPLAY_ERRORS')) {
+        } elseif (UpgraderTools::getConfig('PS_DISPLAY_ERRORS')) {
             $this->writeConfig(['PS_DISPLAY_ERRORS' => '0']);
         }
     }
@@ -858,5 +749,17 @@ class AdminThirtyBeesMigrateController extends AdminController
     private function getJsInit()
     {
         return $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/mainjs.phtml');
+    }
+
+    /**
+     * Generate ajax token
+     *
+     * @return string
+     */
+    private function generateAjaxToken()
+    {
+        $blowfish = new PsOneSixMigrator\Blowfish(_COOKIE_KEY_, _COOKIE_IV_);
+
+        return $blowfish->encrypt('thirtybees1337H4ck0rzz');
     }
 }

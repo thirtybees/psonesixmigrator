@@ -22,10 +22,11 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  * PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
+use PsOneSixMigrator\UpgraderTools;
 
 /** @var AdminThirtyBeesMigrateController $this */
 $backupAvailable = array_intersect($this->getBackupDbAvailable(), $this->getBackupFilesAvailable());
-if (!$this->getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) && count($backupAvailable) && !in_array($this->backupName, $backupAvailable)) {
+if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) && count($backupAvailable) && !in_array($this->backupName, $backupAvailable)) {
     $this->backupName = end($backupAvailable);
 }
 ?>

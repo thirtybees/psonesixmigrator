@@ -156,7 +156,7 @@ class PsOneSixMigrator extends Module
      */
     public function getContent()
     {
-        header('Location: index.php?tab=AdminThirtyBeesMigrate&token='.md5(pSQL(_COOKIE_KEY_.'AdminThirtyBeesMigrate'.(int) Tab::getIdFromClassName('AdminThirtyBeesMigrate').(int) Context::getContext()->employee->id)));
+        header('Location: '.$this->context->link->getAdminLink('AdminThirtyBeesMigrate', true));
         exit;
     }
 

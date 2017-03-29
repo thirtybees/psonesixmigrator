@@ -1,6 +1,8 @@
 <?php
 /** @var AdminThirtyBeesMigrateController $this */
-$confValues = $this->getConfig();
+use PsOneSixMigrator\UpgraderTools;
+
+$confValues = UpgraderTools::getConfig();
 $required = false;
 ?>
 

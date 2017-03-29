@@ -30,8 +30,8 @@ if (function_exists('date_default_timezone_set')) {
     date_default_timezone_set($timezone);
 }
 
-require_once(realpath(__DIR__.'/../../config/config.inc.php'));
-require_once realpath(__DIR__.'/../..').'/modules/psonesixmigrator/classes/autoload.php';
+require_once __DIR__.'/../../config/config.inc.php';
+require_once __DIR__.'/../../modules/psonesixmigrator/classes/autoload.php';
 
 if (!defined('_PS_MODULE_DIR_')) {
     define('_PS_MODULE_DIR_', realpath(__DIR__.'/../../').'/modules/');
@@ -70,16 +70,9 @@ if (!defined('_PS_TOOL_DIR_')) {
 //require(_PS_ADMIN_DIR_.'/functions.php');
 include(AUTOUPGRADE_MODULE_DIR.'init.php');
 
-// this is used to set this->ajax = true in the constructor
-global $ajax;
-
-$ajax = true;
-if (!class_exists('AdminThirtyBeesMigrateController')) {
-    require_once AUTOUPGRADE_MODULE_DIR.'controllers/admin/AdminThirtyBeesMigrate.php';
-}
 $ajaxUpgrader = PsOneSixMigrator\AjaxProcessor::getInstance();
 
-if (is_object($ajaxUpgrader)) {
+if (is_object($ajaxUpgrader) && $ajaxUpgrader->verifyToken()) {
     $ajaxUpgrader->optionDisplayErrors();
     $ajaxUpgrader->ajax = 1;
     if ($ajaxUpgrader->checkToken()) {
@@ -93,8 +86,8 @@ if (is_object($ajaxUpgrader)) {
             $ajaxUpgrader->{'ajaxProcess'.$action}();
         } else {
             die(json_encode([
-                'sucess' => false,
-                'error'  => 'Method not found',
+                'error' => true,
+                'status'  => 'Method not found',
             ], JSON_PRETTY_PRINT));
         }
 
@@ -108,9 +101,10 @@ if (is_object($ajaxUpgrader)) {
         if (ob_get_level() && ob_get_length() > 0) {
             ob_clean();
         }
-        die(json_encode([
-            'success' => false,
-            'error'   => 'Wrong token',
-        ], JSON_PRETTY_PRINT));
     }
 }
+
+die(json_encode([
+    'error'  => true,
+    'status' => 'Wrong token or request',
+], JSON_PRETTY_PRINT));

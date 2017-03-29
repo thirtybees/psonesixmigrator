@@ -22,6 +22,7 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  * PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
+use PsOneSixMigrator\UpgraderTools;
 
 /** @var AdminThirtyBeesMigrateController $this */
 $tokenPreferences = Tools::getAdminTokenLite('AdminPreferences');
@@ -35,7 +36,7 @@ $ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
 	window.upgrader = {};
 	window.upgrader.manualMode = <?php echo($this->manualMode ? 'true' : 'false'); ?>;
 	window.upgrader._PS_MODE_DEV_ = <?php echo (defined('_PS_DEV_MODE_') && _PS_DEV_MODE_) ? 'true' : 'false'; ?>;
-	window.upgrader.PS_AUTOUP_BACKUP = <?php echo ($this->getConfig('PS_AUTOUP_BACKUP')) ? 'true' : 'false' ?>;
+	window.upgrader.PS_AUTOUP_BACKUP = <?php echo (UpgraderTools::getConfig('PS_AUTOUP_BACKUP')) ? 'true' : 'false' ?>;
 
 	window.upgrader.txtError = [];
 	window.upgrader.txtError[0] = "<?php echo $this->l('Required field'); ?>";
@@ -104,7 +105,8 @@ $ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
     window.upgrader.tab = "<?php echo get_class($this); ?>";
     window.upgrader.autoupgradeDir = "<?php echo $this->install_autoupgrade_dir; ?>";
 
-    window.upgrader.channel = '<?php echo AdminThirtyBeesMigrateController::getConfig('channel'); ?>';
+    window.upgrader.channel = '<?php echo UpgraderTools::getConfig('channel'); ?>';
 
     window.upgrader.currentIndex = '<?php echo AdminThirtyBeesMigrateController::$currentIndex; ?>';
+    window.upgrader.ajaxToken = '<?php echo $this->generateAjaxToken(); ?>';
 </script>

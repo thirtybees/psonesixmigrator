@@ -22,6 +22,7 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  * PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
+use PsOneSixMigrator\UpgraderTools;
 
 /** @var AdminThirtyBeesMigrateController $this */
 
@@ -41,13 +42,13 @@ echo $ajaxProcessor->divChannelInfos($upgradeInfo);
 <div id="for-useMinor" ><div class="margin-form margin-form-small"><?php echo $this->l('This option regroup all stable versions.'); ?></div></div>
 <div id="for-usePrivate">
     <p><label class="label-small"><?php echo $this->l('Link:'); ?></label>
-        <input size="50" type="text" name="private_release_link" value="<?php $this->getConfig('private_release_link'); ?>"/> *
+        <input size="50" type="text" name="private_release_link" value="<?php UpgraderTools::getConfig('private_release_link'); ?>"/> *
     </p>
     <p><label class="label-small"><?php echo $this->l('Hash key:'); ?></label>
-        <input size="32" type="text" name="private_release_md5" value="<?php echo $this->getConfig('private_release_md5'); ?>"/> *
+        <input size="32" type="text" name="private_release_md5" value="<?php echo UpgraderTools::getConfig('private_release_md5'); ?>"/> *
     </p>
     <p><label class="label-small"><?php echo $this->l('Allow major upgrade:'); ?></label>
-        <input type="checkbox" name="private_allow_major" value="1"<?php echo ($this->getConfig('private_allow_major') ? ' checked="checked"' : ''); ?>/>
+        <input type="checkbox" name="private_allow_major" value="1"<?php echo (UpgraderTools::getConfig('private_allow_major') ? ' checked="checked"' : ''); ?>/>
     </p>
 </div>
 
@@ -61,7 +62,7 @@ echo $ajaxProcessor->divChannelInfos($upgradeInfo);
             <?php endforeach; ?>
 
         </select>
-        <?php echo $this->l('to upgrade for version'); ?><input type="text" size="10" name="archive_num" value="<?php echo ($this->getConfig('archive.version_num') ? $this->getConfig('archive.version_num') : ''); ?>" /> *
+        <?php echo $this->l('to upgrade for version'); ?><input type="text" size="10" name="archive_num" value="<?php echo (UpgraderTools::getConfig('archive.version_num') ? UpgraderTools::getConfig('archive.version_num') : ''); ?>" /> *
     <?php else : ?>
         <div class="warn"><?php echo $this->l('No archive found in your admin/autoupgrade/download directory'); ?></div>
     <?php endif; ?>
@@ -72,7 +73,7 @@ echo $ajaxProcessor->divChannelInfos($upgradeInfo);
     <div id="for-useDirectory">
         <div>
             <?php echo sprintf($this->l('The directory %1$s will be used to upgrade to version '), '<b>/admin/autoupgrade/latest/prestashop/</b>'); ?>
-        <input type="text" size="10" name="directory_num" value="<?php echo ($this->getConfig('directory.version_num') ? $this->getConfig('directory.version_num') : ''); ?>" /> <small>(1.6.0.6 for instance)</small> *
+        <input type="text" size="10" name="directory_num" value="<?php echo (UpgraderTools::getConfig('directory.version_num') ? UpgraderTools::getConfig('directory.version_num') : ''); ?>" /> <small>(1.6.0.6 for instance)</small> *
             <div class="margin-form">* <?php echo $this->l('This option will skip both download and unzip steps.'); ?></div>
         </div>
     </div>
