@@ -76,6 +76,9 @@ class Upgrader
      * @var string $extraLink
      */
     public $extraLink;
+    public $md5Core;
+    public $md5Extra;
+
     /**
      * Link to md5 JSON
      *
@@ -166,10 +169,10 @@ class Upgrader
             );
 
             $promises = [
-                'alpha'  => $guzzle->getAsync("alpha.json"),
-                'beta'   => $guzzle->getAsync("beta.json"),
-                'rc'     => $guzzle->getAsync("rc.json"),
-                'stable' => $guzzle->getAsync("stable.json"),
+                'alpha'  => $guzzle->getAsync('alpha.json'),
+                'beta'   => $guzzle->getAsync('beta.json'),
+                'rc'     => $guzzle->getAsync('rc.json'),
+                'stable' => $guzzle->getAsync('stable.json'),
             ];
 
             $results = Promise\settle($promises)->wait();
@@ -204,6 +207,8 @@ class Upgrader
             $this->channel = $this->selectedChannel;
             $this->coreLink = '';
             $this->extraLink = '';
+            $this->md5Core = '';
+            $this->md5Extra = '';
             $this->md5Link = '';
 
             return false;
@@ -213,15 +218,17 @@ class Upgrader
         $this->channel = $channelWithLatestVersion;
         $this->coreLink = $versionInfo['core'];
         $this->extraLink = $versionInfo['extra'];
-        $this->md5Link = $versionInfo['md5'];
+        $this->md5Core = $versionInfo['md5core'];
+        $this->md5Extra = $versionInfo['md5extra'];
+        $this->md5Link = $versionInfo['md5files'];
 
         return true;
     }
 
     /**
-     * downloadLast download the last version of PrestaShop and save it in $dest/$filename
+     * downloadLast download the last version of thirty bees and save it in $dest/$filename
      *
-     * @param string $dest     directory where to save the file
+     * @param string $dest directory where to save the file
      *
      * @return boolean
      *
@@ -236,13 +243,15 @@ class Upgrader
             }
         }
 
-        $coreDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-core-{$this->coreLink}.zip";
-        $extraDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-core-{$this->extraLink}.zip";
+        $coreDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-v{$this->version}.zip";
+        $extraDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-extra-v{$this->version}.zip";
+        $md5Path = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-md5-v{$this->version}.json";
 
         Tools::copy($this->coreLink, $coreDestPath);
         Tools::copy($this->extraLink, $extraDestPath);
+        Tools::copy($this->md5Link, $md5Path);
 
-        return is_file($coreDestPath) && is_file($extraDestPath);
+        return is_file($coreDestPath) && is_file($extraDestPath) && is_file($md5Path);
     }
 
     /**

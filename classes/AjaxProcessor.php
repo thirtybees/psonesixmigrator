@@ -221,7 +221,7 @@ class AjaxProcessor
      */
     private function getCoreFilePath()
     {
-        return $this->tools->downloadPath.DIRECTORY_SEPARATOR.'thirtybees-core-v'.$this->upgrader->version.'.zip';
+        return $this->tools->downloadPath.DIRECTORY_SEPARATOR.'thirtybees-v'.$this->upgrader->version.'.zip';
     }
 
     /**
@@ -444,7 +444,7 @@ class AjaxProcessor
         $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
 
         $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
-        $this->nextQuickInfo[] = sprintf($this->l('md5 hash will be checked against the file %s'), $this->upgrader->md5Link);
+        $this->nextQuickInfo[] = sprintf($this->l('md5 hashes for core and extra should be resp. %s and %s'), $this->upgrader->md5Core, $this->upgrader->md5Extra);
     }
 
     /**
@@ -2237,7 +2237,7 @@ class AjaxProcessor
      */
     public function ajaxProcessBackupDb()
     {
-        if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->versionNum, '1.7.0.0', '<')) {
+        if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->version, '1.7.0.0', '<')) {
             $this->stepDone = true;
             $this->nextParams['dbStep'] = 0;
             $this->nextDesc = sprintf($this->l('Database backup skipped. Now upgrading files...'), $this->backupName);
@@ -2784,40 +2784,43 @@ class AjaxProcessor
             }
             // regex optimization
             preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-            $this->upgrader->channel = UpgraderTools::getConfig('channel');
 
-            $this->nextQuickInfo[] = sprintf($this->l('downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
+            $this->nextQuickInfo[] = sprintf($this->l('Downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
             $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath());
             if (file_exists($this->tools->downloadPath)) {
                 Tools::deleteDirectory($this->tools->downloadPath, false);
-                $this->nextQuickInfo[] = $this->l('download directory has been emptied');
+                $this->nextQuickInfo[] = $this->l('Download directory has been cleared');
             }
             $report = '';
             $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
             if (ConfigurationTest::test_dir($relativeDownloadPath, false, $report)) {
                 $res = $this->upgrader->downloadLast($this->tools->downloadPath);
                 if ($res) {
-                    $md5file = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR.$this->tools->coreFilename);
-                    if ($md5file == $this->upgrader->md5Link) {
+                    // FIXME: also check extra package
+                    $md5CoreFile = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR."thirtybees-v{$this->upgrader->version}.zip");
+                    $md5ExtraFile = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR."thirtybees-extra-v{$this->upgrader->version}.zip");
+                    if ($md5CoreFile === $this->upgrader->md5Core && $md5ExtraFile === $this->upgrader->md5Extra) {
                         $this->nextQuickInfo[] = $this->l('Download complete.');
                         $this->next = 'unzip';
                         $this->nextDesc = $this->l('Download complete. Now extracting...');
                     } else {
-                        $this->nextQuickInfo[] = sprintf($this->l('Download complete but MD5 sum does not match (%s).'), $md5file);
-                        $this->nextErrors[] = sprintf($this->l('Download complete but MD5 sum does not match (%s).'), $md5file);
+                        if ($md5CoreFile !== $this->upgrader->md5Core) {
+                            $this->nextQuickInfo[] = sprintf($this->l('Download complete but the md5 sum of the core package does not match (%s).'), $md5CoreFile);
+                            $this->nextErrors[] = sprintf($this->l('Download complete but md5 the sum of the core package does not match (%s).'), $md5CoreFile);
+                        }
+                        if ($md5ExtraFile !== $this->upgrader->md5Extra) {
+                            $this->nextQuickInfo[] = sprintf($this->l('Download complete but md5 sum of the library package does not match (%s).'), $md5ExtraFile);
+                            $this->nextErrors[] = sprintf($this->l('Download complete but md5 sum the library package does not match (%s).'), $md5ExtraFile);
+                        }
+
                         $this->next = 'error';
-                        $this->nextDesc = $this->l('Download complete but MD5 sum does not match (%s). Operation aborted.');
+                        $this->nextDesc = $this->l('Download complete but the md5 sums do not match. Operation aborted.');
                     }
                 } else {
-                    if ($this->upgrader->channel == 'private') {
-                        $this->nextDesc = $this->l('Error during download. The private key may be incorrect.');
-                        $this->nextQuickInfo[] = $this->l('Error during download. The private key may be incorrect.');
-                        $this->nextErrors[] = $this->l('Error during download. The private key may be incorrect.');
-                    } else {
-                        $this->nextDesc = $this->l('Error during download');
-                        $this->nextQuickInfo[] = $this->l('Error during download');
-                        $this->nextErrors[] = $this->l('Error during download');
-                    }
+                    $this->nextDesc = $this->l('Error during download');
+                    $this->nextQuickInfo[] = $this->l('Error during download');
+                    $this->nextErrors[] = $this->l('Error during download');
+
                     $this->next = 'error';
                 }
             } else {
@@ -3229,9 +3232,6 @@ class AjaxProcessor
 
     protected function initializeFiles()
     {
-        // If you have defined this somewhere, you know what you do
-        /* load options from configuration if we're not in ajax mode */
-        $this->createCustomToken();
         // installedLanguagesIso is used to merge translations files
         $isoIds = \Language::getIsoIds(false);
         foreach ($isoIds as $v) {
@@ -3306,33 +3306,6 @@ class AjaxProcessor
     }
 
     /**
-     * create cookies id_employee, id_tab and autoupgrade (token)
-     *
-     * @return false
-     *
-     * @since 1.0.0
-     */
-    protected function createCustomToken()
-    {
-        // ajax-mode for autoupgrade, we can't use the classic authentication
-        // so, we'll create a cookie in admin dir, based on cookie key
-        $cookie = \Context::getContext()->cookie;
-        $idEmployee = $cookie->id_employee;
-        if ($cookie->id_lang) {
-            $isoCode = $_COOKIE['iso_code'] = \Language::getIsoById((int) $cookie->id_lang);
-        } else {
-            $isoCode = 'en';
-        }
-        $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
-        $cookiePath = __PS_BASE_URI__.$adminDir;
-        setcookie('id_employee', $idEmployee, 0, $cookiePath);
-        setcookie('iso_code', $isoCode, 0, $cookiePath);
-        setcookie('autoupgrade', Tools::encrypt($idEmployee), 0, $cookiePath);
-
-        return false;
-    }
-
-    /**
      * @return void
      *
      * @since 1.0.0
@@ -3341,7 +3314,6 @@ class AjaxProcessor
     {
         $tools = UpgraderTools::getInstance();
         $tmpFiles = [
-            UpgraderTools::CONFIG_FILENAME,
             UpgraderTools::TO_UPGRADE_QUERIES_LIST,
             UpgraderTools::TO_UPGRADE_FILE_LIST,
             UpgraderTools::TO_UPGRADE_MODULE_LIST,

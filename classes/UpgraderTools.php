@@ -95,8 +95,6 @@ class UpgraderTools
     public $root_writable_report;
     public $module_version;
     public $lastAutoupgradeVersion = '';
-    public $coreFilename = 'prestashop.zip';
-    public $extraFilename = 'prestashop.zip';
 
     /** @var array $error */
     public $errors = [];
@@ -307,7 +305,7 @@ class UpgraderTools
         if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
             $config = static::initConfig();
         } else {
-            $config = include($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
+            $config = json_decode(file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME), true);
         }
 
         if (!is_array($config)) {
@@ -335,7 +333,7 @@ class UpgraderTools
             return (bool) static::resetConfig($newConfig);
         }
 
-        $config = include($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
+        $config = json_decode(file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME), true);
 
         foreach ($newConfig as $key => $val) {
             $config[$key] = $val;
