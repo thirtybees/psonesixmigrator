@@ -34,10 +34,6 @@ $ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
         <option id="use<?php echo ucfirst($channel); ?>" value="<?php echo $channel; ?>"<?php ($channel === $selectedChannel) ? 'class="current" selected="selected">* ' : '>' ?>
     <?php endforeach; ?>
 </select>
-<?php
-$upgradeInfo = $ajaxProcessor->getInfoForChannel($selectedChannel);
-echo $ajaxProcessor->divChannelInfos($upgradeInfo);
-?>
 
 <div id="for-useMinor" ><div class="margin-form margin-form-small"><?php echo $this->l('This option regroup all stable versions.'); ?></div></div>
 <div id="for-usePrivate">

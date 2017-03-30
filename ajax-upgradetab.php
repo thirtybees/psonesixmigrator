@@ -75,32 +75,26 @@ $ajaxUpgrader = PsOneSixMigrator\AjaxProcessor::getInstance();
 if (is_object($ajaxUpgrader) && $ajaxUpgrader->verifyToken()) {
     $ajaxUpgrader->optionDisplayErrors();
     $ajaxUpgrader->ajax = 1;
-    if ($ajaxUpgrader->checkToken()) {
-        // the differences with index.php is here
-        $ajaxUpgrader->ajaxPreProcess();
-        $action = Tools::getValue('action');
 
-        // no need to use displayConf() here
+    // the differences with index.php is here
+    $ajaxUpgrader->ajaxPreProcess();
+    $action = Tools::getValue('action');
 
-        if (!empty($action) && method_exists($ajaxUpgrader, 'ajaxProcess'.$action)) {
-            $ajaxUpgrader->{'ajaxProcess'.$action}();
-        } else {
-            die(json_encode([
-                'error' => true,
-                'status'  => 'Method not found',
-            ], JSON_PRETTY_PRINT));
-        }
+    // no need to use displayConf() here
 
-        if (!empty($action) && method_exists($ajaxUpgrader, 'displayAjax'.$action)) {
-            $ajaxUpgrader->{'displayAjax'.$action}();
-        } else {
-            $ajaxUpgrader->displayAjax();
-        }
+    if (!empty($action) && method_exists($ajaxUpgrader, 'ajaxProcess'.$action)) {
+        $ajaxUpgrader->{'ajaxProcess'.$action}();
     } else {
-        // If this is an XSS attempt, then we should only display a simple, secure page
-        if (ob_get_level() && ob_get_length() > 0) {
-            ob_clean();
-        }
+        die(json_encode([
+            'error' => true,
+            'status'  => 'Method not found',
+        ], JSON_PRETTY_PRINT));
+    }
+
+    if (!empty($action) && method_exists($ajaxUpgrader, 'displayAjax'.$action)) {
+        $ajaxUpgrader->{'displayAjax'.$action}();
+    } else {
+        $ajaxUpgrader->displayAjax();
     }
 }
 

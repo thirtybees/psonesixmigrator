@@ -23,7 +23,7 @@
 
       if (msg) {
         $infoStep.append(msg + '<div class="clear"></div>')
-          .prop({ scrollTop: $infoStep.prop('scrollHeight') }, 1);
+          .attr({ scrollTop: $infoStep.attr('scrollHeight') }, 1);
       }
     }
 
@@ -36,10 +36,10 @@
         $errorDuringUpgrade.show();
 
         for (i = 0; i < arrError.length; i += 1) {
-          $infoError.append(arrError[i] + '<div class="clear"></div>');
+          $infoError.append(arrError[i] + '<br />');
         }
         // Note : jquery 1.6 make uses of prop() instead of attr()
-        $infoError.prop({ scrollTop: $infoError.prop('scrollHeight') }, 1);
+        $infoError.attr({ scrollTop: $infoError.attr('scrollHeight') }, 1);
       }
     }
 
@@ -50,10 +50,10 @@
       if (arrQuickInfo) {
         $quickInfo.show();
         for (i = 0; i < arrQuickInfo.length; i += 1) {
-          $quickInfo.append(arrQuickInfo[i] + '<div class="clear"></div>');
+          $quickInfo.append(arrQuickInfo[i] + '<br />');
         }
         // Note : jquery 1.6 make uses of prop() instead of attr()
-        $quickInfo.prop({ scrollTop: $quickInfo.prop('scrollHeight') }, 1);
+        $quickInfo.attr({ scrollTop: $quickInfo.attr('scrollHeight') }, 1);
       }
     }
 
@@ -103,6 +103,7 @@
               $selectedVersion.html(result.version);
               $upgradeNow.attr('disabled', false);
             }
+            $selectChannelErrors.hide();
           } else if (res.error && res.status) {
             $selectedVersion.html('Error');
             $selectChannelErrors.html('Error during channel selection: ' + res.status);
@@ -206,7 +207,7 @@
     function startProcess(type) {
       // hide useless divs, show activity log
       $('#informationBlock,#comparisonBlock,#currentConfigurationBlock,#backupOptionsBlock,#upgradeOptionsBlock,#upgradeButtonBlock').slideUp('fast');
-      $('.autoupgradeSteps a').addClass('button');
+      $('#activityLogBlock').slideDown();
 
       $(window).bind('beforeunload', function (e) {
         var event = e;
@@ -264,7 +265,7 @@
       return isOk;
     }
 
-    function afterUpgradeNow(res) {
+    function afterUpgradeNow() {
       var $upgradeNow = $('#upgradeNow');
 
       startProcess('upgrade');
@@ -410,6 +411,7 @@
           dir: window.upgrader.dir,
           ajax: '1',
           token: window.upgrader.token,
+          ajaxToken: window.upgrader.ajaxToken,
           autoupgradeDir: window.token.autoupgradeDir,
           tab: 'AdminThirtyBeesMigrate',
           action: action,
@@ -437,23 +439,23 @@
             };
             alert('Javascript error (parseJSON) detected for action "' + action + '"Starting recovery process...');
           }
-          addQuickInfo(res.nextQuickInfo);
-          addError(res.nextErrors);
-          updateInfoStep(res.nextDesc);
-          window.upgrader.currentParams = res.nextParams;
-          if (res.status === 'ok') {
+          addQuickInfo(response.nextQuickInfo);
+          addError(response.nextErrors);
+          updateInfoStep(response.nextDesc);
+          window.upgrader.currentParams = response.nextParams;
+          if (response.status === 'ok') {
             $action.addClass('done');
-            if (res.stepDone) {
+            if (response.stepDone) {
               $('#' + action).addClass('stepok');
             }
             // if a function 'after[action name]' exists, it should be called now.
             // This is used for enabling restore buttons for example
             var funcName = 'after' + ucFirst(action);
             if (typeof funcName === 'string' && eval('typeof ' + funcName) === 'function') {
-              callFunction(funcName, res);
+              callFunction(funcName, response);
             }
 
-            handleSuccess(res, action);
+            handleSuccess(response, action);
           } else {
             // display progression
             $action.addClass('done');
@@ -465,7 +467,7 @@
               && action !== 'rollback'
               && action !== 'noRollbackFound'
             ) {
-              handleError(res, action);
+              handleError(response, action);
             } else {
               alert('Error detected during [' + action + ']');
             }
@@ -752,7 +754,7 @@
               params.private_allow_major = 0;
             }
           }
-          if (newChannel == 'archive') {
+          if (newChannel === 'archive') {
             var archiveThirtyBees = $('select[name=archive_prestashop] option:selected').val();
             var archiveNum = $('input[name=archive_num]').val();
             if (archiveNum === '') {

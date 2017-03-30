@@ -184,6 +184,7 @@
     // http://eslint.org/docs/rules/no-undef-init
     "no-undefined": 1,
     // http://eslint.org/docs/rules/no-undefined
+    "no-underscore-dangle": 0,
     "no-with": 2,
     // http://eslint.org/docs/rules/no-with
     "handle-callback-err": 1,

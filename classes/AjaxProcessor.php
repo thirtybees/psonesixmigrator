@@ -38,12 +38,12 @@ class AjaxProcessor
     protected static $instance;
     public $stepDone = true;
     public $status = true;
-    public $installVersion;
     public $backupName;
     public $backupFilesFilename;
     public $backupIgnoreFiles;
     public $backupDbFilename;
     public $restoreName;
+    public $installVersion;
     public $restoreFilesFilename;
     public $restoreDbFilenames;
     public $installedLanguagesIso;
@@ -109,6 +109,7 @@ class AjaxProcessor
 
         $this->tools = UpgraderTools::getInstance();
         $this->upgrader = Upgrader::getInstance();
+        $this->installVersion = $this->upgrader->version;
         $this->latestRootDir = $this->tools->latestPath.DIRECTORY_SEPARATOR.'prestashop';
 
         foreach ($this->ajaxParams as $prop) {
@@ -150,18 +151,6 @@ class AjaxProcessor
     }
 
     /**
-     * @return bool
-     *
-     * @since 1.0.0
-     */
-    public function checkToken()
-    {
-        // FIXME: find - check token - replacement
-        // simple checkToken in ajax-mode, to be free of Cookie class (and no Tools::encrypt() too )
-        return ($_COOKIE['autoupgrade'] == Tools::encrypt($_COOKIE['id_employee']));
-    }
-
-    /**
      * ends the rollback process
      *
      * @return void
@@ -187,7 +176,7 @@ class AjaxProcessor
     protected function l($string, $class = 'AdminThirtyBeesMigrateController', $addslashes = false, $htmlentities = true)
     {
         // need to be called in order to populate $classInModule
-        $str = \AdminThirtyBeesMigrateController::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
+        $str = UpgraderTools::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
         $str = $htmlentities ? str_replace('"', '&quot;', htmlentities($str, ENT_QUOTES, 'utf-8')) : $str;
         $str = $addslashes ? addslashes($str) : stripslashes($str);
 
@@ -210,10 +199,10 @@ class AjaxProcessor
         }
         $this->next = '';
 
-        if (UpgraderTools::getConfig('channel') != 'archive' && file_exists($this->getFilePath()) && unlink($this->getFilePath())) {
-            $this->nextQuickInfo[] = sprintf($this->l('%s removed'), $this->getFilePath());
-        } elseif (is_file($this->getFilePath())) {
-            $this->nextQuickInfo[] = '<strong>'.sprintf($this->l('Please remove %s by FTP'), $this->getFilePath()).'</strong>';
+        if (UpgraderTools::getConfig('channel') != 'archive' && file_exists($this->getCoreFilePath()) && unlink($this->getCoreFilePath())) {
+            $this->nextQuickInfo[] = sprintf($this->l('%s removed'), $this->getCoreFilePath());
+        } elseif (is_file($this->getCoreFilePath())) {
+            $this->nextQuickInfo[] = '<strong>'.sprintf($this->l('Please remove %s by FTP'), $this->getCoreFilePath()).'</strong>';
         }
 
         if (UpgraderTools::getConfig('channel') != 'directory' && file_exists($this->latestRootDir) && Tools::deleteDirectory($this->latestRootDir, true)) {
@@ -224,15 +213,27 @@ class AjaxProcessor
     }
 
     /**
-     * getFilePath return the path to the zipfile containing prestashop.
+     * getCoreFilePath return the path to the zip file containing thirty bees core.
      *
      * @return string
      *
      * @since 1.0.0
      */
-    private function getFilePath()
+    private function getCoreFilePath()
     {
-        return $this->tools->downloadPath.DIRECTORY_SEPARATOR.$this->tools->destDownloadFilename;
+        return $this->tools->downloadPath.DIRECTORY_SEPARATOR.'thirtybees-core-v'.$this->upgrader->version.'.zip';
+    }
+
+    /**
+     * getExtraFilePath return the path to the zip file containing thirty bees core.
+     *
+     * @return string
+     *
+     * @since 1.0.0
+     */
+    private function getExtraFilePath()
+    {
+        return $this->tools->downloadPath.DIRECTORY_SEPARATOR.'thirtybees-extra-v'.$this->upgrader->version.'.zip';
     }
 
     /**
@@ -293,61 +294,10 @@ class AjaxProcessor
             $config['skip_backup'] = $this->currentParams['skip_backup'];
         }
 
-        if (!$this->writeConfig($config)) {
+        if (!UpgraderTools::writeConfig($config)) {
             $this->error = 1;
             $this->nextDesc = $this->l('Error on saving configuration');
         }
-    }
-
-    /**
-     * update module configuration (saved in file `UpgraderTools::CONFIG_FILENAME`) with `$new_config`
-     *
-     * @param array $newConfig
-     *
-     * @return boolean true if success
-     *
-     * @since 1.0.0
-     */
-    public function writeConfig($newConfig)
-    {
-        $tools = UpgraderTools::getInstance();
-        if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
-            $this->upgrader->channel = $newConfig['channel'];
-            $this->upgrader->checkTbVersion();
-            $this->installVersion = $this->upgrader->versionNum;
-
-            return $this->resetConfig($newConfig);
-        }
-
-        $config = file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
-        $configUnserialized = @unserialize(base64_decode($config));
-        if (!is_array($configUnserialized)) {
-            $configUnserialized = @unserialize($config);
-        } // retrocompat, before base64_decode implemented
-        $config = $configUnserialized;
-
-        foreach ($newConfig as $key => $val) {
-            $config[$key] = $val;
-        }
-        $this->nextDesc = $this->l('Configuration successfully updated.').' <strong>'.$this->l('This page will now be reloaded and the module will check if a new version is available.').'</strong>';
-
-        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($config)));
-    }
-
-    /**
-     * reset module configuration with $new_config values (previous config will be totally lost)
-     *
-     * @param array $newConfig
-     *
-     * @return boolean true if success
-     *
-     * @since 1.0.0
-     */
-    public function resetConfig($newConfig)
-    {
-        $tools = UpgraderTools::getInstance();
-
-        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($newConfig)));
     }
 
     /**
@@ -377,59 +327,8 @@ class AjaxProcessor
             'changelog' => $upgrader->changelogLink,
             'available' => (bool) $upgrader->version,
         ];
-    }
 
-    /** returns an array containing information related to the channel $channel
-     *
-     * @param string $channel name of the channel
-     *
-     * @return array available, version_num, version_name, link, md5, changelog
-     *
-     * @since 1.0.0
-     */
-    public function getInfoForChannel($channel)
-    {
-        $upgradeInfo = [];
-        $publicChannel = ['minor', 'major', 'rc', 'beta', 'alpha'];
-        $upgrader = Upgrader::getInstance();
-        preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-        $upgrader->branch = $matches[1];
-        $upgrader->channel = $channel;
-        if (in_array($channel, $publicChannel)) {
-            if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
-                $upgrader->checkTbVersion(false, ['private', 'minor']);
-            } else {
-                $upgrader->checkTbVersion(false, ['minor']);
-            }
-
-
-        } else {
-            switch ($channel) {
-                case 'private':
-                    if (!UpgraderTools::getConfig('private_allow_major')) {
-                        $upgrader->checkTbVersion(false, ['private', 'minor']);
-                    } else {
-                        $upgrader->checkTbVersion(false, ['minor']);
-                    }
-
-                    $upgradeInfo['available'] = $upgrader->available;
-                    $upgradeInfo['branch'] = $upgrader->branch;
-                    $upgradeInfo['version_num'] = $upgrader->versionNum;
-                    $upgradeInfo['version_name'] = $upgrader->versionName;
-                    $upgradeInfo['link'] = UpgraderTools::getConfig('private_release_link');
-                    $upgradeInfo['md5'] = UpgraderTools::getConfig('private_release_md5');
-                    $upgradeInfo['changelog'] = $upgrader->changelogLink;
-                    break;
-                case 'archive':
-                    $upgradeInfo['available'] = true;
-                    break;
-                case 'directory':
-                    $upgradeInfo['available'] = true;
-                    break;
-            }
-        }
-
-        return $upgradeInfo;
+        UpgraderTools::setConfig('channel', $upgrader->channel);
     }
 
     /**
@@ -544,8 +443,8 @@ class AjaxProcessor
         $this->next = 'download';
         $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
 
-        $this->nextQuickInfo[] = sprintf($this->l('Downloaded archive will come from %s'), $this->upgrader->coreLink);
-        $this->nextQuickInfo[] = sprintf($this->l('MD5 hash will be checked against %s'), $this->upgrader->md5Link);
+        $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
+        $this->nextQuickInfo[] = sprintf($this->l('md5 hash will be checked against the file %s'), $this->upgrader->md5Link);
     }
 
     /**
@@ -569,7 +468,7 @@ class AjaxProcessor
      */
     public function ajaxProcessUnzip()
     {
-        $filepath = $this->getFilePath();
+        $filepath = $this->getCoreFilePath();
         $destExtract = $this->tools->latestPath;
 
         if (file_exists($destExtract)) {
@@ -2886,19 +2785,9 @@ class AjaxProcessor
             // regex optimization
             preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
             $this->upgrader->channel = UpgraderTools::getConfig('channel');
-            $this->upgrader->branch = $matches[1];
-            if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
-                $this->upgrader->checkTbVersion(false, ['private', 'minor']);
-            } else {
-                $this->upgrader->checkTbVersion(false, ['minor']);
-            }
 
-            if ($this->upgrader->channel == 'private') {
-                $this->upgrader->link = UpgraderTools::getConfig('private_release_link');
-                $this->upgrader->md5Link = UpgraderTools::getConfig('private_release_md5');
-            }
-            $this->nextQuickInfo[] = sprintf($this->l('downloading from %s'), $this->upgrader->link);
-            $this->nextQuickInfo[] = sprintf($this->l('file will be saved in %s'), $this->getFilePath());
+            $this->nextQuickInfo[] = sprintf($this->l('downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
+            $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath());
             if (file_exists($this->tools->downloadPath)) {
                 Tools::deleteDirectory($this->tools->downloadPath, false);
                 $this->nextQuickInfo[] = $this->l('download directory has been emptied');
@@ -2906,9 +2795,9 @@ class AjaxProcessor
             $report = '';
             $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
             if (ConfigurationTest::test_dir($relativeDownloadPath, false, $report)) {
-                $res = $this->upgrader->downloadLast($this->tools->downloadPath, $this->tools->destDownloadFilename);
+                $res = $this->upgrader->downloadLast($this->tools->downloadPath);
                 if ($res) {
-                    $md5file = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR.$this->tools->destDownloadFilename);
+                    $md5file = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR.$this->tools->coreFilename);
                     if ($md5file == $this->upgrader->md5Link) {
                         $this->nextQuickInfo[] = $this->l('Download complete.');
                         $this->next = 'unzip';
@@ -2938,10 +2827,11 @@ class AjaxProcessor
                 $this->next = 'error';
             }
         } else {
+            // FIXME: make sure the user downloads all files
             $this->nextQuickInfo[] = $this->l('You need allow_url_fopen or cURL enabled for automatic download to work.');
             $this->nextErrors[] = $this->l('You need allow_url_fopen or cURL enabled for automatic download to work.');
             $this->next = 'error';
-            $this->nextDesc = sprintf($this->l('You need allow_url_fopen or cURL enabled for automatic download to work. You can also manually upload it in filepath %s.'), $this->getFilePath());
+            $this->nextDesc = sprintf($this->l('You need allow_url_fopen or cURL enabled for automatic download to work. You can also manually upload it in filepath %s.'), $this->getCoreFilePath());
         }
     }
 
@@ -3003,7 +2893,7 @@ class AjaxProcessor
         $return['stepDone'] = $this->stepDone;
         $return['next'] = $this->next;
         $return['status'] = $this->next == 'error' ? 'error' : 'ok';
-        $return['next_desc'] = $this->nextDesc;
+        $return['nextDesc'] = $this->nextDesc;
 
         $this->nextParams['config'] = UpgraderTools::getConfig();
 

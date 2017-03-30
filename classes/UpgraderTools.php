@@ -5,12 +5,12 @@ namespace PsOneSixMigrator;
 class UpgraderTools
 {
     /**
-     * configFilename contains all configuration specific to the autoupgrade module
+     * configFilename contains all configuration specific to the psonesixmigrator module
      *
      * @var string
      * @access public
      */
-    const CONFIG_FILENAME = 'config.var';
+    const CONFIG_FILENAME = 'config.json';
     /**
      * during upgradeFiles process,
      * this files contains the list of queries left to upgrade in a serialized array.
@@ -95,7 +95,8 @@ class UpgraderTools
     public $root_writable_report;
     public $module_version;
     public $lastAutoupgradeVersion = '';
-    public $destDownloadFilename = 'prestashop.zip';
+    public $coreFilename = 'prestashop.zip';
+    public $extraFilename = 'prestashop.zip';
 
     /** @var array $error */
     public $errors = [];
@@ -155,17 +156,19 @@ class UpgraderTools
     {
         // If not exists in this sessions, "create"
         // session handling : from current to next params
-        if (isset($this->currentParams['removeList'])) {
-            $this->nextParams['removeList'] = $this->currentParams['removeList'];
-        }
-
-        if (isset($this->currentParams['filesToUpgrade'])) {
-            $this->nextParams['filesToUpgrade'] = $this->currentParams['filesToUpgrade'];
-        }
-
-        if (isset($this->currentParams['modulesToUpgrade'])) {
-            $this->nextParams['modulesToUpgrade'] = $this->currentParams['modulesToUpgrade'];
-        }
+        
+        
+//        if (isset($this->currentParams['removeList'])) {
+//            $this->nextParams['removeList'] = $this->currentParams['removeList'];
+//        }
+//
+//        if (isset($this->currentParams['filesToUpgrade'])) {
+//            $this->nextParams['filesToUpgrade'] = $this->currentParams['filesToUpgrade'];
+//        }
+//
+//        if (isset($this->currentParams['modulesToUpgrade'])) {
+//            $this->nextParams['modulesToUpgrade'] = $this->currentParams['modulesToUpgrade'];
+//        }
 
         // set autoupgradePath, to be used in backupFiles and backupDb config values
         $this->autoupgradePath = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.$this->autoupgradeDir;
@@ -221,6 +224,11 @@ class UpgraderTools
         }
     }
 
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
     protected function initializePerformance()
     {
         // Performance settings, if your server has a low memory size, lower these values
@@ -269,16 +277,13 @@ class UpgraderTools
      */
     public static function getConfig($key = '')
     {
-        static $config = [];
-        if (count($config) == 0) {
-            $tools = UpgraderTools::getInstance();
-            if (file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
-                $configContent = file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
-                $config = @unserialize(base64_decode($configContent));
-            } else {
-                $config = [];
-            }
+        $tools = UpgraderTools::getInstance();
+        if (file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
+            $config = json_decode(file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME), true);
+        } else {
+            $config = [];
         }
+
         if (empty($key)) {
             return $config;
         } elseif (isset($config[$key])) {
@@ -286,6 +291,103 @@ class UpgraderTools
         }
 
         return false;
+    }
+
+    /**
+     * Set config value
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return bool
+     */
+    public static function setConfig($key, $value)
+    {
+        $tools = UpgraderTools::getInstance();
+        if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
+            $config = static::initConfig();
+        } else {
+            $config = include($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
+        }
+
+        if (!is_array($config)) {
+            $config = [];
+        }
+
+        $config[$key] = $value;
+
+        return (bool) @file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, json_encode($config, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * update module configuration (saved in file `UpgraderTools::CONFIG_FILENAME`) with `$new_config`
+     *
+     * @param array $newConfig
+     *
+     * @return boolean true if success
+     *
+     * @since 1.0.0
+     */
+    public static function writeConfig($newConfig)
+    {
+        $tools = UpgraderTools::getInstance();
+        if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
+            return (bool) static::resetConfig($newConfig);
+        }
+
+        $config = include($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
+
+        foreach ($newConfig as $key => $val) {
+            $config[$key] = $val;
+        }
+
+        if (!is_array($config)) {
+            $config = [];
+        }
+
+        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, json_encode($config, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Initialize configuration
+     *
+     * @return false|array
+     *
+     * @since 1.0.0
+     */
+    protected function initConfig()
+    {
+        $newConfig = [];
+        $upgrader = Upgrader::getInstance();
+        $upgrader->channel = $newConfig['channel'];
+        $upgrader->checkTbVersion();
+        $newConfig['channel'] = $upgrader->channel;
+
+        if (static::resetConfig($newConfig)) {
+            return $newConfig;
+        }
+
+        return false;
+    }
+
+    /**
+     * reset module configuration with $new_config values (previous config will be totally lost)
+     *
+     * @param array $newConfig
+     *
+     * @return boolean true if success
+     *
+     * @since 1.0.0
+     */
+    public static function resetConfig($newConfig)
+    {
+        $tools = UpgraderTools::getInstance();
+
+        if (!is_array($newConfig)) {
+            $newConfig = [];
+        }
+
+        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, json_encode($newConfig, JSON_PRETTY_PRINT));
     }
 
     /**
@@ -301,7 +403,7 @@ class UpgraderTools
     protected function l($string, $class = 'AdminThirtyBeesMigrateController', $addslashes = false, $htmlentities = true)
     {
         // need to be called in order to populate $classInModule
-        $str = \AdminThirtyBeesMigrateController::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
+        $str = static::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
         $str = $htmlentities ? str_replace('"', '&quot;', htmlentities($str, ENT_QUOTES, 'utf-8')) : $str;
         $str = $addslashes ? addslashes($str) : stripslashes($str);
 

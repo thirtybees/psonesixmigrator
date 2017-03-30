@@ -200,11 +200,17 @@ class Upgrader
 
         $channelWithLatestVersion = $this->findChannelWithLatestVersion($this->selectedChannel);
         if (!$channelWithLatestVersion) {
+            $this->version = '';
+            $this->channel = $this->selectedChannel;
+            $this->coreLink = '';
+            $this->extraLink = '';
+            $this->md5Link = '';
+
             return false;
         }
         $versionInfo = $this->versionInfo[$channelWithLatestVersion];
         $this->version = $versionInfo['version'];
-        $this->channel = $versionInfo['channel'];
+        $this->channel = $channelWithLatestVersion;
         $this->coreLink = $versionInfo['core'];
         $this->extraLink = $versionInfo['extra'];
         $this->md5Link = $versionInfo['md5'];
@@ -216,23 +222,27 @@ class Upgrader
      * downloadLast download the last version of PrestaShop and save it in $dest/$filename
      *
      * @param string $dest     directory where to save the file
-     * @param string $filename new filename
      *
      * @return boolean
      *
      * @TODO ftp if copy is not possible (safe_mode for example)
      */
-    public function downloadLast($dest, $filename = 'thirtybees.zip')
+    public function downloadLast($dest)
     {
-        if (empty($this->link)) {
+        if (!$this->coreLink || !$this->extraLink) {
             $this->checkTbVersion();
+            if (!$this->coreLink || !$this->extraLink) {
+                return false;
+            }
         }
 
-        $destPath = realpath($dest).DIRECTORY_SEPARATOR.$filename;
+        $coreDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-core-{$this->coreLink}.zip";
+        $extraDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-core-{$this->extraLink}.zip";
 
-        Tools::copy($this->link, $destPath);
+        Tools::copy($this->coreLink, $coreDestPath);
+        Tools::copy($this->extraLink, $extraDestPath);
 
-        return is_file($destPath);
+        return is_file($coreDestPath) && is_file($extraDestPath);
     }
 
     /**
