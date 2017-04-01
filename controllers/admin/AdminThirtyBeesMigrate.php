@@ -156,6 +156,23 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     public function initContent()
     {
+        $configurationKeys = [
+            UpgraderTools::KEEP_MAILS             => true,
+            UpgraderTools::DISABLE_CUSTOM_MODULES => true,
+            UpgraderTools::PERFORMANCE            => 1,
+            UpgraderTools::MANUAL_MODE            => false,
+            UpgraderTools::DISPLAY_ERRORS         => false,
+            UpgraderTools::BACKUP                 => true,
+            UpgraderTools::BACKUP_IMAGES          => false,
+        ];
+
+        $config = UpgraderTools::getConfig();
+        foreach ($configurationKeys as $k => $defaultValue) {
+            if (!isset($config[$k])) {
+                UpgraderTools::setConfig($k, $defaultValue);
+            }
+        }
+
         parent::initContent();
 
         /* PrestaShop demo mode */
@@ -189,7 +206,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         $html .= '</div>';
 
         $this->context->smarty->assign('updaterContent', $html);
-//
+
         $this->context->smarty->assign('content', $html);
     }
 
@@ -236,20 +253,18 @@ class AdminThirtyBeesMigrateController extends AdminController
         if ($config === false) {
             $config = [];
             $config['channel'] = Upgrader::DEFAULT_CHANNEL;
-            $this->writeConfig($config);
+            UpgraderTools::writeConfig($config);
             if (class_exists('Configuration', false)) {
                 Configuration::updateValue('PS_UPGRADE_CHANNEL', $config['channel']);
             }
 
-            $this->writeConfig(
+            UpgraderTools::writeConfig(
                 [
-                    'PS_AUTOUP_PERFORMANCE'          => '1',
-                    'PS_AUTOUP_CUSTOM_MOD_DESACT'    => '1',
-                    'PS_AUTOUP_UPDATE_DEFAULT_THEME' => '1',
-                    'PS_AUTOUP_CHANGE_DEFAULT_THEME' => '0',
-                    'PS_AUTOUP_KEEP_MAILS'           => '1',
-                    'PS_AUTOUP_BACKUP'               => '1',
-                    'PS_AUTOUP_KEEP_IMAGES'          => '0',
+                    UpgraderTools::PERFORMANCE            => 1,
+                    UpgraderTools::DISABLE_CUSTOM_MODULES => true,
+                    UpgraderTools::KEEP_MAILS             => true,
+                    UpgraderTools::BACKUP                 => true,
+                    UpgraderTools::BACKUP_IMAGES          => false,
                 ]
             );
         }
@@ -266,7 +281,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         if (Tools::isSubmit('channel')) {
             $channel = Tools::getValue('channel');
             if (in_array($channel, ['stable', 'rc', 'beta', 'alpha'])) {
-                $this->writeConfig(['channel' => Tools::getValue('channel')]);
+                UpgraderTools::writeConfig(['channel' => Tools::getValue('channel')]);
             }
         }
 
@@ -278,7 +293,7 @@ class AdminThirtyBeesMigrateController extends AdminController
                     $config[$key] = $_POST[$key];
                 }
             }
-            $res = $this->writeConfig($config);
+            $res = UpgraderTools::writeConfig($config);
             if ($res) {
                 Tools::redirectAdmin(self::$currentIndex.'&conf=6&token='.Tools::getValue('token'));
             }
@@ -312,57 +327,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * update module configuration (saved in file `UpgraderTools::CONFIG_FILENAME`) with `$new_config`
-     *
-     * @param array $newConfig
-     *
-     * @return boolean true if success
-     *
-     * @since 1.0.0
-     */
-    public function writeConfig($newConfig)
-    {
-        $tools = UpgraderTools::getInstance();
-        if (!file_exists($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME)) {
-            if (!isset($newConfig['channel'])) {
-                $newConfig['channel'] = 'stable';
-            }
-            $this->upgrader->channel = $newConfig['channel'];
-            $this->upgrader->checkTbVersion();
-            $this->installVersion = $this->upgrader->version;
-
-            return $this->resetConfig($newConfig);
-        }
-
-        $config = file_get_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME);
-        $configUnserialized = @unserialize(base64_decode($config));
-        if (!is_array($configUnserialized)) {
-            $configUnserialized = @unserialize($config);
-        } // retrocompat, before base64_decode implemented
-        $config = $configUnserialized;
-
-        foreach ($newConfig as $key => $val) {
-            $config[$key] = $val;
-        }
-
-        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($config)));
-    }
-
-    /**
-     * reset module configuration with $new_config values (previous config will be totally lost)
-     *
-     * @param array $newConfig
-     *
-     * @return boolean true if success
-     *
-     * @since 1.0.0
-     */
-    public function resetConfig($newConfig)
-    {
-        return (bool) file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, base64_encode(serialize($newConfig)));
-    }
-
-    /**
      * @return array
      *
      * @since 1.0.0
@@ -380,7 +344,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             $allowedArray['admin_au_writable'] = ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, false, $report);
             $allowedArray['shop_deactivated'] = (!Configuration::get('PS_SHOP_ENABLE') || (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['127.0.0.1', 'localhost'])));
             $allowedArray['cache_deactivated'] = !(defined('_PS_CACHE_ENABLED_') && _PS_CACHE_ENABLED_);
-            $allowedArray['module_version_ok'] = $this->checkAutoupgradeLastVersion();
+            $allowedArray['module_version_ok'] = true;
         }
 
         return $allowedArray;
@@ -408,13 +372,9 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     public function checkAutoupgradeLastVersion()
     {
-        if ($this->getModuleVersion()) {
-            $this->lastAutoupgradeVersion = version_compare('1.0.0', $this->upgrader->autoupgradeLastVersion, '>=');
-        } else {
-            $this->lastAutoupgradeVersion = true;
-        }
+        $this->lastAutoupgradeVersion = true;
 
-        return $this->lastAutoupgradeVersion;
+        return true;
     }
 
     /**
@@ -561,63 +521,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * Generate main form
-     *
-     * @return void
-     *
-     * @since 1.0.0
-     */
-    protected function generateMainForm()
-    {
-//        $channel = UpgraderTools::getConfig('channel');
-//        switch ($channel) {
-//            case 'archive':
-//                $upgrader->channel = 'archive';
-//                $upgrader->versionNum = UpgraderTools::getConfig('archive.version_num');
-//                break;
-//            case 'directory':
-//                $upgrader->channel = 'directory';
-//                $upgrader->versionNum = UpgraderTools::getConfig('directory.version_num');
-//                break;
-//            default:
-//                if (Tools::getIsset('refreshCurrentVersion')) {
-//                    // delete the potential xml files we saved in config/xml (from last release and from current)
-//                    $upgrader->clearXmlMd5File(_PS_VERSION_);
-//                    $upgrader->clearXmlMd5File($upgrader->versionNum);
-//                    if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
-//                        $upgrader->checkTbVersion(true, ['private', 'minor']);
-//                    } else {
-//                        $upgrader->checkTbVersion(true, ['minor']);
-//                    }
-//
-//                    Tools::redirectAdmin(self::$currentIndex.'&conf=5&token='.Tools::getValue('token'));
-//                } else {
-//                    if (UpgraderTools::getConfig('channel') == 'private' && !UpgraderTools::getConfig('private_allow_major')) {
-//                        $upgrader->checkTbVersion(false, ['private', 'minor']);
-//                    } else {
-//                        $upgrader->checkTbVersion(false, ['minor']);
-//                    }
-//                }
-//        }
-
-        /* Make sure the user has configured the upgrade options, or set default values */
-        $configurationKeys = [
-            'PS_AUTOUP_UPDATE_DEFAULT_THEME' => 1,
-            'PS_AUTOUP_CHANGE_DEFAULT_THEME' => 0,
-            'PS_AUTOUP_KEEP_MAILS'           => 1,
-            'PS_AUTOUP_CUSTOM_MOD_DESACT'    => 1,
-            'PS_AUTOUP_MANUAL_MODE'          => 0,
-            'PS_AUTOUP_PERFORMANCE'          => 1,
-            'PS_DISPLAY_ERRORS'              => 0,
-        ];
-        foreach ($configurationKeys as $k => $defaultValue) {
-            if (Configuration::get($k) == '') {
-                Configuration::updateValue($k, $defaultValue);
-            }
-        }
-    }
-
-    /**
      * @param $name
      * @param $fields
      * @param $tabname
@@ -703,39 +606,64 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     private function setFields()
     {
-        $this->_fieldsBackupOptions['PS_AUTOUP_BACKUP'] = [
-            'title' => $this->l('Back up my files and database'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '1',
-            'type'  => 'bool', 'desc' => $this->l('Automatically back up your database and files in order to restore your shop if needed. This is experimental: you should still perform your own manual backup for safety.'),
+        $this->_fieldsBackupOptions[UpgraderTools::BACKUP] = [
+            'title'        => $this->l('Back up my files and database'),
+            'cast'         => 'intval',
+            'validation'   => 'isBool',
+            'defaultValue' => '1',
+            'type'         => 'bool',
+            'desc'         => $this->l('Automatically back up your database and files in order to restore your shop if needed. This is experimental: you should still perform your own manual backup for safety.'),
         ];
-        $this->_fieldsBackupOptions['PS_AUTOUP_KEEP_IMAGES'] = [
-            'title' => $this->l('Back up my images'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '1',
-            'type'  => 'bool', 'desc' => $this->l('To save time, you can decide not to back your images up. In any case, always make sure you did back them up manually.'),
+        $this->_fieldsBackupOptions[UpgraderTools::BACKUP_IMAGES] = [
+            'title'        => $this->l('Back up my images'),
+            'cast'         => 'intval',
+            'validation'   => 'isBool',
+            'defaultValue' => '1',
+            'type'         => 'bool',
+            'desc'         => $this->l('To save time, you can decide not to back your images up. In any case, always make sure you did back them up manually.'),
         ];
 
-        $this->_fieldsUpgradeOptions['PS_AUTOUP_PERFORMANCE'] = [
-            'title'   => $this->l('Server performance'), 'cast' => 'intval', 'validation' => 'isInt', 'defaultValue' => '1',
-            'type'    => 'select', 'desc' => $this->l('Unless you are using a dedicated server, select "Low".').'<br />'.$this->l('A high value can cause the upgrade to fail if your server is not powerful enough to process the upgrade tasks in a short amount of time.'),
-            'choices' => [1 => $this->l('Low (recommended)'), 2 => $this->l('Medium'), 3 => $this->l('High')],
+        $this->_fieldsUpgradeOptions[UpgraderTools::PERFORMANCE] = [
+            'title'        => $this->l('Server performance'),
+            'cast'         => 'intval',
+            'validation'   => 'isInt',
+            'defaultValue' => '1',
+            'type'         => 'select',
+            'desc'         => $this->l('Unless you are using a dedicated server, select "Low".').'<br />'.$this->l('A high value can cause the upgrade to fail if your server is not powerful enough to process the upgrade tasks in a short amount of time.'),
+            'choices'      => [
+                1 => $this->l('Low (recommended)'),
+                2 => $this->l('Medium'),
+                3 => $this->l('High'),
+            ],
         ];
 
-        $this->_fieldsUpgradeOptions['PS_AUTOUP_CUSTOM_MOD_DESACT'] = [
-            'title' => $this->l('Disable non-native modules'), 'cast' => 'intval', 'validation' => 'isBool',
-            'type'  => 'bool', 'desc' => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
+        $this->_fieldsUpgradeOptions[UpgraderTools::DISABLE_CUSTOM_MODULES] = [
+            'title'      => $this->l('Disable non-native modules'),
+            'cast'       => 'intval',
+            'validation' => 'isBool',
+            'type'       => 'bool',
+            'desc'       => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
         ];
 
         /* Developers only options */
         if (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) {
-            $this->_fieldsUpgradeOptions['PS_AUTOUP_MANUAL_MODE'] = [
-                'title' => $this->l('Step by step mode'), 'cast' => 'intval', 'validation' => 'isBool',
-                'type'  => 'bool', 'desc' => $this->l('Allows to perform the migration step by step (debug mode).'),
+            $this->_fieldsUpgradeOptions[UpgraderTools::MANUAL_MODE] = [
+                'title'      => $this->l('Step by step mode'),
+                'cast'       => 'intval',
+                'validation' => 'isBool',
+                'type'       => 'bool',
+                'desc'       => $this->l('Allows to perform the migration step by step (debug mode).'),
             ];
 
-            $this->_fieldsUpgradeOptions['PS_DISPLAY_ERRORS'] = [
-                'title' => $this->l('Display PHP errors'), 'cast' => 'intval', 'validation' => 'isBool', 'defaultValue' => '0',
-                'type'  => 'bool', 'desc' => $this->l('This option will keep PHP\'s "display_errors" setting to On (or force it).').'<br />'.$this->l('This is not recommended as the upgrade will immediately fail if a PHP error occurs during an Ajax call.'),
+            $this->_fieldsUpgradeOptions[UpgraderTools::DISPLAY_ERRORS] = [
+                'title'        => $this->l('Display PHP errors'),
+                'cast'         => 'intval',
+                'validation'   => 'isBool',
+                'defaultValue' => '0',
+                'type'         => 'bool', 'desc' => $this->l('This option will keep PHP\'s "display_errors" setting to On (or force it).').'<br />'.$this->l('This is not recommended as the upgrade will immediately fail if a PHP error occurs during an Ajax call.'),
             ];
-        } elseif (UpgraderTools::getConfig('PS_DISPLAY_ERRORS')) {
-            $this->writeConfig(['PS_DISPLAY_ERRORS' => '0']);
+        } elseif (UpgraderTools::getConfig(UpgraderTools::DISPLAY_ERRORS)) {
+            UpgraderTools::writeConfig([UpgraderTools::DISPLAY_ERRORS => false]);
         }
     }
 
@@ -755,11 +683,46 @@ class AdminThirtyBeesMigrateController extends AdminController
      * Generate ajax token
      *
      * @return string
+     *
+     * @since 1.0.0
      */
-    private function generateAjaxToken()
+    protected function generateAjaxToken()
     {
         $blowfish = new PsOneSixMigrator\Blowfish(_COOKIE_KEY_, _COOKIE_IV_);
 
         return $blowfish->encrypt('thirtybees1337H4ck0rzz');
+    }
+
+    /**
+     * @return void
+     *
+     * @since 1.0.0
+     */
+    public function ajaxProcessSetConfig()
+    {
+        if (!Tools::isSubmit('configKey') || !Tools::isSubmit('configValue') || !Tools::isSubmit('configType')) {
+            die(json_encode([
+                'success' => false,
+            ]));
+        }
+
+        $configKey = Tools::getValue('configKey');
+        $configType = Tools::getValue('configType');
+        $configValue = Tools::getValue('configValue');
+        if ($configType === 'bool') {
+            if ($configValue === 'false' || !$configValue) {
+                $configValue = false;
+            } else {
+                $configValue = true;
+            }
+        } elseif ($configType === 'select') {
+            $configValue = (int) $configValue;
+        }
+
+        UpgraderTools::setConfig($configKey, $configValue);
+
+        die(json_encode([
+            'success' => true,
+        ]));
     }
 }

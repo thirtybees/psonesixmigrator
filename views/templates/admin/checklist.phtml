@@ -23,7 +23,7 @@
  * PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
-/** @var AdminThirtyBeesMigrateController $this*/
+/** @var AdminThirtyBeesMigrateController $this */
 
 $currentPsConfig = $this->getcheckCurrentPsConfig();
 $picOk = '<i class="icon icon-check" style="color: limegreen"></i>';
@@ -36,25 +36,25 @@ $tools = \PsOneSixMigrator\UpgraderTools::getInstance();
 PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
 ?>
 
-<div id="currentConfigurationBlock" class="panel col-lg-6">
-    <div class="panel-heading"><?php echo $this->l('The pre-Upgrade checklist'); ?></div>
+<div class="panel col-md-6" id="currentConfigurationBlock">
+	<div class="panel-heading"><?php echo $this->l('The pre-Upgrade checklist'); ?></div>
     <?php if (!$this->configOk()) : ?>
-        <div class="clear"><br></div><p class="warn"><?php echo $this->l('The checklist is not OK. You can only upgrade your shop once all indicators are green.'); ?></p>
+		<div class="clear"><br></div><p class="warn"><?php echo $this->l('The checklist is not OK. You can only upgrade your shop once all indicators are green.'); ?></p>
     <?php endif; ?>
 
-    <div id="currentConfiguration">
-        <p><?php echo $this->l('Before starting the upgrade process, please make sure this checklist is all green.'); ?></p>
-        <table class="table" cellpadding="0" cellspacing="0">
-            <tr>
-                <td><?php echo $this->l('Your store\'s root directory is writable (with appropriate CHMOD permissions)'); ?></td>
-                <td><?php echo ($currentPsConfig['root_writable'] ? $picOk : $picNok.' '.$tools->root_writable_report); ?></td>
-            </tr>
+	<div id="currentConfiguration">
+		<p><?php echo $this->l('Before starting the upgrade process, please make sure this checklist is all green.'); ?></p>
+		<table class="table" cellpadding="0" cellspacing="0">
+			<tr>
+				<td><?php echo $this->l('Your store\'s root directory is writable (with appropriate CHMOD permissions)'); ?></td>
+				<td><?php echo($currentPsConfig['root_writable'] ? $picOk : $picNok.' '.$tools->root_writable_report); ?></td>
+			</tr>
 
             <?php if ($report) : ?>
-                <tr>
-                    <td><?php echo $this->l('The "/admin/autoupgrade" directory is writable (appropriate CHMOD permissions)'); ?></td>
-                    <td><?php echo ($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
-                </tr>
+				<tr>
+					<td><?php echo $this->l('The "/admin/autoupgrade" directory is writable (appropriate CHMOD permissions)'); ?></td>
+					<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
+				</tr>
             <?php endif; ?>
 
             <?php
@@ -64,26 +64,27 @@ PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tool
             $safeMode = in_array(Tools::strtolower($safeMode), [1, 'on']);
             ?>
 
-            <tr>
-                <td><?php echo $this->l('PHP\'s "Safe mode" option is turned off'); ?></td>
-                <td><?php echo (!$safeMode ? $picOk : $picWarn); ?></td>
-            </tr>
-            <tr>
-                <td><?php echo $this->l('PHP\'s "allow_url_fopen" option is turned on, or cURL is installed'); ?></td>
-                <td><?php echo ((PsOneSixMigrator\ConfigurationTest::test_fopen() || PsOneSixMigrator\ConfigurationTest::test_curl()) ? $picOk : $picNok); ?></td>
-            </tr>
-            <tr>
-                <td><?php echo $this->l('Your store is in maintenance mode').' '.(!$currentPsConfig['shop_deactivated'] ? '<br><form method="post" action="'.static::$currentIndex.'&token='.$this->token.'"><input type="submit" class="button" name="putUnderMaintenance" value="'.$this->l('Click here to put your shop under maintenance').'"></form>' : ''); ?></td>
-                <td><?php echo ($currentPsConfig['shop_deactivated'] ? $picOk : $picNok); ?></td>
-            </tr>
-            <tr>
-                <td><?php echo $this->l('PrestaShop\'s caching features are disabled'); ?></td>
-                <td><?php echo ($currentPsConfig['cache_deactivated'] ? $picOk : $picNok); ?></td>
-            </tr>
-            <tr>
-                <td><?php echo sprintf($this->l('PHP\'s max_execution_time setting has a high value or is disabled entirely (current value: %s)'), ($maxExecTime == 0 ? $this->l('unlimited') : sprintf($this->l('%s seconds'), $maxExecTime))); ?></td>
-                <td><?php echo ($maxExecTime == 0 ? $picOk : $picWarn); ?></td></tr>
-        </table>
-        <div class="panel-footer"><strong><?php echo $this->l('Please also make sure you make a full manual backup of your files and database.'); ?></strong></div>
-    </div>
+			<tr>
+				<td><?php echo $this->l('PHP\'s "Safe mode" option is turned off'); ?></td>
+				<td><?php echo(!$safeMode ? $picOk : $picWarn); ?></td>
+			</tr>
+			<tr>
+				<td><?php echo $this->l('PHP\'s "allow_url_fopen" option is turned on, or cURL is installed'); ?></td>
+				<td><?php echo((PsOneSixMigrator\ConfigurationTest::test_fopen() || PsOneSixMigrator\ConfigurationTest::test_curl()) ? $picOk : $picNok); ?></td>
+			</tr>
+			<tr>
+				<td><?php echo $this->l('Your store is in maintenance mode').' '.(!$currentPsConfig['shop_deactivated'] ? '<br><form method="post" action="'.static::$currentIndex.'&token='.$this->token.'"><input type="submit" class="button" name="putUnderMaintenance" value="'.$this->l('Click here to put your shop under maintenance').'"></form>' : ''); ?></td>
+				<td><?php echo($currentPsConfig['shop_deactivated'] ? $picOk : $picNok); ?></td>
+			</tr>
+			<tr>
+				<td><?php echo $this->l('PrestaShop\'s caching features are disabled'); ?></td>
+				<td><?php echo($currentPsConfig['cache_deactivated'] ? $picOk : $picNok); ?></td>
+			</tr>
+			<tr>
+				<td><?php echo sprintf($this->l('PHP\'s max_execution_time setting has a high value or is disabled entirely (current value: %s)'), ($maxExecTime == 0 ? $this->l('unlimited') : sprintf($this->l('%s seconds'), $maxExecTime))); ?></td>
+				<td><?php echo($maxExecTime == 0 ? $picOk : $picWarn); ?></td>
+			</tr>
+		</table>
+		<div class="panel-footer"><strong><?php echo $this->l('Please also make sure you make a full manual backup of your files and database.'); ?></strong></div>
+	</div>
 </div>

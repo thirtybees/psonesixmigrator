@@ -44,7 +44,7 @@ if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) 
         <br/>
         <div id="restoreBackupContainer">
             <?php echo $this->l('Choose your backup:'); ?>
-            <select name="restoreName">
+            <select name="restoreName" class="fixed-width-xxl">
                 <option value="0"><?php echo $this->l('-- Choose a backup to restore --'); ?></option>
                 <?php if (is_array($backupAvailable) && count($backupAvailable)) : ?>
                     <?php foreach ($backupAvailable as $backupName) : ?>

@@ -75,6 +75,14 @@ class UpgraderTools
      */
     const TRANSLATIONS_CUSTOM_LIST = 'translations-custom.list';
 
+    const KEEP_MAILS = 'keepMails';
+    const DISABLE_CUSTOM_MODULES = 'disableCustomModules';
+    const MANUAL_MODE = 'manualMode';
+    const DISPLAY_ERRORS = 'displayErrors';
+    const BACKUP = 'backup';
+    const BACKUP_IMAGES = 'backupImages';
+    const PERFORMANCE = 'performance';
+
     public $autoupgradePath;
     public $autoupgradeDir = 'autoupgrade';
     /**
@@ -314,7 +322,7 @@ class UpgraderTools
 
         $config[$key] = $value;
 
-        return (bool) @file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, json_encode($config, JSON_PRETTY_PRINT));
+        return (bool) file_put_contents($tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::CONFIG_FILENAME, json_encode($config, JSON_PRETTY_PRINT));
     }
 
     /**

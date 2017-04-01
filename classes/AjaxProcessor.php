@@ -118,7 +118,10 @@ class AjaxProcessor
             }
         }
 
-        $this->initializeFiles();
+        // Initialize files at first step
+        if ($this->action === 'upgradeNow') {
+            $this->initializeFiles();
+        }
     }
 
     /**
@@ -142,7 +145,7 @@ class AjaxProcessor
      */
     public function optionDisplayErrors()
     {
-        if (UpgraderTools::getConfig('PS_DISPLAY_ERRORS')) {
+        if (UpgraderTools::getConfig(UpgraderTools::DISPLAY_ERRORS)) {
             error_reporting(E_ALL);
             ini_set('display_errors', 'on');
         } else {
@@ -479,40 +482,12 @@ class AjaxProcessor
         $report = '';
         if (ConfigurationTest::test_dir($relativeExtractPath, false, $report)) {
             if ($this->extractZip($filepath, $destExtract)) {
-                if (version_compare($this->installVersion, '1.7.1.0', '>=')) {
-                    // new system release archive
-                    $newZip = $destExtract.DIRECTORY_SEPARATOR.'prestashop.zip';
-                    if (is_file($newZip)) {
-                        @unlink($destExtract.DIRECTORY_SEPARATOR.'/index.php');
-                        @unlink($destExtract.DIRECTORY_SEPARATOR.'/Install_PrestaShop.html');
-                        if ($this->extractZip($newZip, $destExtract)) {
-                            // Unsetting to force listing
-                            unset($this->nextParams['removeList']);
-                            $this->next = 'removeSamples';
-                            $this->nextDesc = $this->l('File extraction complete. Removing sample files...');
-                            @unlink($newZip);
+                // Unsetting to force listing
+                unset($this->nextParams['removeList']);
+                $this->next = 'removeSamples';
+                $this->nextDesc = $this->l('File extraction complete. Removing sample files...');
 
-                            return true;
-                        } else {
-                            $this->next = 'error';
-                            $this->nextDesc = sprintf($this->l('Unable to extract %1$s file into %2$s folder...'), $filepath, $destExtract);
-
-                            return false;
-                        }
-                    } else {
-                        $this->next = 'error';
-                        $this->nextDesc = sprintf($this->l('It\'s not a valid upgrade %s archive...'), $this->installVersion);
-
-                        return false;
-                    }
-                } else {
-                    // Unsetting to force listing
-                    unset($this->nextParams['removeList']);
-                    $this->next = 'removeSamples';
-                    $this->nextDesc = $this->l('File extraction complete. Removing sample files...');
-
-                    return true;
-                }
+                return true;
             } else {
                 $this->next = 'error';
                 $this->nextDesc = sprintf($this->l('Unable to extract %1$s file into %2$s folder...'), $filepath, $destExtract);
@@ -547,14 +522,14 @@ class AjaxProcessor
         }
 
         if (!file_exists($toDir)) {
-            if (!mkdir($toDir)) {
+            if (!mkdir($toDir, 0777, true)) {
                 $this->next = 'error';
                 $this->nextQuickInfo[] = sprintf($this->l('Unable to create directory %s.'), $toDir);
                 $this->nextErrors[] = sprintf($this->l('Unable to create directory %s.'), $toDir);
 
                 return false;
             } else {
-                chmod($toDir, 0775);
+                chmod($toDir, 0777);
             }
         }
 
@@ -2237,7 +2212,7 @@ class AjaxProcessor
      */
     public function ajaxProcessBackupDb()
     {
-        if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->version, '1.7.0.0', '<')) {
+        if (!UpgraderTools::getConfig(UpgraderTools::BACKUP)) {
             $this->stepDone = true;
             $this->nextParams['dbStep'] = 0;
             $this->nextDesc = sprintf($this->l('Database backup skipped. Now upgrading files...'), $this->backupName);
@@ -2278,17 +2253,14 @@ class AjaxProcessor
         }
 
         // INIT LOOP
-        if (!file_exists($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_DB_LIST)) {
-            if (!is_dir($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupName)) {
-                mkdir($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupName);
-            }
+        if (!isset($this->nextParams['tablesToBackup']) || empty($this->nextParams['tablesToBackup'])) {
             $this->nextParams['dbStep'] = 0;
             $tablesToBackup = $this->db->executeS('SHOW TABLES LIKE "'._DB_PREFIX_.'%"', true, false);
-            file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_DB_LIST, base64_encode(serialize($tablesToBackup)));
+            $this->nextParams['tablesToBackup'] = $tablesToBackup;
         }
 
         if (!isset($tablesToBackup)) {
-            $tablesToBackup = unserialize(base64_decode(file_get_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_DB_LIST)));
+            $tablesToBackup = $this->nextParams['tablesToBackup'];
         }
         $found = 0;
         $views = '';
@@ -2316,7 +2288,7 @@ class AjaxProcessor
                 if (isset($fp)) {
                     fclose($fp);
                 }
-                $backupfile = $this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupName.DIRECTORY_SEPARATOR.$this->backupDbFilename;
+                $backupfile = $this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupDbFilename;
                 $backupfile = preg_replace("#_XXXXXX_#", '_'.str_pad($this->nextParams['dbStep'], 6, '0', STR_PAD_LEFT).'_', $backupfile);
 
                 // start init file
@@ -2470,7 +2442,7 @@ class AjaxProcessor
             unset($fp);
         }
 
-        file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_DB_LIST, base64_encode(serialize($tablesToBackup)));
+        $this->nextParams['tablesToBackup'] = $tablesToBackup;
 
         if (count($tablesToBackup) > 0) {
             $this->nextQuickInfo[] = sprintf($this->l('%1$s tables have been saved.'), $found);
@@ -2497,6 +2469,7 @@ class AjaxProcessor
             unset($this->nextParams['backup_loop_limit']);
             unset($this->nextParams['backup_lines']);
             unset($this->nextParams['backup_table']);
+            unset($this->nextParams['tablesToBackup']);
             if ($found) {
                 $this->nextQuickInfo[] = sprintf($this->l('%1$s tables have been saved.'), $found);
             }
@@ -2518,7 +2491,7 @@ class AjaxProcessor
      */
     public function ajaxProcessBackupFiles()
     {
-        if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && version_compare($this->upgrader->versionNum, '1.7.0.0', '<')) {
+        if (!UpgraderTools::getConfig(UpgraderTools::BACKUP)) {
             $this->stepDone = true;
             $this->next = 'backupDb';
             $this->nextDesc = 'File backup skipped.';
@@ -2540,12 +2513,11 @@ class AjaxProcessor
 
         if (empty($this->nextParams['filesForBackup'])) {
             // @todo : only add files and dir listed in "originalPrestashopVersion" list
-            $filesToBackup = $this->listFilesInDir(_PS_ROOT_DIR_, 'backup', false);
-            file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_FILE_LIST, base64_encode(serialize($filesToBackup)));
-            if (count($filesToBackup)) {
-                $this->nextQuickInfo[] = sprintf($this->l('%s Files to backup.'), count($filesToBackup));
+            $filesForBackup = $this->listFilesInDir(_PS_ROOT_DIR_, 'backup', false);
+            if (count($filesForBackup)) {
+                $this->nextQuickInfo[] = sprintf($this->l('%s Files to backup.'), count($filesForBackup));
             }
-            $this->nextParams['filesForBackup'] = $filesToBackup;
+            $this->nextParams['filesForBackup'] = $filesForBackup;
 
             // delete old backup, create new
             if (!empty($this->backupFilesFilename) && file_exists($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename)) {
@@ -2554,13 +2526,13 @@ class AjaxProcessor
 
             $this->nextQuickInfo[] = sprintf($this->l('backup files initialized in %s'), $this->backupFilesFilename);
         }
-        $filesToBackup = unserialize(base64_decode(file_get_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_FILE_LIST)));
+        $filesForBackup = $this->nextParams['filesForBackup'];
 
         $this->next = 'backupFiles';
-        if (count($filesToBackup)) {
-            $this->nextDesc = sprintf($this->l('Backup files in progress. %d files left'), count($filesToBackup));
+        if (count($filesForBackup)) {
+            $this->nextDesc = sprintf($this->l('Backup files in progress. %d files left'), count($filesForBackup));
         }
-        if (is_array($filesToBackup)) {
+        if (is_array($filesForBackup)) {
             $this->nextQuickInfo[] = $this->l('Using class ZipArchive...');
             $zipArchive = true;
             $zip = new \ZipArchive();
@@ -2575,7 +2547,7 @@ class AjaxProcessor
                 $filesToAdd = [];
                 $closeFlag = true;
                 for ($i = 0; $i < UpgraderTools::$loopBackupFiles; $i++) {
-                    if (count($filesToBackup) <= 0) {
+                    if (count($filesForBackup) <= 0) {
                         $this->stepDone = true;
                         $this->status = 'ok';
                         $this->next = 'backupDb';
@@ -2584,7 +2556,7 @@ class AjaxProcessor
                         break;
                     }
                     // filesForBackup already contains all the correct files
-                    $file = array_shift($filesToBackup);
+                    $file = array_shift($filesForBackup);
 
                     $archiveFilename = ltrim(str_replace(_PS_ROOT_DIR_, '', $file), DIRECTORY_SEPARATOR);
                     $size = filesize($file);
@@ -2592,8 +2564,8 @@ class AjaxProcessor
                         if (isset($zipArchive) && $zipArchive) {
                             $addedToZip = $zip->addFile($file, $archiveFilename);
                             if ($addedToZip) {
-                                if ($filesToBackup) {
-                                    $this->nextQuickInfo[] = sprintf($this->l('%1$s added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesToBackup));
+                                if ($filesForBackup) {
+                                    $this->nextQuickInfo[] = sprintf($this->l('%1$s added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesForBackup));
                                 }
                             } else {
                                 // if an error occur, it's more safe to delete the corrupted backup
@@ -2609,8 +2581,8 @@ class AjaxProcessor
                             }
                         } else {
                             $filesToAdd[] = $file;
-                            if (count($filesToBackup)) {
-                                $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %3$s) added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesToBackup), $size);
+                            if (count($filesForBackup)) {
+                                $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %3$s) added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesForBackup), $size);
                             } else {
                                 $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %2$s) added to archive.', 'AdminThirtyBeesMigrate', true), $archiveFilename, $size);
                             }
@@ -2625,7 +2597,7 @@ class AjaxProcessor
                     $zip->close();
                 }
 
-                file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_BACKUP_FILE_LIST, base64_encode(serialize($filesToBackup)));
+                $this->nextParams['filesForBackup'] = $filesForBackup;
 
                 return true;
             } else {
@@ -2641,7 +2613,6 @@ class AjaxProcessor
 
             return true;
         }
-        // 4) save for display.
     }
 
     /**
@@ -3237,21 +3208,19 @@ class AjaxProcessor
         foreach ($isoIds as $v) {
             $this->installedLanguagesIso[] = $v['iso_code'];
         }
+        $this->installedLanguagesIso = array_unique($this->installedLanguagesIso);
 
         $rand = dechex(mt_rand(0, min(0xffffffff, mt_getrandmax())));
         $date = date('Ymd-His');
-        $this->backupName = 'V'._PS_VERSION_.'_'.$date.'-'.$rand;
+        $version = _PS_VERSION_;
+        $this->backupName = "v{$version}_{$date}-{$rand}";
         $this->backupFilesFilename = 'auto-backupfiles_'.$this->backupName.'.zip';
         $this->backupDbFilename = 'auto-backupdb_XXXXXX_'.$this->backupName.'.sql';
-        // removing temporary files
-        $this->cleanTmpFiles();
 
-        $this->keepImages = UpgraderTools::getConfig('PS_AUTOUP_KEEP_IMAGES');
-        $this->updateDefaultTheme = UpgraderTools::getConfig('PS_AUTOUP_UPDATE_DEFAULT_THEME');
-        $this->changeToDefaultTheme = UpgraderTools::getConfig('PS_AUTOUP_CHANGE_DEFAULT_THEME');
-        $this->keepMails = UpgraderTools::getConfig('PS_AUTOUP_KEEP_MAILS');
-        $this->manualMode = (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) ? (bool) UpgraderTools::getConfig('PS_AUTOUP_MANUAL_MODE') : false;
-        $this->deactivateCustomModule = UpgraderTools::getConfig('PS_AUTOUP_CUSTOM_MOD_DESACT');
+        $this->keepImages = UpgraderTools::getConfig(UpgraderTools::BACKUP_IMAGES);
+        $this->keepMails = UpgraderTools::getConfig(UpgraderTools::KEEP_MAILS);
+        $this->manualMode = (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) ? (bool) UpgraderTools::getConfig(UpgraderTools::MANUAL_MODE) : false;
+        $this->deactivateCustomModule = UpgraderTools::getConfig(UpgraderTools::DISABLE_CUSTOM_MODULES);
 
         // during restoration, do not remove :
         $this->restoreIgnoreAbsoluteFiles[] = '/config/settings.inc.php';

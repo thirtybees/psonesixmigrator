@@ -6,6 +6,30 @@
       return;
     }
 
+    function setConfig(key, value, type) {
+      $.ajax({
+        type: 'POST',
+        url: window.upgrader.currentIndex + '&token=' + window.upgrader.token + '&tab=' + window.upgrader.tab + '&ajax=1&action=setConfig',
+        async: true,
+        dataType: 'json',
+        data: {
+          configKey: key,
+          configValue: value,
+          configType: type,
+        },
+        success: function (response) {
+          if (response && response.success) {
+            window.showSuccessMessage('Setting updated');
+          } else {
+            window.showSuccessMessage('Could not update setting');
+          }
+        },
+        error: function () {
+          window.showErrorMessage('Could not update setting');
+        },
+      });
+    }
+
     function ucFirst(str) {
       if (str.length > 0) {
         return str[0].toUpperCase() + str.substring(1);
@@ -22,7 +46,8 @@
       var $infoStep = $('#infoStep');
 
       if (msg) {
-        $infoStep.append(msg + '<div class="clear"></div>')
+        $infoStep
+          .append(msg + '<div class="clear"></div>')
           .attr({ scrollTop: $infoStep.attr('scrollHeight') }, 1);
       }
     }
@@ -89,8 +114,8 @@
           ajax: '1',
           ajaxToken: window.upgrader.ajaxToken,
           params: {
-            channel: channel
-          }
+            channel: channel,
+          },
         },
         success: function (res) {
           var result;
@@ -127,6 +152,20 @@
       });
       $('div[id|=for]').hide();
       $('select[name=channel]').change();
+
+      // The configuration forms
+      $('.generatedForm select').change(function () {
+        setConfig($(this).attr('name'), $(this).val(), 'select');
+      });
+      // The configuration forms
+      $('.generatedForm input[type=radio]').change(function () {
+        var value = $(this).val();
+        if (value === '0') {
+          value = false;
+        }
+        value = !!value;
+        setConfig($(this).attr('name'), value, 'bool');
+      });
 
 
       // the following prevents to leave the page at the inappropriate time
@@ -206,7 +245,7 @@
 
     function startProcess(type) {
       // hide useless divs, show activity log
-      $('#informationBlock,#comparisonBlock,#currentConfigurationBlock,#backupOptionsBlock,#upgradeOptionsBlock,#upgradeButtonBlock').slideUp('fast');
+      $('#informationBlock,#comparisonBlock, #currentConfigurationBlock, #backupOptionsBlock, #upgradeOptionsBlock, #upgradeButtonBlock, .generatedForm').slideUp('fast');
       $('#activityLogBlock').slideDown();
 
       $(window).bind('beforeunload', function (e) {
@@ -284,7 +323,7 @@
         'Javascript and CSS files have changed, please clear your browser cache with CTRL-F5',
         'Please check that your front-office theme is functional (try to create an account, place an order...',
         'Product images do not appear in the front-office? Try regenerating the thumbnails in Preferences > Images',
-        'Do not forget to reactivate your shop once you have checked everything!'
+        'Do not forget to reactivate your shop once you have checked everything!',
       ];
       var i;
       var todoUl = '<ul>';
