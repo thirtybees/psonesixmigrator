@@ -195,7 +195,6 @@ class AdminThirtyBeesMigrateController extends AdminController
         $html = '<div class="row">';
         $html .= $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/welcome.phtml');
 
-        /* Checks/requirements and "Upgrade PrestaShop now" blocks */
         $html .= $this->displayCurrentConfiguration();
         $html .= $this->displayBlockUpgradeButton();
 
@@ -211,34 +210,6 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * create cookies id_employee, id_tab and autoupgrade (token)
-     *
-     * @return false
-     *
-     * @since 1.0.0
-     */
-    public function createCustomToken()
-    {
-        // ajax-mode for autoupgrade, we can't use the classic authentication
-        // so, we'll create a cookie in admin dir, based on cookie key
-        $cookie = Context::getContext()->cookie;
-        $idEmployee = $cookie->id_employee;
-        if ($cookie->id_lang) {
-            $isoCode = $_COOKIE['iso_code'] = Language::getIsoById((int) $cookie->id_lang);
-        } else {
-            $isoCode = 'en';
-        }
-        $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
-        $cookiePath = __PS_BASE_URI__.$adminDir;
-        setcookie('id_employee', $idEmployee, 0, $cookiePath);
-        setcookie('id_tab', $this->id, 0, $cookiePath);
-        setcookie('iso_code', $isoCode, 0, $cookiePath);
-        setcookie('autoupgrade', Tools::encrypt($idEmployee), 0, $cookiePath);
-
-        return false;
-    }
-
-    /**
      * @return void
      *
      * @since 1.0.0
@@ -247,7 +218,7 @@ class AdminThirtyBeesMigrateController extends AdminController
     {
         $this->setFields();
 
-        // set default configuration to default channel & dafault configuration for backup and upgrade
+        // set default configuration to default channel & default configuration for backup and upgrade
         // (can be modified in expert mode)
         $config = UpgraderTools::getConfig('channel');
         if ($config === false) {
@@ -402,7 +373,7 @@ class AdminThirtyBeesMigrateController extends AdminController
 
     /**
      * _displayBlockUpgradeButton
-     * display the summary current version / target vesrion + "Upgrade Now" button with a "more options" button
+     * display the summary current version / target version + "Upgrade Now" button with a "more options" button
      *
      * @return string
      *
@@ -565,12 +536,12 @@ class AdminThirtyBeesMigrateController extends AdminController
     {
         $tools = UpgraderTools::getInstance();
         $array = [];
-
         $files = scandir($tools->backupPath);
-
         foreach ($files as $file) {
-            if ($file[0] == 'V' && is_dir($tools->backupPath.DIRECTORY_SEPARATOR.$file)) {
-                $array[] = $file;
+            if ($file[0] != '.') {
+                if (substr($file, 0, 13) == 'auto-backupdb') {
+                    $array[] = preg_replace('#^auto-backupdb_(.*-[0-9a-f]{1,8})\..*$#', '$1', $file);
+                }
             }
         }
 

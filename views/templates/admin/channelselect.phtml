@@ -26,9 +26,7 @@
 /** @var AdminThirtyBeesMigrateController $this */
 $upgrader = \PsOneSixMigrator\Upgrader::getInstance();
 ?>
-<div class="clearfix">
-	<strong><?php echo $this->l('Going to migrate to thirty bees version'); ?>:</strong> <em id="selectedVersion"><?php echo $upgrader->version ?: $this->l('Nothing available'); ?></em>
-</div>
+<strong><?php echo $this->l('Going to migrate to thirty bees version'); ?>:</strong> <em id="selectedVersion"><?php echo $upgrader->version ?: $this->l('Nothing available'); ?></em>
 <div class="form-group">
 	<label for="channelSelect"><?php echo $this->l('Channel:'); ?></label>
 	<select id="channelSelect" name="channel" class="form-control fixed-width-xxl">

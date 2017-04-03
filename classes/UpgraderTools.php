@@ -162,8 +162,8 @@ class UpgraderTools
     {
         // If not exists in this sessions, "create"
         // session handling : from current to next params
-        
-        
+
+
 //        if (isset($this->currentParams['removeList'])) {
 //            $this->nextParams['removeList'] = $this->currentParams['removeList'];
 //        }
@@ -479,5 +479,28 @@ class UpgraderTools
         }
 
         return static::$lCache[$cacheKey];
+    }
+
+    /**
+     * Recursively remove a directory
+     *
+     * @param string $dir Path to directory
+     *
+     * @since 1.0.0
+     */
+    public static function rrmdir($dir)
+    {
+        while(false !== ($file = readdir($dir))) {
+            if (($file !== '.') && ($file !== '..')) {
+                $full = $dir.'/'.$file;
+                if (is_dir($full)) {
+                    static::rrmdir($full);
+                } else {
+                    unlink($full);
+                }
+            }
+        }
+        closedir($dir);
+        rmdir($dir);
     }
 }

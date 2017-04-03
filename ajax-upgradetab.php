@@ -23,6 +23,8 @@
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
+use PsOneSixMigrator\Tools;
+use PsOneSixMigrator\AjaxProcessor;
 
 if (function_exists('date_default_timezone_set')) {
     // date_default_timezone_get calls date_default_timezone_set, which can provide warning
@@ -30,7 +32,7 @@ if (function_exists('date_default_timezone_set')) {
     date_default_timezone_set($timezone);
 }
 
-require_once __DIR__.'/../../config/config.inc.php';
+require_once __DIR__.'/../../config/settings.inc.php';
 require_once __DIR__.'/../../modules/psonesixmigrator/classes/autoload.php';
 
 if (!defined('_PS_MODULE_DIR_')) {
@@ -45,8 +47,6 @@ if (!isset($_POST['dir'])) {
     die('no directory');
 }
 
-// defines.inc.php can not exists (1.3.0.1 for example)
-// but we need _PS_ROOT_DIR_
 if (!defined('_PS_ROOT_DIR_')) {
     define('_PS_ROOT_DIR_', realpath(__DIR__.'/../../'));
 }
@@ -70,7 +70,7 @@ if (!defined('_PS_TOOL_DIR_')) {
 //require(_PS_ADMIN_DIR_.'/functions.php');
 include(AUTOUPGRADE_MODULE_DIR.'init.php');
 
-$ajaxUpgrader = PsOneSixMigrator\AjaxProcessor::getInstance();
+$ajaxUpgrader = AjaxProcessor::getInstance();
 
 if (is_object($ajaxUpgrader) && $ajaxUpgrader->verifyToken()) {
     $ajaxUpgrader->optionDisplayErrors();

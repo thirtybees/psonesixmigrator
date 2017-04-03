@@ -297,6 +297,6 @@ class ConfigurationTest
 
     static function test_mobile()
     {
-        return !(int) \Module::isInstalled('mobile_theme');
+        return true;
     }
 }

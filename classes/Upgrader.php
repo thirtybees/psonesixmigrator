@@ -80,11 +80,11 @@ class Upgrader
     public $md5Extra;
 
     /**
-     * Link to md5 JSON
+     * Link to file actions link
      *
-     * @var string $md5Link
+     * @var string $fileActionsLink
      */
-    public $md5Link;
+    public $fileActionsLink;
     /**
      * List of files that will be affected
      *
@@ -209,7 +209,7 @@ class Upgrader
             $this->extraLink = '';
             $this->md5Core = '';
             $this->md5Extra = '';
-            $this->md5Link = '';
+            $this->fileActionsLink = '';
 
             return false;
         }
@@ -220,7 +220,7 @@ class Upgrader
         $this->extraLink = $versionInfo['extra'];
         $this->md5Core = $versionInfo['md5core'];
         $this->md5Extra = $versionInfo['md5extra'];
-        $this->md5Link = $versionInfo['md5files'];
+        $this->fileActionsLink = $versionInfo['fileActions'];
 
         return true;
     }
@@ -245,196 +245,13 @@ class Upgrader
 
         $coreDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-v{$this->version}.zip";
         $extraDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-extra-v{$this->version}.zip";
-        $md5Path = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-md5-v{$this->version}.json";
+        $fileActionsPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-file-actions-v{$this->version}.json";
 
         Tools::copy($this->coreLink, $coreDestPath);
         Tools::copy($this->extraLink, $extraDestPath);
-        Tools::copy($this->md5Link, $md5Path);
+        Tools::copy($this->fileActionsLink, $fileActionsPath);
 
-        return is_file($coreDestPath) && is_file($extraDestPath) && is_file($md5Path);
-    }
-
-    /**
-     * delete the file /config/xml/$version.xml if exists
-     *
-     * @param string $version
-     *
-     * @return boolean true if succeed
-     */
-    public function clearXmlMd5File($version)
-    {
-        if (file_exists(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml')) {
-            return unlink(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml');
-        }
-
-        return true;
-    }
-
-    /**
-     * getDiffFilesList
-     *
-     * @param string  $version1
-     * @param string  $version2
-     * @param boolean $showModif
-     *
-     * @return array array('modified'=>array(...), 'deleted'=>array(...))
-     */
-    public function getDiffFilesList($version1, $version2, $showModif = true, $refresh = false)
-    {
-        $checksum1 = $this->getXmlMd5File($version1, $refresh);
-        $checksum2 = $this->getXmlMd5File($version2, $refresh);
-        if ($checksum1) {
-            $v1 = $this->md5FileAsArray($checksum1->ps_root_dir[0]);
-        }
-        if ($checksum2) {
-            $v2 = $this->md5FileAsArray($checksum2->ps_root_dir[0]);
-        }
-        if (empty($v1) || empty($v2)) {
-            return false;
-        }
-        $filesList = $this->compareReleases($v1, $v2, $showModif);
-        if (!$showModif) {
-            return $filesList['deleted'];
-        }
-
-        return $filesList;
-
-    }
-
-    /**
-     * return xml containing the list of all default PrestaShop files for version $version,
-     * and their respective md5sum
-     *
-     * @param string $version
-     *
-     * @return \SimpleXMLElement or false if error
-     */
-    public function getXmlMd5File($version, $refresh = false)
-    {
-        return $this->getJsonFile(_PS_ROOT_DIR_.'/config/xml/'.$version.'.xml', $this->rssMd5FileLinkDir.$version.'.xml', $refresh);
-    }
-
-    public function md5FileAsArray($node, $dir = '/')
-    {
-        $array = [];
-        foreach ($node as $key => $child) {
-            if (is_object($child) && $child->getName() == 'dir') {
-                $dir = (string) $child['name'];
-                // $current_path = $dir.(string)$child['name'];
-                // @todo : something else than array pop ?
-                $dirContent = $this->md5FileAsArray($child, $dir);
-                $array[$dir] = $dirContent;
-            } else {
-                if (is_object($child) && $child->getName() == 'md5file') {
-                    $array[(string) $child['name']] = (string) $child;
-                }
-            }
-        }
-
-        return $array;
-    }
-
-    /**
-     * returns an array of files which are present in PrestaShop version $version and has been modified
-     * in the current filesystem.
-     *
-     * @return array of string> array of filepath
-     */
-    public function getChangedFilesList($version = null, $refresh = false)
-    {
-        if (empty($version)) {
-            $version = _PS_VERSION_;
-        }
-        if (is_array($this->changedFiles) && count($this->changedFiles) == 0) {
-            $checksum = $this->getXmlMd5File($version, $refresh);
-            if ($checksum == false) {
-                $this->changedFiles = false;
-            } else {
-                $this->browseXmlAndCompare($checksum->ps_root_dir[0]);
-            }
-        }
-
-        return $this->changedFiles;
-    }
-
-    /**
-     * Compare the md5sum of the current files with the md5sum of the original
-     *
-     * @param mixed $node
-     * @param array $currentPath
-     * @param int   $level
-     *
-     * @return void
-     */
-    protected function browseXmlAndCompare($node, &$currentPath = [], $level = 1)
-    {
-        foreach ($node as $key => $child) {
-            if (is_object($child) && $child->getName() == 'dir') {
-                $currentPath[$level] = (string) $child['name'];
-                $this->browseXmlAndCompare($child, $currentPath, $level + 1);
-            } elseif (is_object($child) && $child->getName() == 'md5file') {
-                // We will store only relative path.
-                // absolute path is only used for file_exists and compare
-                $relativePath = '';
-                for ($i = 1; $i < $level; $i++) {
-                    $relativePath .= $currentPath[$i].'/';
-                }
-                $relativePath .= (string) $child['name'];
-
-                $fullpath = _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.$relativePath;
-                $fullpath = str_replace('ps_root_dir', _PS_ROOT_DIR_, $fullpath);
-
-                // replace default admin dir by current one
-                $fullpath = str_replace(_PS_ROOT_DIR_.'/admin', _PS_ADMIN_DIR_, $fullpath);
-                $fullpath = str_replace(_PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'admin', _PS_ADMIN_DIR_, $fullpath);
-                if (!file_exists($fullpath)) {
-                    $this->addMissingFile($relativePath);
-                } elseif (!$this->compareChecksum($fullpath, (string) $child) && substr(str_replace(DIRECTORY_SEPARATOR, '-', $relativePath), 0, 19) != 'modules/autoupgrade') {
-                    $this->addChangedFile($relativePath);
-                }
-                // else, file is original (and ok)
-            }
-        }
-    }
-
-    /** populate $this->missing_files with $path
-     *
-     * @param string $path filepath to add, relative to _PS_ROOT_DIR_
-     */
-    protected function addMissingFile($path)
-    {
-        $this->versionIsModified = true;
-        $this->missingFiles[] = $path;
-    }
-
-    protected function compareChecksum($filepath, $md5sum)
-    {
-        if (md5_file($filepath) == $md5sum) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /** populate $this->changed_files with $path
-     * in sub arrays  mail, translation and core items
-     *
-     * @param string $path filepath to add, relative to _PS_ROOT_DIR_
-     */
-    protected function addChangedFile($path)
-    {
-        $this->versionIsModified = true;
-
-        if (strpos($path, 'mails/') !== false) {
-            $this->changedFiles['mail'][] = $path;
-        } elseif (strpos($path, '/en.php') !== false || strpos($path, '/fr.php') !== false
-            || strpos($path, '/es.php') !== false || strpos($path, '/it.php') !== false
-            || strpos($path, '/de.php') !== false || strpos($path, 'translations/') !== false
-        ) {
-            $this->changedFiles['translation'][] = $path;
-        } else {
-            $this->changedFiles['core'][] = $path;
-        }
+        return is_file($coreDestPath) && is_file($extraDestPath) && is_file($fileActionsPath);
     }
 
     /**
@@ -450,7 +267,8 @@ class Upgrader
     {
         $latestVersion = '0.0.0';
         $channelWithLatest = false;
-        // FIXME: replace with migration module version
+
+        // FIXME: check if migration module needs to be updated as well
         $semver = new Version('1.0.0');
 
         $checkVersions = [];
@@ -485,7 +303,7 @@ class Upgrader
     {
         $success = true;
         foreach ($this->versionInfo as $type => $version) {
-            $success &= (bool) @file_put_contents(_PS_MODULE_DIR_."psonesixmigrat/json/thirtybees-{$type}.json", json_encode($version), JSON_PRETTY_PRINT);
+            $success &= (bool) @file_put_contents(_PS_MODULE_DIR_."psonesixmigrator/json/thirtybees-{$type}.json", json_encode($version), JSON_PRETTY_PRINT);
         }
 
         return $success;

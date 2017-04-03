@@ -88,43 +88,6 @@ class AjaxProcessor
     protected $deactivateCustomModule;
 
     /**
-     * AjaxProcessor constructor.
-     *
-     * @since 1.0.0
-     */
-    protected function __construct()
-    {
-        @set_time_limit(0);
-        @ini_set('max_execution_time', '0');
-
-        // Database instantiation (need to be cached because there will be at least 100k calls in the upgrade process
-        if (class_exists('\\Db')) {
-            $this->db = \Db::getInstance();
-        } else {
-            $this->db = Db::getInstance();
-        }
-
-        $this->action = empty($_REQUEST['action']) ? null : $_REQUEST['action'];
-        $this->currentParams = empty($_REQUEST['params']) ? null : $_REQUEST['params'];
-
-        $this->tools = UpgraderTools::getInstance();
-        $this->upgrader = Upgrader::getInstance();
-        $this->installVersion = $this->upgrader->version;
-        $this->latestRootDir = $this->tools->latestPath.DIRECTORY_SEPARATOR.'prestashop';
-
-        foreach ($this->ajaxParams as $prop) {
-            if (property_exists($this, $prop)) {
-                $this->{$prop} = isset($this->currentParams[$prop]) ? $this->currentParams[$prop] : '';
-            }
-        }
-
-        // Initialize files at first step
-        if ($this->action === 'upgradeNow') {
-            $this->initializeFiles();
-        }
-    }
-
-    /**
      * @return AjaxProcessor
      *
      * @since 1.0.0
@@ -154,6 +117,40 @@ class AjaxProcessor
     }
 
     /**
+     * AjaxProcessor constructor.
+     *
+     * @since 1.0.0
+     */
+    protected function __construct()
+    {
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+
+        // Database instantiation (need to be cached because there will be at least 100k calls in the upgrade process
+        $this->db = Db::getInstance();
+
+
+        $this->action = empty($_REQUEST['action']) ? null : $_REQUEST['action'];
+        $this->currentParams = empty($_REQUEST['params']) ? null : $_REQUEST['params'];
+
+        $this->tools = UpgraderTools::getInstance();
+        $this->upgrader = Upgrader::getInstance();
+        $this->installVersion = $this->upgrader->version;
+        $this->latestRootDir = $this->tools->latestPath.DIRECTORY_SEPARATOR.'prestashop';
+
+        foreach ($this->ajaxParams as $prop) {
+            if (property_exists($this, $prop)) {
+                $this->{$prop} = isset($this->currentParams[$prop]) ? $this->currentParams[$prop] : '';
+            }
+        }
+
+        // Initialize files at first step
+        if ($this->action === 'upgradeNow') {
+            $this->initializeFiles();
+        }
+    }
+
+    /**
      * ends the rollback process
      *
      * @return void
@@ -179,7 +176,7 @@ class AjaxProcessor
     protected function l($string, $class = 'AdminThirtyBeesMigrateController', $addslashes = false, $htmlentities = true)
     {
         // need to be called in order to populate $classInModule
-        $str = UpgraderTools::findTranslation('psonesixmigrator', $string, 'AdminThirtyBeesMigrateController');
+        $str = UpgraderTools::findTranslation('psonesixmigrator', $string, $class);
         $str = $htmlentities ? str_replace('"', '&quot;', htmlentities($str, ENT_QUOTES, 'utf-8')) : $str;
         $str = $addslashes ? addslashes($str) : stripslashes($str);
 
@@ -239,69 +236,7 @@ class AjaxProcessor
         return $this->tools->downloadPath.DIRECTORY_SEPARATOR.'thirtybees-extra-v'.$this->upgrader->version.'.zip';
     }
 
-    /**
-     * update configuration after validating the new values
-     *
-     * @return void
-     *
-     * @since 1.0.0
-     */
-    public function ajaxProcessUpdateConfig()
-    {
-        $config = [];
-        // nothing next
-        $this->next = '';
-        // update channel
-        if (isset($this->currentParams['channel'])) {
-            $config['channel'] = $this->currentParams['channel'];
-        }
-        if (isset($this->currentParams['private_release_link']) && isset($this->currentParams['private_release_md5'])) {
-            $config['channel'] = 'private';
-            $config['private_release_link'] = $this->currentParams['private_release_link'];
-            $config['private_release_md5'] = $this->currentParams['private_release_md5'];
-            $config['private_allow_major'] = $this->currentParams['private_allow_major'];
-        }
-        // if (!empty($this->currentParams['archive_name']) && !empty($this->currentParams['archive_num']))
-        if (!empty($this->currentParams['archive_prestashop'])) {
-            $file = $this->currentParams['archive_prestashop'];
-            if (!file_exists($this->tools->downloadPath.DIRECTORY_SEPARATOR.$file)) {
-                $this->error = 1;
-                $this->nextDesc = sprintf($this->l('File %s does not exist. Unable to select that channel.'), $file);
 
-                return;
-            }
-            if (empty($this->currentParams['archive_num'])) {
-                $this->error = 1;
-                $this->nextDesc = sprintf($this->l('Version number is missing. Unable to select that channel.'), $file);
-
-                return;
-            }
-            $config['channel'] = 'archive';
-            $config['archive.filename'] = $this->currentParams['archive_prestashop'];
-            $config['archive.version_num'] = $this->currentParams['archive_num'];
-            // $config['archive_name'] = $this->currentParams['archive_name'];
-            $this->nextDesc = $this->l('Upgrade process will use archive.');
-        }
-        if (isset($this->currentParams['directory_num'])) {
-            $config['channel'] = 'directory';
-            if (empty($this->currentParams['directory_num']) || strpos($this->currentParams['directory_num'], '.') === false) {
-                $this->error = 1;
-                $this->nextDesc = sprintf($this->l('Version number is missing. Unable to select that channel.'));
-
-                return;
-            }
-
-            $config['directory.version_num'] = $this->currentParams['directory_num'];
-        }
-        if (isset($this->currentParams['skip_backup'])) {
-            $config['skip_backup'] = $this->currentParams['skip_backup'];
-        }
-
-        if (!UpgraderTools::writeConfig($config)) {
-            $this->error = 1;
-            $this->nextDesc = $this->l('Error on saving configuration');
-        }
-    }
 
     /**
      * display informations related to the selected channel : link/changelog for remote channel,
@@ -326,107 +261,12 @@ class AjaxProcessor
             'channel'   => $upgrader->channel,
             'coreLink'  => $upgrader->coreLink,
             'extraLink' => $upgrader->extraLink,
-            'md5Link'   => $upgrader->md5Link,
+            'md5Link'   => $upgrader->fileActionsLink,
             'changelog' => $upgrader->changelogLink,
             'available' => (bool) $upgrader->version,
         ];
 
         UpgraderTools::setConfig('channel', $upgrader->channel);
-    }
-
-    /**
-     * get the list of all modified and deleted files between current version
-     * and target version (according to channel configuration)
-     *
-     * @return void
-     *
-     * @since 1.0.0
-     */
-    public function ajaxProcessCompareReleases()
-    {
-        // do nothing after this request (see javascript function doAjaxRequest )
-        $this->next = '';
-        $channel = UpgraderTools::getConfig('channel');
-        $this->upgrader = Upgrader::getInstance();
-        switch ($channel) {
-            case 'archive':
-                $version = UpgraderTools::getConfig('archive.version_num');
-                break;
-            case 'directory':
-                $version = UpgraderTools::getConfig('directory.version_num');
-                break;
-            default:
-                preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-                $this->upgrader->branch = $matches[1];
-                $this->upgrader->channel = $channel;
-
-                $version = $this->upgrader->version;
-        }
-
-        $diffFileList = $this->upgrader->getDiffFilesList(_PS_VERSION_, $version);
-        if (!is_array($diffFileList)) {
-            $this->nextParams['status'] = 'error';
-            $this->nextParams['msg'] = sprintf('Unable to generate diff file list between %1$s and %2$s.', _PS_VERSION_, $version);
-        } else {
-            file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::FILES_DIFF, base64_encode(serialize($diffFileList)));
-            if (count($diffFileList) > 0) {
-                $this->nextParams['msg'] = sprintf(
-                    $this->l('%1$s files will be modified, %2$s files will be deleted (if they are found).'),
-                    count($diffFileList['modified']),
-                    count($diffFileList['deleted'])
-                );
-            } else {
-                $this->nextParams['msg'] = $this->l('No diff files found.');
-            }
-            $this->nextParams['result'] = $diffFileList;
-        }
-    }
-
-    /**
-     * list the files modified in the current installation regards to the original version
-     *
-     * @return void
-     *
-     * @since 1.0.0
-     */
-    public function ajaxProcessCheckFilesVersion()
-    {
-        // do nothing after this request (see javascript function doAjaxRequest )
-        $this->next = '';
-        $this->upgrader = Upgrader::getInstance();
-
-        $changedFileList = $this->upgrader->getChangedFilesList();
-        if (!is_array($changedFileList)
-        ) {
-            $this->nextParams['status'] = 'error';
-            $this->nextParams['msg'] = $this->l('Unable to check files for the installed version of PrestaShop.');
-        } else {
-            $this->nextParams['status'] = 'ok';
-            $testOrigCore = true;
-
-            if (!isset($changedFileList['core'])) {
-                $changedFileList['core'] = [];
-            }
-
-            if (!isset($changedFileList['translation'])) {
-                $changedFileList['translation'] = [];
-            }
-            file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TRANSLATIONS_CUSTOM_LIST, base64_encode(serialize($changedFileList['translation'])));
-
-            if (!isset($changedFileList['mail'])) {
-                $changedFileList['mail'] = [];
-            }
-            file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::MAIL_CUSTOM_LIST, base64_encode(serialize($changedFileList['mail'])));
-
-            if ($changedFileList === false) {
-                $changedFileList = [];
-                $this->nextParams['msg'] = $this->l('Unable to check files');
-                $this->nextParams['status'] = 'error';
-            } else {
-                $this->nextParams['msg'] = ($testOrigCore ? $this->l('Core files are ok') : sprintf($this->l('%1$s file modifications have been detected, including %2$s from core and native modules:'), count(array_merge($changedFileList['core'], $changedFileList['mail'], $changedFileList['translation'])), count($changedFileList['core'])));
-            }
-            $this->nextParams['result'] = $changedFileList;
-        }
     }
 
     /**
@@ -457,7 +297,96 @@ class AjaxProcessor
      */
     public function ajaxProcessUpgradeFiles()
     {
-        // TODO: implement
+        $this->nextParams = $this->currentParams;
+
+        if (!isset($this->nextParams['fileActions'])) {
+            // list saved in $this->toUpgradeFileList
+            // get files differences (previously generated)
+            $filepathListDiff = _PS_ADMIN_DIR_."/autoupgrade/download/thirtybees-file-actions-v{$this->upgrader->version}.json";
+            if (file_exists($filepathListDiff)) {
+                $unsortedListFilesToUpgrade = json_decode(file_get_contents($filepathListDiff), true);
+                $deleteFilesForUpgrade = [];
+                $addFilesForUpgrade = [];
+                foreach ($unsortedListFilesToUpgrade as $path => $fileAction) {
+                    // Make sure the delete actions happen before the adds
+                    // Leave the md5 sum for now
+                    if ($fileAction['action'] === 'delete') {
+                        $deleteFilesForUpgrade[] = [
+                            'path'   => $path,
+                            'action' => $fileAction['action'],
+                        ];
+                    } else {
+                        $addFilesForUpgrade[] = [
+                            'path'   => $path,
+                            'action' => $fileAction['action'],
+                        ];
+                    }
+                }
+                // Save in an array in `fileActions`
+                // Delete actions at back of array, we will process those first
+                $this->nextParams['fileActions'] = $addFilesForUpgrade + $deleteFilesForUpgrade;
+            } else {
+                $this->nextErrors[] = $this->l('Couldn\'t find a list of files to upgrade');
+                $this->nextDesc = $this->l('Couldn\'t find a list of files to upgrade');
+                $this->nextQuickInfo = $this->l('Couldn\'t find a list of files to upgrade');
+                $this->next = 'error';
+
+                return false;
+            }
+
+            if (count($this->nextParams['fileActions']) === 0) {
+                $this->nextQuickInfo[] = $this->l('[ERROR] Unable to find files to upgrade.');
+                $this->nextErrors[] = $this->l('[ERROR] Unable to find files to upgrade.');
+                $this->nextDesc = $this->l('Unable to list files to upgrade');
+                $this->next = 'error';
+
+                return false;
+            }
+            $this->nextQuickInfo[] = sprintf($this->l('%s files will be upgraded.'), count($this->nextParams['fileActions']));
+            $this->nextDesc = sprintf($this->l('%s files will be upgraded.'), count($this->nextParams['fileActions']));
+            $this->next = 'upgradeFiles';
+            $this->stepDone = false;
+
+            return true;
+        }
+        // Later we can choose between _PS_ROOT_DIR_ or _PS_TEST_DIR_
+        $this->next = 'upgradeFiles';
+        if (!is_array($this->nextParams['fileActions'])) {
+            $this->next = 'error';
+            $this->nextDesc = $this->l('`fileActions` is not an array');
+            $this->nextQuickInfo[] = $this->l('`fileActions` is not an array');
+            $this->nextErrors[] = $this->l('`fileActions` is not an array');
+
+            return false;
+        }
+
+        // @TODO : does not upgrade files in modules, translations if they have not a correct md5 (or crc32, or whatever) from previous version
+        for ($i = 0; $i < UpgraderTools::$loopUpgradeFiles; $i++) {
+            if (count($this->nextParams['fileActions']) <= 0) {
+                $this->next = 'upgradeDb';
+                unlink($this->nextParams['fileActions']);
+                $this->nextDesc = $this->l('All files upgraded. Now upgrading database...');
+                $this->nextResponseType = 'json';
+                $this->stepDone = true;
+                break;
+            }
+
+            $fileAction = array_pop($this->nextParams['fileActions']);
+            if (!$this->upgradeThisFile($fileAction)) {
+                // put the file back to the begin of the list
+                $this->next = 'error';
+                $this->nextQuickInfo[] = sprintf($this->l('Error when trying to upgrade file %s.'), $fileAction['path']);
+                $this->nextErrors[] = sprintf($this->l('Error when trying to upgrade file %s.'), $fileAction['path']);
+                break;
+            }
+        }
+        if (count($this->nextParams['fileActions']) > 0) {
+            if (count($this->nextParams['fileActions'])) {
+                $this->nextDesc = sprintf($this->l('%1$s files left to upgrade.'), count($this->nextParams['fileActions']));
+                $this->nextQuickInfo[] = sprintf($this->l('%2$s files left to upgrade.'), count($this->nextParams['fileActions']));
+                $this->stepDone = false;
+            }
+        }
 
         return true;
     }
@@ -471,17 +400,19 @@ class AjaxProcessor
      */
     public function ajaxProcessUnzip()
     {
-        $filepath = $this->getCoreFilePath();
-        $destExtract = $this->tools->latestPath;
+        $coreFilePath = $this->getCoreFilePath();
+        $coreDileDest = $this->tools->latestPath;
+        $extraFilePath = $this->getExtraFilePath();
+        $extraDileDest = $this->tools->latestPath.'/upgrade';
 
-        if (file_exists($destExtract)) {
-            Tools::deleteDirectory($destExtract, false);
+        if (file_exists($coreDileDest)) {
+            Tools::deleteDirectory($coreDileDest, false);
             $this->nextQuickInfo[] = $this->l('"/latest" directory has been emptied');
         }
-        $relativeExtractPath = str_replace(_PS_ROOT_DIR_, '', $destExtract);
+        $relativeExtractPath = str_replace(_PS_ROOT_DIR_, '', $coreDileDest);
         $report = '';
         if (ConfigurationTest::test_dir($relativeExtractPath, false, $report)) {
-            if ($this->extractZip($filepath, $destExtract)) {
+            if ($this->extractZip($coreFilePath, $coreDileDest) && $this->extractZip($extraFilePath, $extraDileDest)) {
                 // Unsetting to force listing
                 unset($this->nextParams['removeList']);
                 $this->next = 'removeSamples';
@@ -490,14 +421,14 @@ class AjaxProcessor
                 return true;
             } else {
                 $this->next = 'error';
-                $this->nextDesc = sprintf($this->l('Unable to extract %1$s file into %2$s folder...'), $filepath, $destExtract);
+                $this->nextDesc = sprintf($this->l('Unable to extract %1$s and/or %2$s into %3$s folder...'), $coreFilePath, $extraFilePath, $coreDileDest);
 
                 return true;
             }
         } else {
             $this->nextDesc = $this->l('Extraction directory is not writable.');
             $this->nextQuickInfo[] = $this->l('Extraction directory is not writable.');
-            $this->nextErrors[] = sprintf($this->l('Extraction directory %s is not writable.'), $destExtract);
+            $this->nextErrors[] = sprintf($this->l('Extraction directory %s is not writable.'), $coreDileDest);
             $this->next = 'error';
         }
 
@@ -752,11 +683,6 @@ class AjaxProcessor
             return false;
         }
 
-        if (version_compare(INSTALL_VERSION, '1.7.1.0', '<')) {
-            $this->next = 'upgradeModules';
-            $this->nextDesc = $this->l('Database upgraded. Now upgrading your Addons modules...');
-        }
-
         return true;
     }
 
@@ -802,31 +728,6 @@ class AjaxProcessor
             define('_THEMES_DIR_', __PS_BASE_URI__.'themes/');
         }
 
-        $oldversion = _PS_VERSION_;
-        $versionCompare = version_compare(INSTALL_VERSION, $oldversion);
-
-        if ($versionCompare == '-1') {
-            $this->next = 'error';
-            $this->nextQuickInfo[] = sprintf($this->l('Current version: %1$s. Version to install: %2$s.'), $oldversion, INSTALL_VERSION);
-            $this->nextErrors[] = sprintf($this->l('Current version: %1$s. Version to install: %2$s'), $oldversion, INSTALL_VERSION);
-            $this->nextQuickInfo[] = $this->l('[ERROR] Version to install is too old.');
-            $this->nextErrors[] = $this->l('[ERROR] Version to install is too old.');
-
-            return false;
-        } elseif ($versionCompare == 0) {
-            $this->next = 'error';
-            $this->nextQuickInfo[] = $this->l(sprintf('You already have the %s version.', INSTALL_VERSION));
-            $this->nextErrors[] = $this->l(sprintf('You already have the %s version.', INSTALL_VERSION));
-
-            return false;
-        } elseif ($versionCompare === false) {
-            $this->next = 'error';
-            $this->nextQuickInfo[] = $this->l('There is no older version. Did you delete or rename the config/settings.inc.php file?');
-            $this->nextErrors[] = $this->l('There is no older version. Did you delete or rename the config/settings.inc.php file?');
-
-            return false;
-        }
-
         //check DB access
         $this->db;
         error_reporting(E_ALL);
@@ -842,16 +743,14 @@ class AjaxProcessor
 
         //custom sql file creation
         $upgradeFiles = [];
+        $upgradeDirSql = $this->tools->autoupgradePath.DIRECTORY_SEPARATOR.'latest'.DIRECTORY_SEPARATOR.'upgrade'.DIRECTORY_SEPARATOR.'sql';
 
-        $upgradeDirSql = INSTALL_PATH.'/upgrade/sql';
-        // if 1.4;
-        if (!file_exists($upgradeDirSql)) {
-            $upgradeDirSql = INSTALL_PATH.'/sql/upgrade';
-        }
 
         if (!file_exists($upgradeDirSql)) {
             $this->next = 'error';
-            $this->nextDesc = $this->l('Unable to find upgrade directory in the installation path.');
+            $this->nextDesc = $this->l('Unable to find SQL upgrade directory in the installation path.');
+            $this->nextQuickInfo[] = $this->l('Unable to find SQL upgrade directory in the installation path.');
+            $this->nextErrors[] = $this->l('Unable to find SQL upgrade directory in the installation path.');
 
             return false;
         }
@@ -884,16 +783,9 @@ class AjaxProcessor
         $oldversion = implode('.', $arrayVersion);
 
         foreach ($upgradeFiles as $version) {
-            if (version_compare($version, $oldversion) == 1 && version_compare(INSTALL_VERSION, $version) != -1) {
+            if (version_compare($version, $oldversion) == 1 && version_compare('2.999.999.999', $version) != -1) {
                 $neededUpgradeFiles[] = $version;
             }
-        }
-
-        if (strpos(INSTALL_VERSION, '.') === false) {
-            $this->nextQuickInfo[] = sprintf($this->l('%s is not a valid version number.'), INSTALL_VERSION);
-            $this->nextErrors[] = sprintf($this->l('%s is not a valid version number.'), INSTALL_VERSION);
-
-            return false;
         }
 
         $sqlContentVersion = [];
@@ -904,16 +796,6 @@ class AjaxProcessor
             }
         }
 
-        if (version_compare(INSTALL_VERSION, '1.5.6.1', '=')) {
-            $filename = _PS_INSTALLER_PHP_UPGRADE_DIR_.'migrate_orders.php';
-            $content = file_get_contents($filename);
-            $strOld[] = '$values_order_detail = array();';
-            $strOld[] = '$values_order = array();';
-            $strOld[] = '$col_order_detail = array();';
-            $content = str_replace($strOld, '', $content);
-            file_put_contents($filename, $content);
-        }
-
         foreach ($neededUpgradeFiles as $version) {
             $file = $upgradeDirSql.DIRECTORY_SEPARATOR.$version.'.sql';
             if (!file_exists($file)) {
@@ -922,7 +804,6 @@ class AjaxProcessor
                 $this->nextErrors[] = sprintf($this->l('Error while loading SQL upgrade file "%s.sql".'), $version);
 
                 return false;
-//                    $logger->logError('Error while loading SQL upgrade file.');
             }
             if (!$sqlContent = file_get_contents($file)."\n") {
                 $this->next = 'error';
@@ -930,7 +811,6 @@ class AjaxProcessor
                 $this->nextErrors[] = $this->l(sprintf('Error while loading sql SQL file %s.', $version));
 
                 return false;
-//                    $logger->logError(sprintf('Error while loading sql upgrade file %s.', $version));
             }
             $sqlContent = str_replace([$filePrefix, $engineType], [_DB_PREFIX_, $mysqlEngine], $sqlContent);
             $sqlContent = preg_split("/;\s*[\r\n]+/", $sqlContent);
@@ -974,13 +854,10 @@ class AjaxProcessor
                         /* Call a simple function */
                         if (strpos($phpString, '::') === false) {
                             $funcName = str_replace($pattern[0], '', $php[0]);
-                            if (version_compare(INSTALL_VERSION, '1.5.5.0', '=') && $funcName == 'fix_download_product_feature_active') {
-                                continue;
-                            }
 
                             if (!file_exists(_PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($funcName).'.php')) {
-                                $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgradeFile.' PHP - missing file '.$query.'</div>';
-                                $this->nextErrors[] = '[ERROR] '.$upgradeFile.' PHP - missing file '.$query;
+                                $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgradeFile.' PHP - missing file '._PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($funcName).'.php</div>';
+                                $this->nextErrors[] = '[ERROR] '.$upgradeFile.' PHP - missing file '._PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($funcName).'.php';
                                 $warningExist = true;
                             } else {
                                 require_once(_PS_INSTALLER_PHP_UPGRADE_DIR_.strtolower($funcName).'.php');
@@ -989,8 +866,8 @@ class AjaxProcessor
                         } /* Or an object method */
                         else {
                             $funcName = [$php[0], str_replace($pattern[0], '', $php[1])];
-                            $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgradeFile.' PHP - Object Method call is forbidden ( '.$php[0].'::'.str_replace($pattern[0], '', $php[1]).')</div>';
-                            $this->nextErrors[] = '[ERROR] '.$upgradeFile.' PHP - Object Method call is forbidden ('.$php[0].'::'.str_replace($pattern[0], '', $php[1]).')';
+                            $this->nextQuickInfo[] = '<div class="upgradeDbError">[ERROR] '.$upgradeFile.' PHP - Object Method call is forbidden ( '.$funcName.')</div>';
+                            $this->nextErrors[] = '[ERROR] '.$upgradeFile.' PHP - Object Method call is forbidden ('.$funcName.')';
                             $warningExist = true;
                         }
 
@@ -1066,10 +943,8 @@ class AjaxProcessor
         $arrayToClean[] = _PS_ROOT_DIR_.'/tools/smarty/compile/';
         $arrayToClean[] = _PS_ROOT_DIR_.'/tools/smarty_v2/cache/';
         $arrayToClean[] = _PS_ROOT_DIR_.'/tools/smarty_v2/compile/';
-        if (version_compare(INSTALL_VERSION, '1.5.0.0', '>')) {
-            $arrayToClean[] = _PS_ROOT_DIR_.'/cache/smarty/cache/';
-            $arrayToClean[] = _PS_ROOT_DIR_.'/cache/smarty/compile/';
-        }
+        $arrayToClean[] = _PS_ROOT_DIR_.'/cache/smarty/cache/';
+        $arrayToClean[] = _PS_ROOT_DIR_.'/cache/smarty/compile/';
 
         foreach ($arrayToClean as $dir) {
             if (!file_exists($dir)) {
@@ -1089,7 +964,7 @@ class AjaxProcessor
             }
         }
 
-        if (version_compare(INSTALL_VERSION, '1.5.0.0', '>')) {
+
             Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `name` = \'PS_LEGACY_IMAGES\' WHERE name LIKE \'0\' AND `value` = 1');
             Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 0 WHERE `name` LIKE \'PS_LEGACY_IMAGES\'');
             if (Db::getInstance()->getValue('SELECT COUNT(id_product_download) FROM `'._DB_PREFIX_.'product_download` WHERE `active` = 1') > 0) {
@@ -1104,30 +979,6 @@ class AjaxProcessor
                         if ($cache[0] != '.' && $cache != 'index.php' && $cache != '.htaccess' && file_exists($file.$cache) && !is_dir($file.$cache)) {
                             if (file_exists($dir.$cache)) {
                                 unlink($file.$cache);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (version_compare(_PS_VERSION_, '1.5.0.0', '<=')) {
-                $dir = _PS_ROOT_DIR_.'/controllers/';
-                if (file_exists($dir)) {
-                    foreach (scandir($dir) as $file) {
-                        if (!is_dir($file) && $file[0] != '.' && $file != 'index.php' && $file != '.htaccess') {
-                            if (file_exists($dir.basename(str_replace('.php', '', $file).'.php'))) {
-                                unlink($dir.basename($file));
-                            }
-                        }
-                    }
-                }
-
-                $dir = _PS_ADMIN_DIR_.'/tabs/';
-                if (file_exists($dir)) {
-                    foreach (scandir($dir) as $file) {
-                        if (!is_dir($file) && $file[0] != '.' && $file != 'index.php' && $file != '.htaccess') {
-                            if (file_exists($dir.basename(str_replace('.php', '', $file).'.php'))) {
-                                unlink($dir.basename($file));
                             }
                         }
                     }
@@ -1149,10 +1000,9 @@ class AjaxProcessor
                     define('_PS_MAILS_DIR_', _PS_ROOT_DIR_.'/mails/');
                 }
                 $langs = Db::getInstance()->executeS('SELECT * FROM `'._DB_PREFIX_.'lang` WHERE `active` = 1');
-                require_once(_PS_TOOL_DIR_.'tar/Archive_Tar.php');
                 if (is_array($langs)) {
                     foreach ($langs as $lang) {
-                        $langPack = Tools::jsonDecode(Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://www.prestashop.com/download/lang_packs/get_language_pack.php?version='.$this->installVersion.'&iso_lang='.$lang['iso_code']));
+                        $langPack = json_decode(Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://www.prestashop.com/download/lang_packs/get_language_pack.php?version='.$this->installVersion.'&iso_lang='.$lang['iso_code']));
 
                         if (!$langPack) {
                             continue;
@@ -1185,150 +1035,13 @@ class AjaxProcessor
                 }
             }
 
-            if (version_compare($this->installVersion, '1.6.0.0', '>')) {
-                if (version_compare($this->installVersion, '1.6.1.0', '>=')) {
-                    require_once(_PS_ROOT_DIR_.'/Core/Foundation/Database/Core_Foundation_Database_EntityInterface.php');
-                }
-
-                if (file_exists(_PS_ROOT_DIR_.'/classes/Tools.php')) {
-                    require_once(_PS_ROOT_DIR_.'/classes/Tools.php');
-                }
-                if (!class_exists('Tools2', false) and class_exists('ToolsCore')) {
-                    eval('class Tools2 extends ToolsCore{}');
-                }
-
-                if (class_exists('Tools2') && method_exists('Tools2', 'generateHtaccess')) {
-                    $urlRewrite = (bool) Db::getInstance()->getvalue('SELECT `value` FROM `'._DB_PREFIX_.'configuration` WHERE name=\'PS_REWRITING_SETTINGS\'');
-
-                    if (!defined('_MEDIA_SERVER_1_')) {
-                        define('_MEDIA_SERVER_1_', '');
-                    }
-                    if (!defined('_MEDIA_SERVER_2_')) {
-                        define('_MEDIA_SERVER_2_', '');
-                    }
-                    if (!defined('_MEDIA_SERVER_3_')) {
-                        define('_MEDIA_SERVER_3_', '');
-                    }
-                    if (!defined('_PS_USE_SQL_SLAVE_')) {
-                        define('_PS_USE_SQL_SLAVE_', false);
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/ObjectModel.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/ObjectModel.php');
-                    }
-                    if (!class_exists('ObjectModel', false) and class_exists('ObjectModelCore')) {
-                        eval('abstract class ObjectModel extends ObjectModelCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Configuration.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Configuration.php');
-                    }
-                    if (!class_exists('Configuration', false) and class_exists('ConfigurationCore')) {
-                        eval('class Configuration extends ConfigurationCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/cache/Cache.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/cache/Cache.php');
-                    }
-                    if (!class_exists('Cache', false) and class_exists('CacheCore')) {
-                        eval('abstract class Cache extends CacheCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/PrestaShopCollection.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/PrestaShopCollection.php');
-                    }
-                    if (!class_exists('PrestaShopCollection', false) and class_exists('PrestaShopCollectionCore')) {
-                        eval('class PrestaShopCollection extends PrestaShopCollectionCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/shop/ShopUrl.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/shop/ShopUrl.php');
-                    }
-                    if (!class_exists('ShopUrl', false) and class_exists('ShopUrlCore')) {
-                        eval('class ShopUrl extends ShopUrlCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/shop/Shop.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/shop/Shop.php');
-                    }
-                    if (!class_exists('Shop', false) and class_exists('ShopCore')) {
-                        eval('class Shop extends ShopCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Translate.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Translate.php');
-                    }
-                    if (!class_exists('Translate', false) and class_exists('TranslateCore')) {
-                        eval('class Translate extends TranslateCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/module/Module.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/module/Module.php');
-                    }
-                    if (!class_exists('Module', false) and class_exists('ModuleCore')) {
-                        eval('class Module extends ModuleCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Validate.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Validate.php');
-                    }
-                    if (!class_exists('Validate', false) and class_exists('ValidateCore')) {
-                        eval('class Validate extends ValidateCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Language.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Language.php');
-                    }
-                    if (!class_exists('Language', false) and class_exists('LanguageCore')) {
-                        eval('class Language extends LanguageCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Tab.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Tab.php');
-                    }
-                    if (!class_exists('Tab', false) and class_exists('TabCore')) {
-                        eval('class Tab extends TabCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Dispatcher.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Dispatcher.php');
-                    }
-                    if (!class_exists('Dispatcher', false) and class_exists('DispatcherCore')) {
-                        eval('class Dispatcher extends DispatcherCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Hook.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Hook.php');
-                    }
-                    if (!class_exists('Hook', false) and class_exists('HookCore')) {
-                        eval('class Hook extends HookCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Context.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Context.php');
-                    }
-                    if (!class_exists('Context', false) and class_exists('ContextCore')) {
-                        eval('class Context extends ContextCore{}');
-                    }
-
-                    if (file_exists(_PS_ROOT_DIR_.'/classes/Group.php')) {
-                        require_once(_PS_ROOT_DIR_.'/classes/Group.php');
-                    }
-                    if (!class_exists('Group', false) and class_exists('GroupCore')) {
-                        eval('class Group extends GroupCore{}');
-                    }
-
-                    Tools2::generateHtaccess(null, $urlRewrite);
-                }
-            }
-
-            if (version_compare($this->installVersion, '1.6.0.2', '>')) {
+            if (true) { // 1.6.0.2+
                 $path = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'themes'.DIRECTORY_SEPARATOR.'default'.DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR.'controllers'.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.'header.tpl';
                 if (file_exists($path)) {
                     unlink($path);
                 }
             }
-        }
+
 
         if (file_exists(_PS_ROOT_DIR_.'/cache/class_index.php')) {
             unlink(_PS_ROOT_DIR_.'/cache/class_index.php');
@@ -1371,11 +1084,6 @@ class AjaxProcessor
             if (file_exists(_PS_ROOT_DIR_.'/classes/PrestaShopAutoload.php')) {
                 require_once(_PS_ROOT_DIR_.'/classes/PrestaShopAutoload.php');
             }
-
-            if (version_compare($this->installVersion, '1.6.0.0', '>') && class_exists('PrestaShopAutoload') && method_exists('PrestaShopAutoload', 'generateIndex')) {
-                PrestaShopAutoload::getInstance()->_include_override_path = false;
-                PrestaShopAutoload::getInstance()->generateIndex();
-            }
         }
 
         // delete cache filesystem if activated
@@ -1398,7 +1106,7 @@ class AjaxProcessor
 
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="0" WHERE name = "PS_HIDE_OPTIMIZATION_TIS"', false);
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1" WHERE name = "PS_NEED_REBUILD_INDEX"', false);
-        $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="'.INSTALL_VERSION.'" WHERE name = "PS_VERSION_DB"', false);
+        $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1.6.1.999" WHERE name = "PS_VERSION_DB"', false);
 
         if ($this->next == 'error') {
             return false;
@@ -1419,13 +1127,13 @@ class AjaxProcessor
     public function doUpgradeSetupConst()
     {
         // Initialize
-        // setting the memory limit to 128M only if current is lower
+        // setting the memory limit to 256M only if current is lower
         $memoryLimit = ini_get('memory_limit');
         if ((substr($memoryLimit, -1) != 'G')
-            && ((substr($memoryLimit, -1) == 'M' and substr($memoryLimit, 0, -1) < 128)
+            && ((substr($memoryLimit, -1) == 'M' and substr($memoryLimit, 0, -1) < 256)
                 || is_numeric($memoryLimit) and (intval($memoryLimit) < 131072))
         ) {
-            @ini_set('memory_limit', '128M');
+            @ini_set('memory_limit', '256M');
         }
 
         /* Redefine REQUEST_URI if empty (on some webservers...) */
@@ -1448,7 +1156,7 @@ class AjaxProcessor
 
         define('INSTALL_VERSION', $this->installVersion);
         // 1.4
-        define('INSTALL_PATH', _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.$this->tools->autoupgradeDir);
+        define('INSTALL_PATH', $this->tools->autoupgradePath);
         // 1.5 ...
         define('_PS_INSTALL_PATH_', INSTALL_PATH.DIRECTORY_SEPARATOR);
         // 1.6
@@ -1460,13 +1168,9 @@ class AjaxProcessor
         define('SETTINGS_FILE', _PS_ROOT_DIR_.'/config/settings.inc.php');
         define('DEFINES_FILE', _PS_ROOT_DIR_.'/config/defines.inc.php');
         define('INSTALLER__PS_BASE_URI', substr($_SERVER['REQUEST_URI'], 0, -1 * (strlen($_SERVER['REQUEST_URI']) - strrpos($_SERVER['REQUEST_URI'], '/')) - strlen(substr(dirname($_SERVER['REQUEST_URI']), strrpos(dirname($_SERVER['REQUEST_URI']), '/') + 1))));
-        //	define('INSTALLER__PS_BASE_URI_ABSOLUTE', 'http://'.ToolsInstall::getHttpHost(false, true).INSTALLER__PS_BASE_URI);
-
-        // XML Header
-        // header('Content-Type: text/xml');
 
         if (function_exists('date_default_timezone_set')) {
-            date_default_timezone_set('Europe/Paris');
+            date_default_timezone_set('Europe/Amsterdam');
         }
 
         // if _PS_ROOT_DIR_ is defined, use it instead of "guessing" the module dir.
@@ -1476,19 +1180,16 @@ class AjaxProcessor
             define('_PS_MODULE_DIR_', INSTALL_PATH.'/../modules/');
         }
 
-        $upgradeDirPhp = 'upgrade/php';
+        $upgradeDirPhp = 'latest/upgrade/php';
         if (!file_exists(INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp)) {
-            $upgradeDirPhp = 'php';
-            if (!file_exists(INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp)) {
-                $this->next = 'error';
-                $this->nextDesc = INSTALL_PATH.$this->l(' directory is missing in archive or directory');
-                $this->nextQuickInfo[] = INSTALL_PATH.' directory is missing in archive or directory';
-                $this->nextErrors[] = INSTALL_PATH.' directory is missing in archive or directory.';
+            $this->next = 'error';
+            $this->nextDesc = sprintf($this->l('%s directory is missing in archive or directory.'), INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp);
+            $this->nextQuickInfo[] = sprintf($this->l('%s directory is missing in archive or directory.'), INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp);
+            $this->nextErrors[] = sprintf($this->l('%s directory is missing in archive or directory.'), INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp);
 
-                return false;
-            }
+            return false;
         }
-        define('_PS_INSTALLER_PHP_UPGRADE_DIR_', INSTALL_PATH.DIRECTORY_SEPARATOR.$upgradeDirPhp.DIRECTORY_SEPARATOR);
+        define('_PS_INSTALLER_PHP_UPGRADE_DIR_', $this->tools->autoupgradePath.'/latest/upgrade/php/');
 
         return true;
     }
@@ -1530,14 +1231,10 @@ class AjaxProcessor
             ['_COOKIE_KEY_', _COOKIE_KEY_],
             ['_COOKIE_IV_', _COOKIE_IV_],
             ['_PS_CREATION_DATE_', defined("_PS_CREATION_DATE_") ? _PS_CREATION_DATE_ : date('Y-m-d')],
-            ['_PS_VERSION_', INSTALL_VERSION],
+            ['_PS_VERSION_', '1.6.1.999'],
+            ['_TB_VERSION_', $this->upgrader->version],
         ];
 
-        if (version_compare(INSTALL_VERSION, '1.6.0.11', '<')) {
-            $datas[] = ['_MEDIA_SERVER_1_', defined('_MEDIA_SERVER_1_') ? _MEDIA_SERVER_1_ : ''];
-            $datas[] = ['_MEDIA_SERVER_2_', defined('_MEDIA_SERVER_2_') ? _MEDIA_SERVER_2_ : ''];
-            $datas[] = ['_MEDIA_SERVER_3_', defined('_MEDIA_SERVER_3_') ? _MEDIA_SERVER_3_ : ''];
-        }
         if (defined('_RIJNDAEL_KEY_')) {
             $datas[] = ['_RIJNDAEL_KEY_', _RIJNDAEL_KEY_];
         }
@@ -1568,6 +1265,8 @@ class AjaxProcessor
             $this->nextQuickInfo[] = $this->l('Settings file updated');
         }
         error_reporting($oldLevel);
+
+        return true;
     }
 
     /**
@@ -1647,7 +1346,7 @@ class AjaxProcessor
             }
             $files = scandir($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->restoreName);
             foreach ($files as $file) {
-                if (preg_match('#auto-backupdb_[0-9]{6}_'.preg_quote($this->restoreName).'#', $file)) {
+                if (preg_match('#auto-backupdb_'.preg_quote($this->restoreName).'#', $file)) {
                     $this->restoreDbFilenames[] = $file;
                 }
             }
@@ -1796,7 +1495,7 @@ class AjaxProcessor
 
         // very second restoreFiles step : extract backup
         // if (!isset($fromArchive))
-        //	$fromArchive = unserialize(base64_decode(file_get_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.$this->fromArchiveFileList)));
+        // $fromArchive = unserialize(base64_decode(file_get_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.$this->fromArchiveFileList)));
         $filepath = $this->tools->backupPath.DIRECTORY_SEPARATOR.$this->restoreFilesFilename;
         $destExtract = _PS_ROOT_DIR_;
         if ($this->extractZip($filepath, $destExtract)) {
@@ -1858,15 +1557,6 @@ class AjaxProcessor
      */
     public function listFilesToRemove()
     {
-        $prevVersion = preg_match('#auto-backupfiles_V([0-9.]*)_#', $this->restoreFilesFilename, $matches);
-        if ($prevVersion) {
-            $prevVersion = $matches[1];
-        }
-
-        if (!$this->upgrader) {
-            $this->upgrader = Upgrader::getInstance();
-        }
-
         $toRemove = false;
         // note : getDiffFilesList does not include files moved by upgrade scripts,
         // so this method can't be trusted to fully restore directory
@@ -1893,7 +1583,7 @@ class AjaxProcessor
     }
 
     /**
-     * @param        $dir
+     * @param string $dir
      * @param string $way
      * @param bool   $listDirectories
      *
@@ -2010,8 +1700,8 @@ class AjaxProcessor
     }
 
     /**
-     * @param       $dir
-     * @param array $ignore
+     * @param string $dir
+     * @param array  $ignore
      *
      * @return bool
      *
@@ -2051,7 +1741,7 @@ class AjaxProcessor
         // deal with the next files stored in restoreDbFilenames
         if (empty($listQuery) && is_array($this->restoreDbFilenames) && count($this->restoreDbFilenames) > 0) {
             $currentDbFilename = array_shift($this->restoreDbFilenames);
-            if (!preg_match('#auto-backupdb_([0-9]{6})_#', $currentDbFilename, $match)) {
+            if (!preg_match('#auto-backupdb_#', $currentDbFilename, $match)) {
                 $this->next = 'error';
                 $this->error = 1;
                 $this->nextQuickInfo[] = $this->nextDesc = $this->l(sprintf('%s: File format does not match.', $currentDbFilename));
@@ -2074,10 +1764,10 @@ class AjaxProcessor
                         while (!feof($fp)) {
                             $content .= bzread($fp, 4096);
                         }
-                    } else {
-                        die("error when trying to open in bzmode");
-                    } // @todo : handle error
-                    break;
+                        bzclose($fp);
+                        break;
+                    }
+                    // Fall through if failure
                 case 'gz':
                     if ($fp = gzopen($backupdbPath.DIRECTORY_SEPARATOR.$currentDbFilename, 'r')) {
                         while (!feof($fp)) {
@@ -2190,7 +1880,7 @@ class AjaxProcessor
             $this->stepDone = true;
             $this->status = 'ok';
             $this->next = 'rollbackComplete';
-            $this->nextQuickInfo[] = $this->nextDesc = $this->l('Database restoration done.');
+            $this->nextQuickInfo[] = $this->nextDesc = $this->l('Database restore complete.');
         }
 
         return true;
@@ -2289,7 +1979,6 @@ class AjaxProcessor
                     fclose($fp);
                 }
                 $backupfile = $this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupDbFilename;
-                $backupfile = preg_replace("#_XXXXXX_#", '_'.str_pad($this->nextParams['dbStep'], 6, '0', STR_PAD_LEFT).'_', $backupfile);
 
                 // start init file
                 // Figure out what compression is available and open the file
@@ -2893,45 +2582,6 @@ class AjaxProcessor
     }
 
     /**
-     * list files to upgrade and return it as array
-     *
-     * @param string $dir
-     *
-     * @return false|array number of files found
-     *
-     * @since 1.0.0
-     */
-    public function listFilesToUpgrade($dir)
-    {
-        static $list = [];
-        if (!is_dir($dir)) {
-            $this->nextQuickInfo[] = sprintf($this->l('[ERROR] %s does not exist or is not a directory.'), $dir);
-            $this->nextErrors[] = sprintf($this->l('[ERROR] %s does not exist or is not a directory.'), $dir);
-            $this->nextDesc = $this->l('Nothing has been extracted. It seems the unzipping step has been skipped.');
-            $this->next = 'error';
-
-            return false;
-        }
-
-        $allFiles = scandir($dir);
-        foreach ($allFiles as $file) {
-            $fullPath = $dir.DIRECTORY_SEPARATOR.$file;
-
-            if (!$this->skipFile($file, $fullPath, "upgrade")) {
-                $list[] = str_replace($this->latestRootDir, '', $fullPath);
-                // if is_dir, we will create it :)
-                if (is_dir($fullPath)) {
-                    if (strpos($dir.DIRECTORY_SEPARATOR.$file, 'install') === false || strpos($dir.DIRECTORY_SEPARATOR.$file, 'modules') !== false) {
-                        $this->listFilesToUpgrade($fullPath);
-                    }
-                }
-            }
-        }
-
-        return $list;
-    }
-
-    /**
      * upgradeThisFile
      *
      * @param mixed $file
@@ -2940,47 +2590,42 @@ class AjaxProcessor
      *
      * @since 1.0.0
      */
-    public function upgradeThisFile($file)
+    public function upgradeThisFile($fileAction)
     {
-
         // note : keepMails is handled in skipFiles
         // translations_custom and mails_custom list are currently not used
         // later, we could handle customization with some kind of diff functions
         // for now, just copy $file in str_replace($this->latestRootDir,_PS_ROOT_DIR_)
-        $orig = $this->latestRootDir.$file;
-        $dest = $this->destUpgradePath.$file;
+        $path = $fileAction['path'];
+        $orig = $this->tools->autoupgradePath.DIRECTORY_SEPARATOR.'latest'.$path;
+        if (Tools::substr($path, 0, 1) !== '/') {
+            $path = '/'.$path;
+        }
 
-        if ($this->skipFile($file, $dest, 'upgrade')) {
-            $this->nextQuickInfo[] = sprintf($this->l('%s ignored'), $file);
-
-            return true;
+        $adminDir = str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_);
+        if (Tools::substr($path, 0, 6) === '/admin') {
+            $newPath = str_replace('/admin', $adminDir, $path);
         } else {
-            if (is_dir($orig)) {
-                // if $dest is not a directory (that can happen), just remove that file
-                if (!is_dir($dest) and file_exists($dest)) {
-                    unlink($dest);
-                    $this->nextQuickInfo[] = sprintf($this->l('[WARNING] File %1$s has been deleted.'), $file);
+            $newPath = $path;
+        }
+
+        $dest = _PS_ROOT_DIR_.$newPath;
+
+        switch ($fileAction['action']) {
+            case 'delete':
+                if (is_dir($dest)) {
+                    UpgraderTools::rrmdir($dest);
+                    $this->nextQuickInfo[] = sprintf($this->l('Recursively removed directory %1$s.'), $dest);
+                } else {
+                    @unlink($dest);
+                    $this->nextQuickInfo[] = sprintf($this->l('Removed file %1$s.'), $dest);
                 }
-                if (!file_exists($dest)) {
-                    if (mkdir($dest)) {
-                        $this->nextQuickInfo[] = sprintf($this->l('Directory %1$s created.'), $file);
+                break;
 
-                        return true;
-                    } else {
-                        $this->next = 'error';
-                        $this->nextQuickInfo[] = sprintf($this->l('Error while creating directory %s.'), $dest);
-                        $this->nextErrors[] = $this->nextDesc = sprintf($this->l('Error while creating directory %s.'), $dest);
-
-                        return false;
-                    }
-                } else { // directory already exists
-                    $this->nextQuickInfo[] = sprintf($this->l('Directory %1$s already exists.'), $file);
-
-                    return true;
-                }
-            } elseif (is_file($orig)) {
-                if ($this->isTranslationFile($file) && file_exists($dest)) {
-                    $typeTrad = $this->getTranslationFileType($file);
+            case 'add':
+            default:
+                if ($this->isTranslationFile($dest) && file_exists($dest)) {
+                    $typeTrad = $this->getTranslationFileType($dest);
                     $res = $this->mergeTranslationFile($orig, $dest, $typeTrad);
                     if ($res) {
                         $this->nextQuickInfo[] = sprintf($this->l('[TRANSLATION] The translation files have been merged into file %1$s.'), $dest);
@@ -2994,35 +2639,25 @@ class AjaxProcessor
 
                 // upgrade exception were above. This part now process all files that have to be upgraded (means to modify or to remove)
                 // delete before updating (and this will also remove deprecated files)
+                if (!file_exists(dirname($dest))) {
+                    mkdir(dirname($dest), 0777, true);
+                }
+
                 if (copy($orig, $dest)) {
-                    $this->nextQuickInfo[] = sprintf($this->l('Copied %1$s.'), $file);
+                    $this->nextQuickInfo[] = sprintf($this->l('Copied %1$s to %2$s.'), $orig, $dest);
 
                     return true;
                 } else {
                     $this->next = 'error';
-                    $this->nextQuickInfo[] = sprintf($this->l('error for copying %1$s'), $file);
-                    $this->nextErrors[] = $this->nextDesc = sprintf($this->l('Error while copying file %1$s'), $file);
+                    $this->nextQuickInfo[] = sprintf($this->l('Error while copying from %1$s to %2$s'), $orig, $dest);
+                    $this->nextErrors[] = $this->nextDesc = sprintf($this->l('Error while copying from %1$s to %2$s'), $orig, $dest);
 
                     return false;
                 }
-            } elseif (is_file($dest)) {
-                if (file_exists($dest)) {
-                    unlink($dest);
-                }
-                $this->nextQuickInfo[] = sprintf('removed file %1$s.', $file);
-
-                return true;
-            } elseif (is_dir($dest)) {
-                if (strpos($dest, DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR) === false) {
-                    Tools::deleteDirectory($dest, true);
-                }
-                $this->nextQuickInfo[] = sprintf('removed dir %1$s.', $file);
-
-                return true;
-            } else {
-                return true;
-            }
+                break;
         }
+
+        return true;
     }
 
     /**
@@ -3204,7 +2839,7 @@ class AjaxProcessor
     protected function initializeFiles()
     {
         // installedLanguagesIso is used to merge translations files
-        $isoIds = \Language::getIsoIds(false);
+        $isoIds = Language::getIsoIds(false);
         foreach ($isoIds as $v) {
             $this->installedLanguagesIso[] = $v['iso_code'];
         }
@@ -3215,17 +2850,19 @@ class AjaxProcessor
         $version = _PS_VERSION_;
         $this->backupName = "v{$version}_{$date}-{$rand}";
         $this->backupFilesFilename = 'auto-backupfiles_'.$this->backupName.'.zip';
-        $this->backupDbFilename = 'auto-backupdb_XXXXXX_'.$this->backupName.'.sql';
+        $this->backupDbFilename = 'auto-backupdb_'.$this->backupName.'.sql';
 
         $this->keepImages = UpgraderTools::getConfig(UpgraderTools::BACKUP_IMAGES);
         $this->keepMails = UpgraderTools::getConfig(UpgraderTools::KEEP_MAILS);
         $this->manualMode = (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) ? (bool) UpgraderTools::getConfig(UpgraderTools::MANUAL_MODE) : false;
         $this->deactivateCustomModule = UpgraderTools::getConfig(UpgraderTools::DISABLE_CUSTOM_MODULES);
 
+        $adminDir = str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_);
+
         // during restoration, do not remove :
         $this->restoreIgnoreAbsoluteFiles[] = '/config/settings.inc.php';
         $this->restoreIgnoreAbsoluteFiles[] = '/modules/autoupgrade';
-        $this->restoreIgnoreAbsoluteFiles[] = '/admin/autoupgrade';
+        $this->restoreIgnoreAbsoluteFiles[] = "/$adminDir/autoupgrade";
         $this->restoreIgnoreAbsoluteFiles[] = '.';
         $this->restoreIgnoreAbsoluteFiles[] = '..';
 
@@ -3241,7 +2878,7 @@ class AjaxProcessor
 
         // do not care about the two autoupgrade dir we use;
         $this->backupIgnoreAbsoluteFiles[] = '/modules/autoupgrade';
-        $this->backupIgnoreAbsoluteFiles[] = '/admin/autoupgrade';
+        $this->backupIgnoreAbsoluteFiles[] = "/$adminDir/autoupgrade";
 
         $this->backupIgnoreFiles[] = '.';
         $this->backupIgnoreFiles[] = '..';

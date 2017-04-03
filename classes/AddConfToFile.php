@@ -40,7 +40,7 @@ class AddConfToFile
     /**
      * AddConfToFile constructor.
      *
-     * @param        $file
+     * @param string $file
      * @param string $mode
      */
     public function __construct($file, $mode = 'r+')
@@ -79,18 +79,22 @@ class AddConfToFile
     }
 
     /**
-     * @param $name
-     * @param $data
+     * @param string $name
+     * @param string $data
      *
      * @return bool
      */
     public function writeInFile($name, $data)
     {
-        if (!$res = @fwrite($this->fd,
-            'define(\''.$name.'\', \''.$this->checkString($data).'\');'."\n")) {
+        if (!$res = @fwrite(
+            $this->fd,
+            'define(\''.$name.'\', \''.$this->checkString($data).'\');'."\n"
+        )) {
             $this->error = 6;
+
             return false;
         }
+
         return true;
     }
 
@@ -101,13 +105,15 @@ class AddConfToFile
     {
         if (!$res = @fwrite($this->fd, '?>'."\n")) {
             $this->error = 6;
+
             return false;
         }
+
         return true;
     }
 
     /**
-     * @param $string
+     * @param string $string
      *
      * @return mixed|string
      */
@@ -120,6 +126,7 @@ class AddConfToFile
             $string = addslashes($string);
             $string = str_replace(array("\n", "\r"), '', $string);
         }
+
         return $string;
     }
 }

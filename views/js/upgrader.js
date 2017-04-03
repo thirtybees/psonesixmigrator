@@ -119,7 +119,6 @@
         },
         success: function (res) {
           var result;
-
           if (res && !res.error) {
             result = res.nextParams.result;
             if (!result.available) {
@@ -139,7 +138,7 @@
           $selectedVersion.html('Error');
           $selectChannelErrors.html('Could not connect with the server');
           $selectChannelErrors.show();
-        }
+        },
       });
     }
 
@@ -199,9 +198,19 @@
         if ($(this).val()) {
           $(this).after('<a class="button confirmBeforeDelete" href="index.php?tab=AdminThirtyBeesMigrate&token=' + window.upgrader.token + '&amp;deletebackup&amp;name=' + $(this).val() + '"> <img src="../img/admin/disabled.gif" />Delete</a>');
           $(this).next().click(function (e) {
-            if (!confirm('Are you sure you want to delete this backup?')) {
-              e.preventDefault();
-            }
+            window.swal({
+              title: 'Delete backup',
+              text: 'Are you sure you want to delete this backup?',
+              type: 'warning',
+              showCancelButton: true,
+            }).then(
+              function () {},
+              function (dismiss) {
+                if (dismiss === 'cancel' || dismiss === 'close') {
+                  e.preventDefault();
+                }
+              }
+            );
           });
         }
 
@@ -427,7 +436,7 @@
       afterRestoreDb: afterRestoreDb,
       afterRestoreFiles: afterRestoreFiles,
       afterBackupFiles: afterBackupFiles,
-      afterBackupDb: afterBackupDb
+      afterBackupDb: afterBackupDb,
     };
 
 
@@ -454,7 +463,7 @@
           autoupgradeDir: window.token.autoupgradeDir,
           tab: 'AdminThirtyBeesMigrate',
           action: action,
-          params: nextParams
+          params: nextParams,
         },
         beforeSend: function (jqXHR) {
           $.xhrPool.push(jqXHR);
@@ -474,9 +483,9 @@
           } catch (e) {
             response = {
               status: 'error',
-              nextParams: nextParams
+              nextParams: nextParams,
             };
-            alert('Javascript error (parseJSON) detected for action "' + action + '"Starting recovery process...');
+            window.swal('Javascript error (parseJSON) detected for action "' + action + '"Starting recovery process...');
           }
           addQuickInfo(response.nextQuickInfo);
           addError(response.nextErrors);
@@ -508,7 +517,7 @@
             ) {
               handleError(response, action);
             } else {
-              alert('Error detected during [' + action + ']');
+              window.swal('Error detected during [' + action + ']');
             }
           }
         },
@@ -568,7 +577,7 @@
           && action !== 'rollback'
           && action !== 'noRollbackFound')) {
           prepareNextButton('#' + res.next, res.nextParams);
-          alert('Manually go to button ' + res.next);
+          window.swal('Manually go to button ' + res.next);
         }
         else {
           // if next is rollback, prepare nextParams with rollbackDbFilename and rollbackFilesFilename
@@ -588,19 +597,27 @@
 
 // res = {nextParams, nextDesc}
     function handleError(res, action) {
+      var response = res;
       // display error message in the main process thing
       // In case the rollback button has been deactivated, just re-enable it
       $('#rollback').removeAttr('disabled');
       // auto rollback only if current action is upgradeFiles or upgradeDb
       if (action === 'upgradeFiles' || action === 'upgradeDb' || action === 'upgradeModules') {
         $('.button-autoupgrade').html('Operation canceled. Checking for restoration...');
-        res.nextParams.restoreName = res.nextParams.backupName;
+        response.nextParams.restoreName = response.nextParams.backupName;
         // FIXME: show backup name
-        if (confirm('Do you want to restore from backup ``?')) {
-          doAjaxRequest('rollback', res.nextParams);
-        }
-      }
-      else {
+        window.swal({
+          title: 'Migration failed :(',
+          text: 'Do you want to restore from backup `' + response.nextParams.backupName + '`?',
+          type: 'error',
+          showCancelButton: true,
+        })
+          .then(
+            function () {
+              doAjaxRequest('rollback', response.nextParams);
+            }
+          );
+      } else {
         $('.button-autoupgrade').html('Operation canceled. An error happened.');
         $(window).unbind();
       }
@@ -832,12 +849,14 @@
 
         // note: preserveFiles is currently not used
         if ($(this).attr('name') === 'submitConf-preserveFiles') {
-          if (confirm('Please confirm that you want to preserve file options.')) {
+          window.swal({
+            title: 'Please confirm that you want to preserve file options.'
+          }).then(function () {
             params.preserve_files = $('input[name=submitConf-preserveFiles]:checked').length;
-          } else {
-            $('input[name=submitConf-skipBackup]:checked').removeAttr('checked');
-            return false;
-          }
+          });
+        } else {
+          $('input[name=submitConf-skipBackup]:checked').removeAttr('checked');
+          return false;
         }
         window.upgrader.res = doAjaxRequest('updateConfig', params);
       });

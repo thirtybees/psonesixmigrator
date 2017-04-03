@@ -25,8 +25,8 @@
 use PsOneSixMigrator\UpgraderTools;
 
 /** @var AdminThirtyBeesMigrateController $this */
-$backupAvailable = array_intersect($this->getBackupDbAvailable(), $this->getBackupFilesAvailable());
-if (!UpgraderTools::getConfig('PS_AUTOUP_BACKUP') && is_array($backupAvailable) && count($backupAvailable) && !in_array($this->backupName, $backupAvailable)) {
+$backupAvailable = array_intersect($this->getBackupFilesAvailable(), $this->getBackupDbAvailable());
+if (!UpgraderTools::getConfig(UpgraderTools::BACKUP) && is_array($backupAvailable) && count($backupAvailable) && !in_array($this->backupName, $backupAvailable)) {
     $this->backupName = end($backupAvailable);
 }
 ?>

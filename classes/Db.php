@@ -126,18 +126,19 @@ abstract class Db
     /**
      * Try a connection to the database
      *
-     * @param string $server Server address
-     * @param string $user   Login for database connection
-     * @param string $pwd    Password for database connection
-     * @param string $db     Database name
-     * @param bool   $new_db_link
+     * @param string $server    Server address
+     * @param string $user      Login for database connection
+     * @param string $pwd       Password for database connection
+     * @param string $db        Database name
+     * @param bool   $newDbLink
      * @param bool   $engine
+     * @param int    $timeout
      *
      * @return int
      */
-    public static function checkConnection($server, $user, $pwd, $db, $new_db_link = true, $engine = null, $timeout = 5)
+    public static function checkConnection($server, $user, $pwd, $db, $newDbLink = true, $engine = null, $timeout = 5)
     {
-        return call_user_func_array([Db::getClass(), 'tryToConnect'], [$server, $user, $pwd, $db, $new_db_link, $engine, $timeout]);
+        return call_user_func_array([Db::getClass(), 'tryToConnect'], [$server, $user, $pwd, $db, $newDbLink, $engine, $timeout]);
     }
 
     /**
@@ -147,21 +148,7 @@ abstract class Db
      */
     public static function getClass()
     {
-        if (!defined('PHP_VERSION_ID')) {
-            $version = explode('.', PHP_VERSION);
-            define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
-        }
-
-        $class = 'MySQL';
-        if (extension_loaded('mysql') && PHP_VERSION_ID < 50500) {
-            $class = 'MySQL';
-        } elseif (extension_loaded('mysqli') && (PHP_VERSION_ID < 50300 || extension_loaded('mysqlnd'))) {
-            $class = 'DbMySQLi';
-        } elseif (PHP_VERSION_ID >= 50200 && extension_loaded('pdo_mysql')) {
-            $class = 'DbPDO';
-        }
-
-        return $class;
+        return 'PsOneSixMigrator\\DbPDO';
     }
 
     /**

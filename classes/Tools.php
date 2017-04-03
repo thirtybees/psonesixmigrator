@@ -189,59 +189,6 @@ class Tools
     }
 
     /**
-     * Redirect user to another page
-     *
-     * @param string       $url     Desired URL
-     * @param string       $baseUri Base URI (optional)
-     * @param \Link         $link
-     * @param string|array $headers A list of headers to send before redirection
-     *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
-     */
-    public static function redirect($url, $baseUri = __PS_BASE_URI__, \Link $link = null, $headers = null)
-    {
-        if (!$link) {
-            $link = \Context::getContext()->link;
-        }
-
-        if (strpos($url, 'http://') === false && strpos($url, 'https://') === false && $link) {
-            if (strpos($url, $baseUri) === 0) {
-                $url = substr($url, strlen($baseUri));
-            }
-            if (strpos($url, 'index.php?controller=') !== false && strpos($url, 'index.php/') == 0) {
-                $url = substr($url, strlen('index.php?controller='));
-                if (\Configuration::get('PS_REWRITING_SETTINGS')) {
-                    $url = static::strReplaceFirst('&', '?', $url);
-                }
-            }
-
-            $explode = explode('?', $url);
-            // don't use ssl if url is home page
-            // used when logout for example
-            $useSsl = !empty($url);
-            $url = $link->getPageLink($explode[0], $useSsl);
-            if (isset($explode[1])) {
-                $url .= '?'.$explode[1];
-            }
-        }
-
-        // Send additional headers
-        if ($headers) {
-            if (!is_array($headers)) {
-                $headers = [$headers];
-            }
-
-            foreach ($headers as $header) {
-                header($header);
-            }
-        }
-
-        header('Location: '.$url);
-        exit;
-    }
-
-    /**
      * @param string $search
      * @param string $replace
      * @param string $subject
@@ -2449,32 +2396,6 @@ class Tools
         }
 
         return static::usingSecureMode() ? static::getShopDomainSSL() : static::getShopDomain();
-    }
-
-    /**
-     * getShopDomainSsl returns domain name according to configuration and depending on ssl activation
-     *
-     * @param bool $http     if true, return domain name with protocol
-     * @param bool $entities if true, convert special chars to HTML entities
-     *
-     * @return string domain
-     *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
-     */
-    public static function getShopDomainSsl($http = false, $entities = false)
-    {
-        if (!$domain = \ShopUrl::getMainShopDomainSSL()) {
-            $domain = static::getHttpHost();
-        }
-        if ($entities) {
-            $domain = htmlspecialchars($domain, ENT_COMPAT, 'UTF-8');
-        }
-        if ($http) {
-            $domain = (\Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://').$domain;
-        }
-
-        return $domain;
     }
 
     /**
