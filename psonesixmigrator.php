@@ -52,7 +52,7 @@ class PsOneSixMigrator extends Module
         $this->multishop_context = Shop::CONTEXT_ALL;
 
         $this->displayName = $this->l('1-Click Upgrade');
-        $this->description = $this->l('Provides an automated method to upgrade your shop to the latest version of PrestaShop.');
+        $this->description = $this->l('Provides an automated method to migrate your shop to the latest version of thirty bees.');
 
         $this->ps_versions_compliancy = array('min' => '1.6.0.0', 'max' => '1.6.999.999');
     }
