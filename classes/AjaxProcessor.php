@@ -364,7 +364,7 @@ class AjaxProcessor
         for ($i = 0; $i < UpgraderTools::$loopUpgradeFiles; $i++) {
             if (count($this->nextParams['fileActions']) <= 0) {
                 $this->next = 'upgradeDb';
-                unlink($this->nextParams['fileActions']);
+                unset($this->nextParams['fileActions']);
                 $this->nextDesc = $this->l('All files upgraded. Now upgrading database...');
                 $this->nextResponseType = 'json';
                 $this->stepDone = true;
@@ -2624,6 +2624,12 @@ class AjaxProcessor
 
             case 'add':
             default:
+                if (!file_exists($orig)) {
+                    $this->nextQuickInfo[] = sprintf($this->l('Source file %1$s not found. Skipping'), $orig);
+
+                    break;
+                }
+
                 if ($this->isTranslationFile($dest) && file_exists($dest)) {
                     $typeTrad = $this->getTranslationFileType($dest);
                     $res = $this->mergeTranslationFile($orig, $dest, $typeTrad);
