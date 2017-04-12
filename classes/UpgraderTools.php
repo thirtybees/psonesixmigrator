@@ -488,7 +488,7 @@ class UpgraderTools
      *
      * @since 1.0.0
      */
-    public static function rrmdir($dir)
+    public static function rrmdir($dir, $keepRootDir = false)
     {
         while(false !== ($file = readdir($dir))) {
             if (($file !== '.') && ($file !== '..')) {
@@ -501,6 +501,8 @@ class UpgraderTools
             }
         }
         closedir($dir);
-        rmdir($dir);
+        if (!$keepRootDir) {
+            rmdir($dir);
+        }
     }
 }

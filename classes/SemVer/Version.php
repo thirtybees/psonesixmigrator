@@ -103,7 +103,7 @@ class Version extends Expression {
     /**
      * Increment the version number
      * @param string $what One of 'major', 'minor', 'patch' or 'build'
-     * @return \vierbergenlars\SemVer\version
+     * @return \vierbergenlars\SemVer\Version
      * @throws SemVerException When an invalid increment value is given
      */
     function inc($what) {

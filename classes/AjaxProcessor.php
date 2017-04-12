@@ -401,18 +401,18 @@ class AjaxProcessor
     public function ajaxProcessUnzip()
     {
         $coreFilePath = $this->getCoreFilePath();
-        $coreDileDest = $this->tools->latestPath;
+        $coreFileDest = $this->tools->latestPath;
         $extraFilePath = $this->getExtraFilePath();
-        $extraDileDest = $this->tools->latestPath.'/upgrade';
+        $extraFileDest = $this->tools->latestPath.'/upgrade';
 
-        if (file_exists($coreDileDest)) {
-            Tools::deleteDirectory($coreDileDest, false);
+        if (file_exists($coreFileDest)) {
+            Tools::deleteDirectory($coreFileDest, false);
             $this->nextQuickInfo[] = $this->l('"/latest" directory has been emptied');
         }
-        $relativeExtractPath = str_replace(_PS_ROOT_DIR_, '', $coreDileDest);
+        $relativeExtractPath = str_replace(_PS_ROOT_DIR_, '', $coreFileDest);
         $report = '';
         if (ConfigurationTest::test_dir($relativeExtractPath, false, $report)) {
-            if ($this->extractZip($coreFilePath, $coreDileDest) && $this->extractZip($extraFilePath, $extraDileDest)) {
+            if ($this->extractZip($coreFilePath, $coreFileDest) && $this->extractZip($extraFilePath, $extraFileDest)) {
                 // Unsetting to force listing
                 unset($this->nextParams['removeList']);
                 $this->next = 'removeSamples';
@@ -421,14 +421,14 @@ class AjaxProcessor
                 return true;
             } else {
                 $this->next = 'error';
-                $this->nextDesc = sprintf($this->l('Unable to extract %1$s and/or %2$s into %3$s folder...'), $coreFilePath, $extraFilePath, $coreDileDest);
+                $this->nextDesc = sprintf($this->l('Unable to extract %1$s and/or %2$s into %3$s folder...'), $coreFilePath, $extraFilePath, $coreFileDest);
 
                 return true;
             }
         } else {
             $this->nextDesc = $this->l('Extraction directory is not writable.');
             $this->nextQuickInfo[] = $this->l('Extraction directory is not writable.');
-            $this->nextErrors[] = sprintf($this->l('Extraction directory %s is not writable.'), $coreDileDest);
+            $this->nextErrors[] = sprintf($this->l('Extraction directory %s is not writable.'), $coreFileDest);
             $this->next = 'error';
         }
 

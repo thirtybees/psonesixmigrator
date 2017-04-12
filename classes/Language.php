@@ -415,9 +415,9 @@ class Language extends ObjectModel
         if (!Validate::isLanguageIsoCode((string) $iso)) {
             return false;
         }
-        // TODO: filter beta RC versions etc.
         if ($version == null) {
-            $version = _TB_VERSION_;
+            $versionArray = array_pad(explode('.', _PS_VERSION_), 3, '0');
+            $version = "$versionArray[0].$versionArray[1].$versionArray[2]";
         }
 
         $langPack = false;
@@ -528,8 +528,8 @@ class Language extends ObjectModel
 
         // If the language pack has not been provided, retrieve it from translations.thirtybees.com
         if (!$langPack) {
-            // TODO: filter rc beta etc.
-            $version = _TB_VERSION_;
+            $versionArray = array_pad(explode('.', _PS_VERSION_), 3, '0');
+            $version = "$versionArray[0].$versionArray[1].$versionArray[2]";
             $guzzle = new GuzzleHttp\Client([
                 'base_uri' => "https://translations.thirtybees.com/packs/{$version}/",
                 'timeout'  => 20,
@@ -657,8 +657,6 @@ class Language extends ObjectModel
 
         // @todo Since a lot of modules are not in right format with their primary keys name, just get true ...
         $this->loadUpdateSQL();
-
-        UrlRewrite::regenerateUrlRewrites($this->id);
 
         return true;
     }

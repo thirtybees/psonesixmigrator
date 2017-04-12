@@ -125,7 +125,7 @@ class Expression {
     /**
      * Find the maximum satisfying version
      * @param array|string $versions An array of version objects or version strings, one version string
-     * @return \vierbergenlars\SemVer\version|boolean
+     * @return \vierbergenlars\SemVer\Version|boolean
      */
     function maxSatisfying($versions) {
         if (!is_array($versions))
