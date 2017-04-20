@@ -26,6 +26,10 @@
 use PsOneSixMigrator\Tools;
 use PsOneSixMigrator\AjaxProcessor;
 
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+}
+
 if (function_exists('date_default_timezone_set')) {
     // date_default_timezone_get calls date_default_timezone_set, which can provide warning
     $timezone = @date_default_timezone_get();
