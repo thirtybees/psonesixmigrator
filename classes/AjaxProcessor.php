@@ -380,7 +380,7 @@ class AjaxProcessor
                 break;
             }
         }
-        if (count($this->nextParams['fileActions']) > 0) {
+        if (isset($this->nextParams['fileActions']) && count($this->nextParams['fileActions']) > 0) {
             if (count($this->nextParams['fileActions'])) {
                 $this->nextDesc = sprintf($this->l('%1$s files left to upgrade.'), count($this->nextParams['fileActions']));
                 $this->nextQuickInfo[] = sprintf($this->l('%2$s files left to upgrade.'), count($this->nextParams['fileActions']));
@@ -2222,7 +2222,7 @@ class AjaxProcessor
             $this->nextDesc = sprintf($this->l('Backup files in progress. %d files left'), count($filesForBackup));
         }
         if (is_array($filesForBackup)) {
-            $this->nextQuickInfo[] = $this->l('Using class ZipArchive...');
+//            $this->nextQuickInfo[] = $this->l('Using class ZipArchive...');
             $zipArchive = true;
             $zip = new \ZipArchive();
             $res = $zip->open($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename, \ZipArchive::CREATE);
@@ -2604,7 +2604,7 @@ class AjaxProcessor
 
         $adminDir = str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_);
         if (Tools::substr($path, 0, 6) === '/admin') {
-            $newPath = str_replace('/admin', $adminDir, $path);
+            $newPath = $adminDir.Tools::substr($path, 6);
         } else {
             $newPath = $path;
         }
