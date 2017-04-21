@@ -395,7 +395,7 @@ class AdminThirtyBeesMigrateController extends AdminController
     {
         $download = $this->tools->downloadPath.DIRECTORY_SEPARATOR;
         $params = [
-            'optChannels'     => ['master', 'stable', 'beta'],
+            'optChannels'     => ['stable', 'rc', 'beta', 'alpha'],
             'selectedChannel' => is_string($channel) ? $channel : 'master',
             'download'        => $download,
             'channelDir'      => glob($download.'*.zip'),
@@ -616,24 +616,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             'desc'       => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
         ];
 
-        /* Developers only options */
-        if (defined('_PS_MODE_DEV_') && _PS_MODE_DEV_) {
-            $this->_fieldsUpgradeOptions[UpgraderTools::MANUAL_MODE] = [
-                'title'      => $this->l('Step by step mode'),
-                'cast'       => 'intval',
-                'validation' => 'isBool',
-                'type'       => 'bool',
-                'desc'       => $this->l('Allows to perform the migration step by step (debug mode).'),
-            ];
-
-            $this->_fieldsUpgradeOptions[UpgraderTools::DISPLAY_ERRORS] = [
-                'title'        => $this->l('Display PHP errors'),
-                'cast'         => 'intval',
-                'validation'   => 'isBool',
-                'defaultValue' => '0',
-                'type'         => 'bool', 'desc' => $this->l('This option will keep PHP\'s "display_errors" setting to On (or force it).').'<br />'.$this->l('This is not recommended as the upgrade will immediately fail if a PHP error occurs during an Ajax call.'),
-            ];
-        } elseif (UpgraderTools::getConfig(UpgraderTools::DISPLAY_ERRORS)) {
+        if (UpgraderTools::getConfig(UpgraderTools::DISPLAY_ERRORS)) {
             UpgraderTools::writeConfig([UpgraderTools::DISPLAY_ERRORS => false]);
         }
     }
