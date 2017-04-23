@@ -159,6 +159,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         $configurationKeys = [
             UpgraderTools::KEEP_MAILS             => true,
             UpgraderTools::DISABLE_CUSTOM_MODULES => true,
+            UpgraderTools::DISABLE_OVERRIDES      => true,
             UpgraderTools::PERFORMANCE            => 1,
             UpgraderTools::MANUAL_MODE            => false,
             UpgraderTools::DISPLAY_ERRORS         => false,
@@ -233,6 +234,7 @@ class AdminThirtyBeesMigrateController extends AdminController
                 [
                     UpgraderTools::PERFORMANCE            => 1,
                     UpgraderTools::DISABLE_CUSTOM_MODULES => true,
+                    UpgraderTools::DISABLE_OVERRIDES      => true,
                     UpgraderTools::KEEP_MAILS             => true,
                     UpgraderTools::BACKUP                 => true,
                     UpgraderTools::BACKUP_IMAGES          => false,
@@ -614,6 +616,14 @@ class AdminThirtyBeesMigrateController extends AdminController
             'validation' => 'isBool',
             'type'       => 'bool',
             'desc'       => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
+        ];
+
+        $this->_fieldsUpgradeOptions[UpgraderTools::DISABLE_OVERRIDES] = [
+            'title'      => $this->l('Disable overrides'),
+            'cast'       => 'intval',
+            'validation' => 'isBool',
+            'type'       => 'bool',
+            'desc'       => $this->l('As the overrides of some modules modules can cause compatibility issues, we recommend to disable these by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
         ];
 
         if (UpgraderTools::getConfig(UpgraderTools::DISPLAY_ERRORS)) {

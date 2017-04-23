@@ -77,6 +77,7 @@ class UpgraderTools
 
     const KEEP_MAILS = 'keepMails';
     const DISABLE_CUSTOM_MODULES = 'disableCustomModules';
+    const DISABLE_OVERRIDES = 'disableOverrides';
     const MANUAL_MODE = 'manualMode';
     const DISPLAY_ERRORS = 'displayErrors';
     const BACKUP = 'backup';
