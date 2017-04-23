@@ -38,10 +38,6 @@
       return str;
     }
 
-    // function cleanInfo() {
-    //   $('#infoStep').html('reset<br/>');
-    // }
-
     function updateInfoStep(msg) {
       var $infoStep = $('#infoStep');
 

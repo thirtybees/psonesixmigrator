@@ -1108,7 +1108,7 @@ class AjaxProcessor
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1" WHERE name = "PS_NEED_REBUILD_INDEX"', false);
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1.6.1.999" WHERE name = "PS_VERSION_DB"', false);
 
-        if ($this->next == 'error') {
+        if ($this->next === 'error') {
             return false;
         } elseif (!empty($warningExist) || $this->warningExists) {
             $this->nextQuickInfo[] = $this->l('Warning detected during upgrade.');
