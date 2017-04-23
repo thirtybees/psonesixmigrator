@@ -1285,7 +1285,7 @@ class AjaxProcessor
         $chars = '0123456789abcdef';
         for ($i = 0; $i < strlen($chars); $i++) {
             $newDir = $directory.$chars[$i].'/';
-            if (mkdir($newDir, 0775) && chmod($newDir, 0775) && $levelDepth - 1 > 0) {
+            if (mkdir($newDir, 0777) && chmod($newDir, 0777) && $levelDepth - 1 > 0) {
                 static::createCacheFsDirectories($levelDepth - 1, $newDir);
             }
         }
