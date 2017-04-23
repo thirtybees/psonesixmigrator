@@ -1292,7 +1292,7 @@ class AjaxProcessor
     }
 
     /**
-     * Clean the database from unwanted entires
+     * Clean unwanted entries from the database
      *
      * @return void
      *
