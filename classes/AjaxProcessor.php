@@ -280,7 +280,6 @@ class AjaxProcessor
     public function ajaxProcessUpgradeNow()
     {
         $this->nextDesc = $this->l('Starting upgrade...');
-        $this->next = 'download';
         preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
 
         $this->next = 'download';
@@ -380,7 +379,7 @@ class AjaxProcessor
                 break;
             }
         }
-        if (count($this->nextParams['fileActions']) > 0) {
+        if (isset($this->nextParams['fileActions']) && count($this->nextParams['fileActions']) > 0) {
             if (count($this->nextParams['fileActions'])) {
                 $this->nextDesc = sprintf($this->l('%1$s files left to upgrade.'), count($this->nextParams['fileActions']));
                 $this->nextQuickInfo[] = sprintf($this->l('%2$s files left to upgrade.'), count($this->nextParams['fileActions']));
@@ -681,6 +680,8 @@ class AjaxProcessor
             $this->nextDesc = $this->l('Error during database upgrade. You may need to restore your database.');
 
             return false;
+        } else {
+            $this->next = 'cleanDatabase';
         }
 
         return true;
@@ -823,8 +824,6 @@ class AjaxProcessor
         $warningExist = false;
 
         // Configuration::loadConfiguration();
-        $request = '';
-
         foreach ($sqlContentVersion as $upgradeFile => $sqlContent) {
             foreach ($sqlContent as $query) {
                 $query = trim($query);
@@ -971,7 +970,7 @@ class AjaxProcessor
                 Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 1 WHERE `name` LIKE \'PS_VIRTUAL_PROD_FEATURE_ACTIVE\'');
             }
 
-            if (defined('_THEME_NAME_') && $this->updateDefaultTheme && preg_match('#(default|prestashop|default-boostrap)$#', _THEME_NAME_)) {
+            if (defined('_THEME_NAME_') && $this->updateDefaultTheme && preg_match('#(default|prestashop|default-bootstrap)$#', _THEME_NAME_)) {
                 $separator = addslashes(DIRECTORY_SEPARATOR);
                 $file = _PS_ROOT_DIR_.$separator.'themes'.$separator._THEME_NAME_.$separator.'cache'.$separator;
                 if (file_exists($file)) {
@@ -1302,9 +1301,9 @@ class AjaxProcessor
     public function ajaxProcessCleanDatabase()
     {
         /* Clean tabs order */
-        foreach ($this->db->executeS('SELECT DISTINCT id_parent FROM '._DB_PREFIX_.'tab') as $parent) {
+        foreach ($this->db->executeS('SELECT DISTINCT `id_parent` FROM `'._DB_PREFIX_.'tab`') as $parent) {
             $i = 1;
-            foreach ($this->db->executeS('SELECT id_tab FROM '._DB_PREFIX_.'tab WHERE id_parent = '.(int) $parent['id_parent'].' ORDER BY IF(class_name IN ("AdminHome", "AdminDashboard"), 1, 2), position ASC') as $child) {
+            foreach ($this->db->executeS('SELECT `id_tab` FROM `'._DB_PREFIX_.'tab` WHERE `id_parent` = '.(int) $parent['id_parent'].' ORDER BY IF(class_name IN ("AdminHome", "AdminDashboard"), 1, 2), position ASC') as $child) {
                 $this->db->execute('UPDATE '._DB_PREFIX_.'tab SET position = '.(int) ($i++).' WHERE id_tab = '.(int) $child['id_tab'].' AND id_parent = '.(int) $parent['id_parent']);
             }
         }
@@ -2222,7 +2221,7 @@ class AjaxProcessor
             $this->nextDesc = sprintf($this->l('Backup files in progress. %d files left'), count($filesForBackup));
         }
         if (is_array($filesForBackup)) {
-            $this->nextQuickInfo[] = $this->l('Using class ZipArchive...');
+//            $this->nextQuickInfo[] = $this->l('Using class ZipArchive...');
             $zipArchive = true;
             $zip = new \ZipArchive();
             $res = $zip->open($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename, \ZipArchive::CREATE);
@@ -2604,7 +2603,7 @@ class AjaxProcessor
 
         $adminDir = str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_);
         if (Tools::substr($path, 0, 6) === '/admin') {
-            $newPath = str_replace('/admin', $adminDir, $path);
+            $newPath = $adminDir.Tools::substr($path, 6);
         } else {
             $newPath = $path;
         }

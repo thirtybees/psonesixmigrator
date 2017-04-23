@@ -156,8 +156,29 @@ class PsOneSixMigrator extends Module
      */
     public function getContent()
     {
-        header('Location: '.$this->context->link->getAdminLink('AdminThirtyBeesMigrate', true));
-        exit;
+        if (version_compare(PHP_VERSION, '5.5.0', '<')) {
+            $this->context->controller->errors[] = $this->l('In order to migrate to thirty bees you need at least PHP version 5.5');
+        }
+        if (!extension_loaded('bcmath')) {
+            $this->context->controller->errors[] = sprintf($this->l('The `%s` PHP extension needs to be installed and available in order to migrate to thirty bees'), 'bcmath');
+        }
+        if (!class_exists('ZipArchive')) {
+            sprintf($this->l('The `%s` PHP extension needs to be installed and available in order to migrate to thirty bees'), 'zip');
+        }
+        if (!class_exists('PDO')) {
+            $this->context->controller->errors[] = $this->l('The MySQL PDO extension needs to be installed and available in order to migrate to thirty bees');
+        }
+        if (is_a(Cache::getInstance(), 'CacheApc') || is_a(Cache::getInstance(), 'CacheXcache')) {
+            // Disable Cache in these cases
+            $settings = file_get_contents(_PS_ROOT_DIR_.'/config/settings.inc.php');
+            $settings = preg_replace('/define\(\'_PS_CACHE_ENABLED_\', \'([01]?)\'\);/Ui', 'define(\'_PS_CACHE_ENABLED_\', \'0\');', $settings);
+            file_put_contents(_PS_ROOT_DIR_.'/config/settings.inc.php', $settings);
+        }
+
+        if (empty($this->context->controller->errors)) {
+            header('Location: '.$this->context->link->getAdminLink('AdminThirtyBeesMigrate', true));
+            exit;
+        }
     }
 
     /**
