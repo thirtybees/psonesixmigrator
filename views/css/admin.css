@@ -1,0 +1,8 @@
+@media (min-width: 1200px) {
+	#informationBlock, #currentConfigurationBlock {
+		min-height: 320px;
+	}
+	.generatedForm {
+		min-height: 400px!important;
+	}
+}

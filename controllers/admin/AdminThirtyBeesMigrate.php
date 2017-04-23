@@ -460,6 +460,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         parent::setMedia();
 
         $this->addJS(_PS_MODULE_DIR_.'psonesixmigrator/views/js/upgrader.js');
+        $this->addCSS(_PS_MODULE_DIR_.'psonesixmigrator/views/css/admin.css', 'all');
     }
 
     /**
