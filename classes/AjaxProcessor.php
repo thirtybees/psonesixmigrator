@@ -456,8 +456,7 @@ class AjaxProcessor
             $this->stepDone = true;
             $this->nextParams['dbStep'] = 0;
             $this->nextDesc = sprintf($this->l('Database backup skipped. Now upgrading files...'), $this->backupName);
-//            $this->next = 'upgradeFiles';
-            $this->next = 'upgradeComplete';
+            $this->next = 'upgradeFiles';
 
             return true;
         }
@@ -723,7 +722,6 @@ class AjaxProcessor
 
             $this->nextDesc = sprintf($this->l('Database backup done in filename %s. Now upgrading files...'), $this->backupName);
             $this->next = 'upgradeFiles';
-            $this->next = 'upgradeComplete';
 
             return true;
         }
@@ -1015,8 +1013,7 @@ class AjaxProcessor
                 return false;
             }
 
-//            $this->next = 'restoreFiles';
-            $this->next = 'restoreDb';
+            $this->next = 'restoreFiles';
             $this->nextDesc = $this->l('Restoring files ...');
             // remove tmp files related to restoreFiles
             if (file_exists($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::FROM_ARCHIVE_FILE_LIST)) {
@@ -1048,6 +1045,7 @@ class AjaxProcessor
         $zip = new \ZipArchive();
         $zip->open($filepath);
 
+        // If we do not have a list of files to restore, we make one first
         if (!isset($this->nextParams['filesToRestore'])) {
             $this->nextParams['filesToRestore'] = [];
 
@@ -1057,6 +1055,7 @@ class AjaxProcessor
             }
         }
 
+        // Take a chunk of 400 files and extract them
         $filesToRestoreNow = array_splice($this->nextParams['filesToRestore'], 0, 400);
 
         if ($zip->extractTo($destExtract, $filesToRestoreNow)) {
@@ -1069,11 +1068,7 @@ class AjaxProcessor
             }
 
             $this->next = 'restoreFiles';
-
-            // get new file list
             $this->nextQuickInfo[] = sprintf($this->l('%d files left to restore.'), count($this->nextParams['filesToRestore']));
-            // once it's restored, do not delete the archive file. This has to be done manually
-            // and we do not empty the var, to avoid infinite loop.
 
             return true;
         } else {
@@ -1093,16 +1088,17 @@ class AjaxProcessor
      */
     public function ajaxProcessRestoreDb()
     {
+        // Already set the next step
         $this->nextParams['dbStep'] = $this->currentParams['dbStep'];
         $startTime = time();
         $listQuery = [];
 
-        // Continue current restore
+        // Continue current restore, we know that we have to execute some queries from the last session if the list file exists
         if (file_exists($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_RESTORE_QUERY_LIST)) {
             $listQuery = json_decode(file_get_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_RESTORE_QUERY_LIST));
         }
 
-        // deal with the next files stored in restoreDbFilenames
+        // Deal with the next files stored in `$this->restoreDbFileNames` in case we do not have to execute previous queries
         if (empty($listQuery) && isset($this->restoreDbFilenames) && !empty($this->restoreDbFilenames)) {
             $currentDbFilename = array_shift($this->restoreDbFilenames);
             if (!preg_match('#auto-backupdb_#', $currentDbFilename, $match)) {
@@ -1178,6 +1174,7 @@ class AjaxProcessor
             }
             file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_RESTORE_QUERY_LIST, base64_encode(serialize($listQuery)));
         }
+        // If we have to execute previous queries, we do so over here
         if (is_array($listQuery) && (count($listQuery) > 0)) {
             do {
                 if (count($listQuery) == 0) {
@@ -1229,6 +1226,7 @@ class AjaxProcessor
 
             $queriesLeft = count($listQuery);
 
+            // If we weren't able to execute all queries within the given time, we save them
             if ($queriesLeft > 0) {
                 file_put_contents(UpgraderTools::TO_RESTORE_QUERY_LIST, json_encode($listQuery));
             } elseif (file_exists(UpgraderTools::TO_RESTORE_QUERY_LIST)) {
