@@ -16,54 +16,54 @@ class UpgraderTools
      * this files contains the list of queries left to upgrade in a serialized array.
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_UPGRADE_QUERIES_LIST = 'queriesToUpgrade.list';
+    const TO_UPGRADE_QUERIES_LIST = 'queriesToUpgrade.json';
     /**
      * during upgradeFiles process,
      * this files contains the list of files left to upgrade in a serialized array.
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_UPGRADE_FILE_LIST = 'filesToUpgrade.list';
+    const TO_UPGRADE_FILE_LIST = 'filesToUpgrade.json';
     /**
      * during upgradeModules process,
      * this files contains the list of modules left to upgrade in a serialized array.
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_UPGRADE_MODULE_LIST = 'modulesToUpgrade.list';
+    const TO_UPGRADE_MODULE_LIST = 'modulesToUpgrade.json';
     /**
      * during upgradeFiles process,
      * this files contains the list of files left to upgrade in a serialized array.
      * (this file is deleted in init() method if you reload the page)
      */
-    const FILES_DIFF = 'filesDiff.list';
+    const FILES_DIFF = 'filesDiff.json';
     /**
      * during backupFiles process,
      * this files contains the list of files left to save in a serialized array.
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_BACKUP_FILE_LIST = 'filesToBackup.list';
+    const TO_BACKUP_FILE_LIST = 'filesToBackup.json';
     /**
      * during backupDb process,
      * this files contains the list of tables left to save in a serialized array.
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_BACKUP_DB_LIST = 'tablesToBackup.list';
+    const TO_BACKUP_DB_LIST = 'tablesToBackup.json';
     /**
      * during restoreDb process,
      * this file contains a serialized array of queries which left to execute for restoring database
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_RESTORE_QUERY_LIST = 'queryToRestore.list';
+    const TO_RESTORE_QUERY_LIST = 'queryToRestore.json';
     /**
      * during restoreFiles process,
      * this file contains difference between queryToRestore and queries present in a backupFiles archive
      * (this file is deleted in init() method if you reload the page)
      */
-    const TO_REMOVE_FILE_LIST = 'filesToRemove.list';
+    const TO_REMOVE_FILE_LIST = 'filesToRemove.json';
     /**
      * during restoreFiles process,
      * contains list of files present in backupFiles archive
      */
-    const FROM_ARCHIVE_FILE_LIST = 'filesFromArchive.list';
+    const FROM_ARCHIVE_FILE_LIST = 'filesFromArchive.json';
     /**
      * `MAIL_CUSTOM_LIST` contains list of mails files which are customized,
      * relative to original files for the current PrestaShop version

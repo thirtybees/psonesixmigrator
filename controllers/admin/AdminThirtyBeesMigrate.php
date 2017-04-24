@@ -292,7 +292,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             if ($res) {
                 Tools::redirectAdmin(static::$currentIndex.'&conf=1&token='.Tools::getValue('token'));
             } else {
-                $this->errors[] = sprintf($this->l('Error when trying to delete backups %s'), $name);
+                $this->errors[] = sprintf($this->l('Error when trying to delete backup %s'), $name);
             }
         }
 
@@ -537,18 +537,15 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     protected function getBackupDbAvailable()
     {
-        $tools = UpgraderTools::getInstance();
         $array = [];
-        $files = scandir($tools->backupPath);
+        $files = scandir($this->tools->backupPath);
         foreach ($files as $file) {
-            if ($file[0] != '.') {
-                if (substr($file, 0, 13) == 'auto-backupdb') {
-                    $array[] = preg_replace('#^auto-backupdb_(.*-[0-9a-f]{1,8})\..*$#', '$1', $file);
-                }
+            if ($file[0] === 'v' && is_dir($this->tools->backupPath.DIRECTORY_SEPARATOR.$file)) {
+                $array[] = $file;
             }
         }
-
         return $array;
+
     }
 
     /**
@@ -571,7 +568,6 @@ class AdminThirtyBeesMigrateController extends AdminController
 
         return $array;
     }
-
 
     /**
      * function to set configuration fields display

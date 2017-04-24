@@ -192,7 +192,7 @@
         $(this).next().remove();
         // show delete button if the value is not 0
         if ($(this).val()) {
-          $(this).after('<a class="button confirmBeforeDelete" href="index.php?tab=AdminThirtyBeesMigrate&token=' + window.upgrader.token + '&amp;deletebackup&amp;name=' + $(this).val() + '"> <img src="../img/admin/disabled.gif" />Delete</a>');
+          $(this).after('<a class="confirmBeforeDelete btn btn-danger" href="index.php?tab=AdminThirtyBeesMigrate&token=' + window.upgrader.token + '&amp;deletebackup&amp;name=' + $(this).val() + '"><i class="icon icon-times"></i> Delete</a>');
           $(this).next().click(function (e) {
             window.swal({
               title: 'Delete backup',
@@ -337,7 +337,7 @@
         .html('<h3>ToDo list:</h3>');
 
       $pleaseWait.hide();
-      if (params.warning_exists === 'false') {
+      if (params.warningExists === 'false') {
         $upgradeResultCheck
           .addClass('conf')
           .removeClass('fail')
@@ -485,7 +485,7 @@
           }
           addQuickInfo(response.nextQuickInfo);
           addError(response.nextErrors);
-          updateInfoStep(response.nextDesc);
+          updateInfoStep(response.nextDesc, response.step);
           window.upgrader.currentParams = response.nextParams;
           if (response.status === 'ok') {
             $action.addClass('done');
