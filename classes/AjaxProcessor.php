@@ -296,8 +296,8 @@ class AjaxProcessor
                             $this->nextErrors[] = sprintf($this->l('Download complete but md5 the sum of the core package does not match (%s).'), $md5CoreFile);
                         }
                         if ($md5ExtraFile !== $this->upgrader->md5Extra) {
-                            $this->nextQuickInfo[] = sprintf($this->l('Download complete but md5 sum of the library package does not match (%s).'), $md5ExtraFile);
-                            $this->nextErrors[] = sprintf($this->l('Download complete but md5 sum the library package does not match (%s).'), $md5ExtraFile);
+                            $this->nextQuickInfo[] = sprintf($this->l('Download complete but md5 sum of the extra package does not match (%s).'), $md5ExtraFile);
+                            $this->nextErrors[] = sprintf($this->l('Download complete but md5 sum the extra package does not match (%s).'), $md5ExtraFile);
                         }
 
                         $this->next = 'error';
