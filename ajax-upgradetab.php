@@ -56,7 +56,7 @@ if (!defined('_PS_ROOT_DIR_')) {
 }
 
 require_once __DIR__.'/../../config/defines.inc.php';
-require_once(AUTOUPGRADE_MODULE_DIR.'alias.php.php');
+require_once(AUTOUPGRADE_MODULE_DIR.'alias.php');
 
 $dir = Tools::safeOutput(Tools::getValue('dir'));
 
