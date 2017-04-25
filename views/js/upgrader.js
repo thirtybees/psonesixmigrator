@@ -325,32 +325,24 @@
       var $infoStep = $('#infoStep');
       var todoList = [
         'Cookies have changed, you will need to log in again once you refreshed the page',
-        'Javascript and CSS files have changed, please clear your browser cache with CTRL-F5',
-        'Please check that your front-office theme is functional (try to create an account, place an order...',
-        'Product images do not appear in the front-office? Try regenerating the thumbnails in Preferences > Images',
-        'Do not forget to reactivate your shop once you have checked everything!',
+        'Javascript and CSS files have changed, please clear your browser cache with CTRL+F5 or CTRL+SHIFT+R',
+        'Please check that your Front Office theme is functional (try to create an account, place an order...)',
+        'In case you have switched to the default theme, check if your original theme can be used with thirty bees, otherwise try to update that theme or stick with the default thirty bees theme.',
+        'Product images do not appear ont the Front Office? Try regenerating the thumbnails in Preferences > Images',
+        'Enable overrides and non-native module on the page "Advanced Parameters > Performance"',
+        'Do not forget to reactivate your shop once you have checked everything!'
       ];
       var i;
       var todoUl = '<ul>';
       $upgradeResultToDoList
-        .addClass('hint clear')
+        .addClass('hint clearfix')
         .html('<h3>ToDo list:</h3>');
 
       $pleaseWait.hide();
       if (params.warningExists === 'false') {
-        $upgradeResultCheck
-          .addClass('conf')
-          .removeClass('fail')
-          .html('<p>Upgrade complete</p>')
-          .show();
         $infoStep.html('<h3>Upgrade Complete!</h3>');
       } else {
         $pleaseWait.hide();
-        $upgradeResultCheck
-          .addClass('fail')
-          .removeClass('ok')
-          .html('<p>Upgrade complete, but warning notifications has been found.</p>')
-          .show('slow');
         $infoStep.html('<h3>Upgrade complete, but warning notifications has been found.</h3>');
       }
 

@@ -839,7 +839,7 @@ class AjaxProcessor
 
             return false;
         } else {
-            $this->next = 'cleanDatabase';
+            $this->next = 'upgradeModules';
         }
 
         return true;
@@ -854,56 +854,30 @@ class AjaxProcessor
      */
     public function ajaxProcessUpgradeModules()
     {
-        $startTime = time();
-        if (!isset($this->nextParams['modulesToUpgrade'])) {
-            // list saved in $this->toUpgradeFileList
-            $totalModulesToUpgrade = $this->listModulesToUpgrade();
-            if ($totalModulesToUpgrade) {
-                $this->nextQuickInfo[] = sprintf($this->l('%s modules will be upgraded.'), $totalModulesToUpgrade);
-                $this->nextDesc = sprintf($this->l('%s modules will be upgraded.'), $totalModulesToUpgrade);
+        if (UpgraderTools::getConfig(UpgraderTools::SWITCH_TO_DEFAULT_THEME)) {
+            if (Db::getInstance()->insert(
+                'theme',
+                [
+                    'name'                => 'community-theme-default',
+                    'directory'           => 'community-theme-default',
+                    'responsive'          => 1,
+                    'default_left_column' => 1,
+                    'product_per_page'    => 12,
+                ]
+            )) {
+                $idTheme = Db::getInstance()->Insert_ID();
+                Db::getInstance()->update(
+                    'shop',
+                    [
+                        'id_theme' => $idTheme,
+                    ]
+                );
             }
-            $this->stepDone = false;
-            $this->next = 'upgradeModules';
-
-            return true;
+            $this->nextDesc = $this->l('Switched to default theme.');
+            $this->nextQuickInfo[] = $this->l('Switched to default theme.');
         }
 
-        $this->next = 'upgradeModules';
-//        if (file_exists($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.$this->nextParams['modulesToUpgrade'])) {
-//            $listModules = @unserialize(base64_decode(file_get_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.$this->nextParams['modulesToUpgrade'])));
-//        } else {
-            $listModules = [];
-//        }
-
-        if (!is_array($listModules)) {
-            $this->next = 'upgradeComplete';
-            $this->warningExists = true;
-            $this->nextDesc = $this->l('upgradeModule step has not ended correctly.');
-            $this->nextQuickInfo[] = $this->l('listModules is not an array. No module has been updated.');
-            $this->nextErrors[] = $this->l('listModules is not an array. No module has been updated.');
-
-            return true;
-        }
-
-        // module list
-        if (count($listModules) > 0) {
-            do {
-                $moduleInfo = array_shift($listModules);
-
-                $this->upgradeThisModule($moduleInfo['id'], $moduleInfo['name']);
-                $timeElapsed = time() - $startTime;
-            } while (($timeElapsed < UpgraderTools::$loopUpgradeModulesTime) && count($listModules) > 0);
-
-            $modulesLeft = count($listModules);
-            file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_UPGRADE_MODULE_LIST, base64_encode(serialize($listModules)));
-            unset($listModules);
-
-            $this->next = 'upgradeModules';
-            if ($modulesLeft) {
-                $this->nextDesc = sprintf($this->l('%s modules left to upgrade.'), $modulesLeft);
-            }
-            $this->stepDone = false;
-        }
+        $this->next = 'upgradeComplete';
 
         return true;
     }
