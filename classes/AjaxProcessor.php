@@ -195,7 +195,7 @@ class AjaxProcessor
         $this->nextDesc = $this->l('Starting upgrade...');
         preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
 
-        $this->next = 'download';
+        $this->next = 'upgradeComplete';
         $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
 
         $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
@@ -204,7 +204,7 @@ class AjaxProcessor
         if (isset($this->currentParams['newsletter']) && $this->currentParams['newsletter'] && $this->currentParams['employee']) {
             $employee = new Employee((int) $this->currentParams['employee']);
             if (Validate::isLoadedObject($employee)) {
-                $guzzle = new GuzzleHttp\Client([
+                $guzzle = new \PsOneSixMigrator\GuzzleHttp\Client([
                     'base_uri'    => 'https://api.thirtybees.com',
                     'timeout'     => 5,
                     'http_errors' => false,
