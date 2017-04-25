@@ -198,6 +198,13 @@ class AjaxProcessor
 
         $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
         $this->nextQuickInfo[] = sprintf($this->l('md5 hashes for core and extra should be resp. %s and %s'), $this->upgrader->md5Core, $this->upgrader->md5Extra);
+
+        if (UpgraderTools::getConfig(UpgraderTools::DISABLE_OVERRIDES)) {
+            Configuration::updateGlobalValue('PS_DISABLE_OVERRIDES', true);
+        }
+        if (UpgraderTools::getConfig(UpgraderTools::DISABLE_CUSTOM_MODULES)) {
+            Configuration::updateGlobalValue('PS_DISABLE_NON_NATIVE_MODULE', true);
+        }
     }
 
     /**
