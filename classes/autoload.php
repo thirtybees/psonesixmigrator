@@ -46,6 +46,7 @@ spl_autoload_register(
             'PsOneSixMigrator\\DbPDO',
             'PsOneSixMigrator\\DbQuery',
             'PsOneSixMigrator\\Dispatcher',
+            'PsOneSixMigrator\\Employee',
             'PsOneSixMigrator\\FileLogger',
             'PsOneSixMigrator\\Group',
             'PsOneSixMigrator\\Hook',
