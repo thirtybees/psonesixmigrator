@@ -36,7 +36,6 @@ $ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
 
 <script type="text/javascript">
 	window.upgrader = {};
-	window.upgrader.manualMode = <?php echo($this->manualMode ? 'true' : 'false'); ?>;
 	window.upgrader._PS_MODE_DEV_ = <?php echo (defined('_PS_DEV_MODE_') && _PS_DEV_MODE_) ? 'true' : 'false'; ?>;
 	window.upgrader.PS_AUTOUP_BACKUP = <?php echo (UpgraderTools::getConfig(UpgraderTools::BACKUP)) ? 'true' : 'false' ?>;
 
@@ -103,7 +102,6 @@ $ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
 
     window.upgrader.dir = '<?php echo $adminDir; ?>';
     window.upgrader.token = '<?php echo $this->token; ?>';
-    window.upgrader.autoupgradeDir = '<?php echo $this->install_autoupgrade_dir; ?>';
     window.upgrader.tab = '<?php echo get_class($this); ?>';
 
     window.upgrader.channel = '<?php echo UpgraderTools::getConfig('channel'); ?>';
