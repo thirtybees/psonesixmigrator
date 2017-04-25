@@ -138,9 +138,10 @@ class AjaxProcessor
         // Database instantiation (need to be cached because there will be at least 100k calls in the upgrade process
         $this->db = Db::getInstance();
 
+        $request = json_decode(file_get_contents('php://input'), true);
 
-        $this->action = empty($_REQUEST['action']) ? null : $_REQUEST['action'];
-        $this->currentParams = empty($_REQUEST['params']) ? null : $_REQUEST['params'];
+        $this->action = (isset($request['action']) ? $request['action'] : null);
+        $this->currentParams = (isset($request['params']) ? $request['params'] : null);
 
         $this->tools = UpgraderTools::getInstance();
         $this->upgrader = Upgrader::getInstance();
@@ -344,11 +345,10 @@ class AjaxProcessor
 
         if (empty($this->nextParams['filesForBackup'])) {
             // @todo : only add files and dir listed in "originalPrestashopVersion" list
-            $filesForBackup = $this->listFilesInDir(_PS_ROOT_DIR_, 'backup', false);
-            if (count($filesForBackup)) {
-                $this->nextQuickInfo[] = sprintf($this->l('%s Files to backup.'), count($filesForBackup));
+            $this->nextParams['filesForBackup'] = $this->listFilesInDir(_PS_ROOT_DIR_, 'backup', false);
+            if (count($this->nextParams['filesForBackup'])) {
+                $this->nextQuickInfo[] = sprintf($this->l('%s Files to backup.'), count($this->nextParams['filesForBackup']));
             }
-            $this->nextParams['filesForBackup'] = $filesForBackup;
 
             // delete old backup, create new
             if (!empty($this->backupFilesFilename) && file_exists($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename)) {
@@ -357,13 +357,12 @@ class AjaxProcessor
 
             $this->nextQuickInfo[] = sprintf($this->l('backup files initialized in %s'), $this->backupFilesFilename);
         }
-        $filesForBackup = $this->nextParams['filesForBackup'];
 
         $this->next = 'backupFiles';
-        if (count($filesForBackup)) {
-            $this->nextDesc = sprintf($this->l('Backup files in progress. %d files left'), count($filesForBackup));
+        if (count($this->nextParams['filesForBackup'])) {
+            $this->nextDesc = sprintf($this->l('Backup files in progress. %d files left'), count($this->nextParams['filesForBackup']));
         }
-        if (is_array($filesForBackup)) {
+        if (is_array($this->nextParams['filesForBackup'])) {
             $zipArchive = true;
             $zip = new \ZipArchive();
             $res = $zip->open($this->tools->backupPath.DIRECTORY_SEPARATOR.$this->backupFilesFilename, \ZipArchive::CREATE);
@@ -377,7 +376,7 @@ class AjaxProcessor
                 $filesToAdd = [];
                 $closeFlag = true;
                 for ($i = 0; $i < UpgraderTools::$loopBackupFiles; $i++) {
-                    if (count($filesForBackup) <= 0) {
+                    if (count($this->nextParams['filesForBackup']) <= 0) {
                         $this->stepDone = true;
                         $this->status = 'ok';
                         $this->next = 'backupDb';
@@ -386,7 +385,7 @@ class AjaxProcessor
                         break;
                     }
                     // filesForBackup already contains all the correct files
-                    $file = array_shift($filesForBackup);
+                    $file = array_shift($this->nextParams['filesForBackup']);
 
                     $archiveFilename = ltrim(str_replace(_PS_ROOT_DIR_, '', $file), DIRECTORY_SEPARATOR);
                     $size = filesize($file);
@@ -394,8 +393,8 @@ class AjaxProcessor
                         if (isset($zipArchive) && $zipArchive) {
                             $addedToZip = $zip->addFile($file, $archiveFilename);
                             if ($addedToZip) {
-                                if ($filesForBackup) {
-                                    $this->nextQuickInfo[] = sprintf($this->l('%1$s added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesForBackup));
+                                if ($this->nextParams['filesForBackup']) {
+                                    $this->nextQuickInfo[] = sprintf($this->l('%1$s added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($this->nextParams['filesForBackup']));
                                 }
                             } else {
                                 // if an error occur, it's more safe to delete the corrupted backup
@@ -411,8 +410,8 @@ class AjaxProcessor
                             }
                         } else {
                             $filesToAdd[] = $file;
-                            if (count($filesForBackup)) {
-                                $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %3$s) added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($filesForBackup), $size);
+                            if (count($this->nextParams['filesForBackup'])) {
+                                $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %3$s) added to archive. %2$s files left.', 'AdminThirtyBeesMigrate', true), $archiveFilename, count($this->nextParams['filesForBackup']), $size);
                             } else {
                                 $this->nextQuickInfo[] = sprintf($this->l('File %1$s (size: %2$s) added to archive.', 'AdminThirtyBeesMigrate', true), $archiveFilename, $size);
                             }
@@ -426,8 +425,6 @@ class AjaxProcessor
                 if ($zipArchive && $closeFlag && is_object($zip)) {
                     $zip->close();
                 }
-
-                $this->nextParams['filesForBackup'] = $filesForBackup;
 
                 return true;
             } else {
@@ -2240,16 +2237,17 @@ class AjaxProcessor
         }
 
         /* PrestaShop demo mode*/
-        if (!empty($_POST['responseType']) && $_POST['responseType'] == 'json') {
+        $request = json_decode(file_get_contents('php://input'), true);
+        if (!empty($request['responseType']) && $request['responseType'] === 'json') {
             header('Content-Type: application/json');
         }
 
-        if (!empty($_POST['action'])) {
-            $action = $_POST['action'];
+        if (isset($this->action) && $this->action) {
+            $action = $this->action;
             if (isset(static::$skipAction[$action])) {
                 $this->next = static::$skipAction[$action];
                 $this->nextQuickInfo[] = $this->nextDesc = sprintf($this->l('action %s skipped'), $action);
-                unset($_POST['action']);
+                unset($this->action);
             } elseif (!method_exists(get_class($this), 'ajaxProcess'.$action)) {
                 $this->nextDesc = sprintf($this->l('action "%1$s" not found'), $action);
                 $this->next = 'error';
@@ -2687,10 +2685,11 @@ class AjaxProcessor
      */
     public function verifyToken()
     {
+        $request = json_decode(file_get_contents('php://input'), true);
         if (isset($_SERVER['HTTP_X_THIRTYBEES_AUTH'])) {
             $ajaxToken = $_SERVER['HTTP_X_THIRTYBEES_AUTH'];
-        } elseif (isset($_POST['ajaxToken'])) {
-            $ajaxToken = $_POST['ajaxToken'];
+        } elseif (isset($request['ajaxToken'])) {
+            $ajaxToken = $request['ajaxToken'];
         } else {
             return false;
         }

@@ -46,8 +46,10 @@ if (!defined('_PS_MODULE_DIR_')) {
 define('AUTOUPGRADE_MODULE_DIR', _PS_MODULE_DIR_.'psonesixmigrator/');
 require_once(AUTOUPGRADE_MODULE_DIR.'functions.php');
 
+$request = json_decode(file_get_contents('php://input'));
+
 // the following test confirm the directory exists
-if (!isset($_POST['dir'])) {
+if (!isset($request->dir)) {
     die('no directory');
 }
 
@@ -58,7 +60,7 @@ if (!defined('_PS_ROOT_DIR_')) {
 require_once __DIR__.'/../../config/defines.inc.php';
 require_once(AUTOUPGRADE_MODULE_DIR.'alias.php');
 
-$dir = Tools::safeOutput(Tools::getValue('dir'));
+$dir = Tools::safeOutput($request->dir);
 
 if (realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir !== realpath(realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir)) {
     die('wrong directory :'.(isset($_POST['dir']) ? $dir : ''));
@@ -85,7 +87,7 @@ if (is_object($ajaxUpgrader) && $ajaxUpgrader->verifyToken()) {
 
     // the differences with index.php is here
     $ajaxUpgrader->ajaxPreProcess();
-    $action = Tools::getValue('action');
+    $action = $request->action;
 
     // no need to use displayConf() here
 

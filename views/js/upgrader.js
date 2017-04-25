@@ -10,7 +10,6 @@
       $.ajax({
         type: 'POST',
         url: window.upgrader.currentIndex + '&token=' + window.upgrader.token + '&tab=' + window.upgrader.tab + '&ajax=1&action=setConfig',
-        async: true,
         dataType: 'json',
         data: {
           configKey: key,
@@ -99,9 +98,10 @@
       window.upgrader.currentChannelAjax = $.ajax({
         type: 'POST',
         url: window.upgrader.ajaxLocation,
-        async: true,
-        dataType: 'JSON',
-        data: {
+        dataType: 'json',
+        processData: false,
+        contentType: 'application/json; ; charset=UTF-8',
+        data: JSON.stringify({
           dir: window.upgrader.dir,
           token: window.upgrader.token,
           autoupgradeDir: window.upgrader.autoupgradeDir,
@@ -112,7 +112,7 @@
           params: {
             channel: channel,
           },
-        },
+        }),
         success: function (res) {
           var result;
           if (res && !res.error) {
@@ -446,12 +446,15 @@
       if (typeof window.upgrader._PS_MODE_DEV_ !== 'undefined' && window.upgrader._PS_MODE_DEV_) {
         addQuickInfo(['[DEV] ajax request : ' + action]);
       }
+
       $('#pleaseWait').show();
       req = $.ajax({
         type: 'POST',
         url: window.upgrader.ajaxLocation,
-        async: true,
-        data: {
+        dataType: 'json',
+        processData: false,
+        contentType: 'application/json; charset=UTF-8',
+        data: JSON.stringify({
           dir: window.upgrader.dir,
           ajax: '1',
           token: window.upgrader.token,
@@ -460,7 +463,7 @@
           tab: 'AdminThirtyBeesMigrate',
           action: action,
           params: nextParams
-        },
+        }),
         beforeSend: function (jqXHR) {
           $.xhrPool.push(jqXHR);
         },
@@ -471,18 +474,10 @@
         },
         success: function (res, textStatus) {
           var $action = $('#' + action);
-          var response;
+          var response = res;
 
           $('#pleaseWait').hide();
-          try {
-            response = JSON.parse(res);
-          } catch (e) {
-            response = {
-              status: 'error',
-              nextParams: nextParams,
-            };
-            window.swal('Javascript error (parseJSON) detected for action "' + action + '"Starting recovery process...');
-          }
+
           addQuickInfo(response.nextQuickInfo);
           addError(response.nextErrors);
           updateInfoStep(response.nextDesc, response.step);
