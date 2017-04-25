@@ -213,7 +213,7 @@ class AjaxProcessor
         $this->nextDesc = $this->l('Starting upgrade...');
         preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
 
-        $this->next = 'upgradeComplete';
+        $this->next = 'download';
         $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
 
         $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
