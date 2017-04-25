@@ -70,6 +70,8 @@ class AdminThirtyBeesMigrateController extends AdminController
             $this->ajax = true;
         }
 
+        $this->bootstrap = true;
+
         parent::__construct();
 
         // Database instantiation (need to be cached because there will be at least 100k calls in the upgrade process
