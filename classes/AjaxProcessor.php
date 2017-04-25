@@ -1789,49 +1789,13 @@ class AjaxProcessor
                 if (!defined('_PS_MAILS_DIR_')) {
                     define('_PS_MAILS_DIR_', _PS_ROOT_DIR_.'/mails/');
                 }
-                $langs = Db::getInstance()->executeS('SELECT * FROM `'._DB_PREFIX_.'lang` WHERE `active` = 1');
-                if (is_array($langs)) {
-                    foreach ($langs as $lang) {
-                        $langPack = json_decode(Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://www.prestashop.com/download/lang_packs/get_language_pack.php?version='.$this->installVersion.'&iso_lang='.$lang['iso_code']));
-
-                        if (!$langPack) {
-                            continue;
-                        } elseif ($content = Tools::file_get_contents('http'.(extension_loaded('openssl') ? 's' : '').'://translations.prestashop.com/download/lang_packs/gzip/'.$langPack->version.'/'.$lang['iso_code'].'.gzip')) {
-                            $file = _PS_TRANSLATIONS_DIR_.$lang['iso_code'].'.gzip';
-                            if ((bool) file_put_contents($file, $content)) {
-                                $gz = new Archive_Tar($file, true);
-                                $filesList = $gz->listContent();
-                                if (!$this->keepMails) {
-                                    $filesListing = [];
-                                    foreach ($filesList as $i => $file) {
-                                        if (preg_match('/^mails\/'.$lang['iso_code'].'\/.*/', $file['filename'])) {
-                                            unset($filesList[$i]);
-                                        }
-                                    }
-                                    foreach ($filesList as $file) {
-                                        if (isset($file['filename']) && is_string($file['filename'])) {
-                                            $filesListing[] = $file['filename'];
-                                        }
-                                    }
-                                    if (is_array($filesListing)) {
-                                        $gz->extractList($filesListing, _PS_TRANSLATIONS_DIR_.'../', '');
-                                    }
-                                } else {
-                                    $gz->extract(_PS_TRANSLATIONS_DIR_.'../', false);
-                                }
-                            }
-                        }
-                    }
-                }
             }
 
-            if (true) { // 1.6.0.2+
-                $path = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'themes'.DIRECTORY_SEPARATOR.'default'.DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR.'controllers'.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.'header.tpl';
-                if (file_exists($path)) {
-                    unlink($path);
-                }
-            }
 
+        $path = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'themes'.DIRECTORY_SEPARATOR.'default'.DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR.'controllers'.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.'header.tpl';
+        if (file_exists($path)) {
+            unlink($path);
+        }
 
         if (file_exists(_PS_ROOT_DIR_.'/cache/class_index.php')) {
             unlink(_PS_ROOT_DIR_.'/cache/class_index.php');
