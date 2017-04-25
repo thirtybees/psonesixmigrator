@@ -55,6 +55,9 @@ if (!defined('_PS_ROOT_DIR_')) {
     define('_PS_ROOT_DIR_', realpath(__DIR__.'/../../'));
 }
 
+require_once __DIR__.'/../../config/defines.inc.php';
+require_once(AUTOUPGRADE_MODULE_DIR.'alias.php.php');
+
 $dir = Tools::safeOutput(Tools::getValue('dir'));
 
 if (realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir !== realpath(realpath(__DIR__.'/../../').DIRECTORY_SEPARATOR.$dir)) {
