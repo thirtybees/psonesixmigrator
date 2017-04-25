@@ -1585,7 +1585,7 @@ abstract class ObjectModel
 
         if ($field !== null || !Cache::isStored($cache_id))
         {
-            $reflection = new ReflectionClass($class);
+            $reflection = new \ReflectionClass($class);
             $definition = $reflection->getStaticPropertyValue('definition');
 
             $definition['classname'] = $class;
