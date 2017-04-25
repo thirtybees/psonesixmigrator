@@ -157,14 +157,15 @@ class AdminThirtyBeesMigrateController extends AdminController
     public function initContent()
     {
         $configurationKeys = [
-            UpgraderTools::KEEP_MAILS             => true,
-            UpgraderTools::DISABLE_CUSTOM_MODULES => true,
-            UpgraderTools::DISABLE_OVERRIDES      => true,
-            UpgraderTools::PERFORMANCE            => 1,
-            UpgraderTools::MANUAL_MODE            => false,
-            UpgraderTools::DISPLAY_ERRORS         => false,
-            UpgraderTools::BACKUP                 => true,
-            UpgraderTools::BACKUP_IMAGES          => false,
+            UpgraderTools::KEEP_MAILS              => true,
+            UpgraderTools::DISABLE_CUSTOM_MODULES  => true,
+            UpgraderTools::DISABLE_OVERRIDES       => true,
+            UpgraderTools::SWITCH_TO_DEFAULT_THEME => version_compare(_PS_VERSION_, '1.6.1.0', '<') || version_compare(_PS_VERSION_, '1.6.2.0', '>='),
+            UpgraderTools::PERFORMANCE             => 1,
+            UpgraderTools::MANUAL_MODE             => false,
+            UpgraderTools::DISPLAY_ERRORS          => false,
+            UpgraderTools::BACKUP                  => true,
+            UpgraderTools::BACKUP_IMAGES           => false,
         ];
 
         $config = UpgraderTools::getConfig();
@@ -232,12 +233,13 @@ class AdminThirtyBeesMigrateController extends AdminController
 
             UpgraderTools::writeConfig(
                 [
-                    UpgraderTools::PERFORMANCE            => 1,
-                    UpgraderTools::DISABLE_CUSTOM_MODULES => true,
-                    UpgraderTools::DISABLE_OVERRIDES      => true,
-                    UpgraderTools::KEEP_MAILS             => true,
-                    UpgraderTools::BACKUP                 => true,
-                    UpgraderTools::BACKUP_IMAGES          => false,
+                    UpgraderTools::PERFORMANCE             => 1,
+                    UpgraderTools::DISABLE_CUSTOM_MODULES  => true,
+                    UpgraderTools::DISABLE_OVERRIDES       => true,
+                    UpgraderTools::SWITCH_TO_DEFAULT_THEME => version_compare(_PS_VERSION_, '1.6.1.0', '<') || version_compare(_PS_VERSION_, '1.6.2.0', '>='),
+                    UpgraderTools::KEEP_MAILS              => true,
+                    UpgraderTools::BACKUP                  => true,
+                    UpgraderTools::BACKUP_IMAGES           => false,
                 ]
             );
         }
@@ -621,6 +623,14 @@ class AdminThirtyBeesMigrateController extends AdminController
             'validation' => 'isBool',
             'type'       => 'bool',
             'desc'       => $this->l('As the overrides of some modules modules can cause compatibility issues, we recommend to disable these by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
+        ];
+
+        $this->_fieldsUpgradeOptions[UpgraderTools::SWITCH_TO_DEFAULT_THEME] = [
+            'title'      => $this->l('Switch to the thirty bees default theme'),
+            'cast'       => 'intval',
+            'validation' => 'isBool',
+            'type'       => 'bool',
+            'desc'       => $this->l('Your theme might not be fully compatible with thirty bees (PS != 1.6.1). In this case it is better to first switch to the default theme.'),
         ];
 
         if (UpgraderTools::getConfig(UpgraderTools::DISPLAY_ERRORS)) {
