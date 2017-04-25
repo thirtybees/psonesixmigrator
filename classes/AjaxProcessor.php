@@ -186,6 +186,24 @@ class AjaxProcessor
      * The very first step of the upgrade process.
      * The only thing done here is the selection of the next step.
      *
+     * Upgrade order:
+     *   - download
+     *   - unzip
+     *   - removeSamples
+     *   - backupFiles
+     *   - backupDb
+     *   - upgradeFiles
+     *   - upgradeDb
+     *   - upgradeModules
+     *   - cleanDatabase
+     *   - upgradeComplete
+     * Rollback order:
+     *   - rollback
+     *   - restoreFiles
+     *   - restoreDb
+     *   - rollbackComplete
+     *
+     *
      * @return void
      *
      * @since 1.0.0

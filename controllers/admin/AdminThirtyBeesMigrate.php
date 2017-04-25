@@ -42,73 +42,16 @@ require_once __DIR__.'/../../classes/autoload.php';
 class AdminThirtyBeesMigrateController extends AdminController
 {
     // @codingStandardsIgnoreStart
-    public $multishop_context;
-    public $multishop_context_group = false;
-    public $html = '';
-    public $noTabLink = [];
-    public $id = -1;
-    public $ajax = false;
-    public $nextResponseType = 'json';
-    public $next = 'N/A';
-
-    public $standalone = true;
-
-    public $bootstrap = true;
-
-    /** @var array $templateVars */
-    public $templateVars = [];
-
-    public $installVersion;
-    public $keepImages = null;
-    public $updateDefaultTheme = null;
-    public $changeToDefaultTheme = null;
-    public $keepMails = null;
-    public $manualMode = null;
-    public $deactivateCustomModule = null;
-    public $sampleFileList = [];
-    public $_fieldsUpgradeOptions = [];
-    public $_fieldsBackupOptions = [];
-    protected $_includeContainer = true;
+    /** @var array $upgradeOptions */
+    public $upgradeOptions = [];
+    /** @var array $backupOptions */
+    public $backupOptions = [];
     /** @var UpgraderTools $tool */
     protected $tools;
     /** @var Upgrader $upgrader */
     protected $upgrader;
-    private $install_autoupgrade_dir; // 15 Mo
-    private $restoreIgnoreFiles = [];
-    private $restoreIgnoreAbsoluteFiles = []; // 4096 ko
-    private $backupIgnoreFiles = [];
-    private $backupIgnoreAbsoluteFiles = [];
-    private $excludeFilesFromUpgrade = [];
-    private $excludeAbsoluteFilesFromUpgrade = [];
-
-    protected $lastAutoupgradeVersion;
-
-    /* ## usage
-     * key = the step you want to skip
-     * value = the next step you want instead
-     * example: `public static $skipAction = array();`
-     * initial order upgrade:
-     *   - download
-     *   - unzip
-     *   - removeSamples
-     *   - backupFiles
-     *   - backupDb
-     *   - upgradeFiles
-     *   - upgradeDb
-     *   - upgradeModules
-     *   - cleanDatabase
-     *   - upgradeComplete
-     * initial order rollback:
-     *   - rollback
-     *   - restoreFiles
-     *   - restoreDb
-     *   - rollbackComplete
-     */
+    /** @var string|null $backupName Chosen backup name */
     protected $backupName = null;
-    protected $backupFilesFilename = null;
-    protected $backupDbFilename = null;
-    protected $restoreFilesFilename = null;
-    protected $restoreDbFilenames = [];
     // @codingStandardsIgnoreEnd
 
     /**
@@ -261,7 +204,7 @@ class AdminThirtyBeesMigrateController extends AdminController
         }
 
         if (Tools::isSubmit('customSubmitAutoUpgrade')) {
-            $configKeys = array_keys(array_merge($this->_fieldsUpgradeOptions, $this->_fieldsBackupOptions));
+            $configKeys = array_keys(array_merge($this->upgradeOptions, $this->backupOptions));
             $config = [];
             foreach ($configKeys as $key) {
                 if (isset($_POST[$key])) {
@@ -338,18 +281,6 @@ class AdminThirtyBeesMigrateController extends AdminController
         $tools->root_writable_report = $report;
 
         return $tools->root_writable;
-    }
-
-    /**
-     * @return bool|mixed|string
-     *
-     * @since 1.0.0
-     */
-    public function checkAutoupgradeLastVersion()
-    {
-        $this->lastAutoupgradeVersion = true;
-
-        return true;
     }
 
     /**
@@ -578,7 +509,7 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     private function setFields()
     {
-        $this->_fieldsBackupOptions[UpgraderTools::BACKUP] = [
+        $this->backupOptions[UpgraderTools::BACKUP] = [
             'title'        => $this->l('Back up my files and database'),
             'cast'         => 'intval',
             'validation'   => 'isBool',
@@ -586,7 +517,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             'type'         => 'bool',
             'desc'         => $this->l('Automatically back up your database and files in order to restore your shop if needed. This is experimental: you should still perform your own manual backup for safety.'),
         ];
-        $this->_fieldsBackupOptions[UpgraderTools::BACKUP_IMAGES] = [
+        $this->backupOptions[UpgraderTools::BACKUP_IMAGES] = [
             'title'        => $this->l('Back up my images'),
             'cast'         => 'intval',
             'validation'   => 'isBool',
@@ -595,7 +526,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             'desc'         => $this->l('To save time, you can decide not to back your images up. In any case, always make sure you did back them up manually.'),
         ];
 
-        $this->_fieldsUpgradeOptions[UpgraderTools::PERFORMANCE] = [
+        $this->upgradeOptions[UpgraderTools::PERFORMANCE] = [
             'title'        => $this->l('Server performance'),
             'cast'         => 'intval',
             'validation'   => 'isInt',
@@ -609,7 +540,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             ],
         ];
 
-        $this->_fieldsUpgradeOptions[UpgraderTools::DISABLE_CUSTOM_MODULES] = [
+        $this->upgradeOptions[UpgraderTools::DISABLE_CUSTOM_MODULES] = [
             'title'      => $this->l('Disable non-native modules'),
             'cast'       => 'intval',
             'validation' => 'isBool',
@@ -617,7 +548,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             'desc'       => $this->l('As non-native modules can experience some compatibility issues, we recommend to disable them by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
         ];
 
-        $this->_fieldsUpgradeOptions[UpgraderTools::DISABLE_OVERRIDES] = [
+        $this->upgradeOptions[UpgraderTools::DISABLE_OVERRIDES] = [
             'title'      => $this->l('Disable overrides'),
             'cast'       => 'intval',
             'validation' => 'isBool',
@@ -625,7 +556,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             'desc'       => $this->l('As the overrides of some modules modules can cause compatibility issues, we recommend to disable these by default.').'<br />'.$this->l('Keeping them enabled might prevent you from loading the "Modules" page properly after the migration.'),
         ];
 
-        $this->_fieldsUpgradeOptions[UpgraderTools::SWITCH_TO_DEFAULT_THEME] = [
+        $this->upgradeOptions[UpgraderTools::SWITCH_TO_DEFAULT_THEME] = [
             'title'      => $this->l('Switch to the thirty bees default theme'),
             'cast'       => 'intval',
             'validation' => 'isBool',

@@ -29,8 +29,8 @@
 <?php echo $this->displayBlockActivityLog(); ?>
 
 <form action="<?php echo AdminThirtyBeesMigrateController::$currentIndex; ?>&amp;customSubmitAutoUpgrade=1&amp;token=<?php echo $this->token; ?>" method="post" enctype="multipart/form-data">
-    <?php echo $this->displayConfigForm('upgradeOptions', $this->_fieldsUpgradeOptions, $this->l('Upgrade Options'), '', 'icon icon-wrench'); ?>
-    <?php echo $this->displayConfigForm('backupOptions', $this->_fieldsBackupOptions, $this->l('Backup Options'), '', 'icon icon-server'); ?>
+    <?php echo $this->displayConfigForm('upgradeOptions', $this->upgradeOptions, $this->l('Upgrade Options'), '', 'icon icon-wrench'); ?>
+    <?php echo $this->displayConfigForm('backupOptions', $this->backupOptions, $this->l('Backup Options'), '', 'icon icon-server'); ?>
 </form>
 
 

@@ -105,7 +105,6 @@ $ajaxProcessor = \PsOneSixMigrator\AjaxProcessor::getInstance();
     window.upgrader.token = '<?php echo $this->token; ?>';
     window.upgrader.autoupgradeDir = '<?php echo $this->install_autoupgrade_dir; ?>';
     window.upgrader.tab = '<?php echo get_class($this); ?>';
-    window.upgrader.autoupgradeDir = '<?php echo $this->install_autoupgrade_dir; ?>';
 
     window.upgrader.channel = '<?php echo UpgraderTools::getConfig('channel'); ?>';
 
