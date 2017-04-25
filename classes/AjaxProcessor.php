@@ -25,6 +25,8 @@
 
 namespace PsOneSixMigrator;
 
+use PsOneSixMigrator\GuzzleHttp\Client;
+
 /**
  * Class AjaxProcessor
  *
@@ -198,6 +200,36 @@ class AjaxProcessor
 
         $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
         $this->nextQuickInfo[] = sprintf($this->l('md5 hashes for core and extra should be resp. %s and %s'), $this->upgrader->md5Core, $this->upgrader->md5Extra);
+
+        if (isset($this->currentParams['newsletter']) && $this->currentParams['newsletter'] && $this->currentParams['employee']) {
+            $employee = new Employee((int) $this->currentParams['employee']);
+            if (Validate::isLoadedObject($employee)) {
+                $guzzle = new GuzzleHttp\Client([
+                    'base_uri'    => 'https://api.thirtybees.com',
+                    'timeout'     => 5,
+                    'http_errors' => false,
+                ]);
+                $language = new Language($employee->id_lang);
+                try {
+                    $guzzle->post(
+                        '/migration/newsletter/',
+                        [
+                            'json' =>
+                                [
+                                    'email'    => $employee->email,
+                                    'fname'    => $employee->firstname,
+                                    'lname'    => $employee->lastname,
+                                    'activity' => Configuration::get('PS_SHOP_ACTIVITY'),
+                                    'country'  => Configuration::get('PS_LOCALE_COUNTRY'),
+                                    'language' => $language->iso_code,
+                                ],
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    // Don't care
+                }
+            }
+        }
 
         if (UpgraderTools::getConfig(UpgraderTools::DISABLE_OVERRIDES)) {
             Configuration::updateGlobalValue('PS_DISABLE_OVERRIDES', true);
