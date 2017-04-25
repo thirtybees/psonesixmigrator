@@ -213,7 +213,7 @@ class AjaxProcessor
         $this->nextDesc = $this->l('Starting upgrade...');
         preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
 
-        $this->next = 'download';
+        $this->next = 'testDirs';
         $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
 
         $this->nextQuickInfo[] = sprintf($this->l('Archives will come from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
@@ -255,6 +255,36 @@ class AjaxProcessor
         if (UpgraderTools::getConfig(UpgraderTools::DISABLE_CUSTOM_MODULES)) {
             Configuration::updateGlobalValue('PS_DISABLE_NON_NATIVE_MODULE', true);
         }
+    }
+
+    /**
+     * Test directories
+     *
+     * @return bool
+     */
+    public function ajaxProcessTestDirs()
+    {
+        $testDirs = [
+            '/classes/',
+            '/controllers/',
+            '/config/',
+        ];
+
+        foreach ($testDirs as $dir) {
+            if (!ConfigurationTest::test_dir($dir, true)) {
+                $this->nextQuickInfo[] = sprintf($this->l('The directory `%s` is not writable.'), $dir);
+                $this->nextErrors[] = sprintf($this->l('The directory `%s` is not writable.'), $dir);
+                $this->next = 'error';
+                $this->nextDesc = sprintf($this->l('The directory `%s` is not writable.'), $dir);
+
+                return false;
+            }
+        }
+
+        $this->nextQuickInfo[] = $this->l('Directory tests complete.');
+        $this->next = 'download';
+
+        return true;
     }
 
     /**

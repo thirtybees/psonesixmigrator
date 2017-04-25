@@ -396,6 +396,10 @@
       // if (params.stepDone)
     }
 
+    function afterTestDirs() {
+
+    }
+
     /**
      * afterBackupDb display the button
      *
@@ -417,6 +421,7 @@
       afterUpdateConfig: afterUpdateConfig,
       isAllConditionOk: isAllConditionOk,
       afterUpgradeNow: afterUpgradeNow,
+      afterTestDirs: afterTestDirs,
       afterUpgradeComplete: afterUpgradeComplete,
       afterError: afterError,
       afterRollback: afterRollback,
