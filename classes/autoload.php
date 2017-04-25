@@ -40,7 +40,6 @@ spl_autoload_register(
             'PsOneSixMigrator\\Configuration',
             'PsOneSixMigrator\\ConfigurationTest',
             'PsOneSixMigrator\\Context',
-            'PsOneSixMigrator\\Core_Foundation_Database_EntityInterface',
             'PsOneSixMigrator\\CryptBlowfish',
             'PsOneSixMigrator\\Db',
             'PsOneSixMigrator\\DbPDO',
