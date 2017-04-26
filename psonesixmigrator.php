@@ -169,7 +169,7 @@ class PsOneSixMigrator extends Module
             $this->context->controller->errors[] = $this->l('The MySQL PDO extension needs to be installed and available in order to migrate to thirty bees');
         }
         if (substr(Db::getInstance()->getVersion(), 0, 3) === '5.7') {
-            $this->context->controller->errors[] = $this->l('Migration on MySQL 5.7 are currently not supported');
+            $this->context->controller->errors[] = $this->l('Migrations on MySQL 5.7 are currently not supported');
         }
         if (is_a(Cache::getInstance(), 'CacheApc') || is_a(Cache::getInstance(), 'CacheXcache')) {
             // Disable Cache in these cases
