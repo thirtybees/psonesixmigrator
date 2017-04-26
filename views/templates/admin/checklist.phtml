@@ -31,7 +31,6 @@ $picNok = '<i class="icon icon-times" style="color: firebrick">';
 $picWarn = '<i class="icon icon-checkmark" style="color: orange">';
 $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
 $maxExecTime = ini_get('max_execution_time');
-$report = '';
 $tools = \PsOneSixMigrator\UpgraderTools::getInstance();
 PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
 ?>
@@ -49,13 +48,10 @@ PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tool
 				<td><?php echo $this->l('Your store\'s root directory is writable (with appropriate CHMOD permissions)'); ?></td>
 				<td><?php echo($currentPsConfig['root_writable'] ? $picOk : $picNok.' '.$tools->root_writable_report); ?></td>
 			</tr>
-
-            <?php if ($report) : ?>
-				<tr>
-					<td><?php echo $this->l('The "/admin/autoupgrade" directory is writable (appropriate CHMOD permissions)'); ?></td>
-					<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
-				</tr>
-            <?php endif; ?>
+			<tr>
+				<td><?php echo $this->l('The "/admin/autoupgrade" directory is writable (appropriate CHMOD permissions)'); ?></td>
+				<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
+			</tr>
 
             <?php
             if (!$safeMode = @ini_get('safe_mode')) {
