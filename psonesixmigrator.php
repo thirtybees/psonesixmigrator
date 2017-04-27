@@ -168,9 +168,6 @@ class PsOneSixMigrator extends Module
         if (!class_exists('PDO')) {
             $this->context->controller->errors[] = $this->l('The MySQL PDO extension needs to be installed and available in order to migrate to thirty bees');
         }
-        if (substr(Db::getInstance()->getVersion(), 0, 3) === '5.7') {
-            $this->context->controller->errors[] = $this->l('Migrations on MySQL 5.7 are currently not supported');
-        }
         if (is_a(Cache::getInstance(), 'CacheApc') || is_a(Cache::getInstance(), 'CacheXcache')) {
             // Disable Cache in these cases
             $settings = file_get_contents(_PS_ROOT_DIR_.'/config/settings.inc.php');
