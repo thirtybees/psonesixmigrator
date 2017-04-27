@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "eslint": "^3.18.0",
-    "grunt": "^1.0.1",
-    "grunt-cli": "^1.2.0",
-    "grunt-contrib-compress": "^1.4.1"
-  }
-}
