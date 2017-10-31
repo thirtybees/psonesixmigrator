@@ -2235,7 +2235,7 @@ class Tools
     {
         $guzzle = new Client([
             'verify'   => __DIR__.'/../cacert.pem',
-            'timeout'  => 60,
+            'timeout'  => 600,
         ]);
 
         try {
