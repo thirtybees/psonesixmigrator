@@ -43,7 +43,7 @@ class PsOneSixMigrator extends Module
         $this->name = 'psonesixmigrator';
         $this->tab = 'administration';
         $this->author = 'thirty bees';
-        $this->version = '1.0.0';
+        $this->version = '1.0.1';
         $this->need_instance = 1;
 
         $this->bootstrap = true;
@@ -51,7 +51,7 @@ class PsOneSixMigrator extends Module
 
         $this->multishop_context = Shop::CONTEXT_ALL;
 
-        $this->displayName = $this->l('1-Click PrestaShop 1.6 => thirty bees migration');
+        $this->displayName = $this->l('1-Click PrestaShop 1.6 to thirty bees migration');
         $this->description = $this->l('Provides an automated way to fully migrate your PrestaShop 1.6 store to thirty bees.');
 
         $this->ps_versions_compliancy = array('min' => '1.6.0.0', 'max' => '1.6.999.999');

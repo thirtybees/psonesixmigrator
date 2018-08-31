@@ -48,7 +48,7 @@ class AjaxProcessor
     public $installVersion;
     public $restoreFilesFilename;
     public $restoreDbFilenames;
-    public $installedLanguagesIso;
+    public $installedLanguagesIso = [];
     public $modulesAddons;
     public $warningExists;
     public $error = '0';
@@ -94,7 +94,7 @@ class AjaxProcessor
     protected $backupIgnoreAbsoluteFiles = [];
     protected $excludeAbsoluteFilesFromUpgrade = [];
     protected $keepImages;
-    protected $restoreIgnoreFiles;
+    protected $restoreIgnoreFiles = [];
     protected $deactivateCustomModule;
     protected $deactivateOverrides;
 
@@ -151,8 +151,8 @@ class AjaxProcessor
         $this->latestRootDir = $this->tools->latestPath.DIRECTORY_SEPARATOR.'prestashop';
 
         foreach ($this->ajaxParams as $prop) {
-            if (property_exists($this, $prop)) {
-                $this->{$prop} = isset($this->currentParams[$prop]) ? $this->currentParams[$prop] : '';
+            if (property_exists($this, $prop) && isset($this->currentParams[$prop])) {
+                $this->{$prop} = $this->currentParams[$prop];
             }
         }
 
@@ -304,7 +304,7 @@ class AjaxProcessor
             preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
 
             $this->nextQuickInfo[] = sprintf($this->l('Downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
-            $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath());
+            $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath(), $this->getExtraFilePath());
             if (file_exists($this->tools->downloadPath)) {
                 Tools::deleteDirectory($this->tools->downloadPath, false);
                 $this->nextQuickInfo[] = $this->l('Download directory has been cleared');
@@ -717,7 +717,7 @@ class AjaxProcessor
                     $sizeof = $this->db->numRows();
                     if ($data && ($sizeof > 0)) {
                         // Export the table data
-                        $written += fwrite($fp, 'INSERT INTO `'.$table."` VALUES\n");
+                        $written += fwrite($fp, "INSERT INTO `$table` VALUES\n");
                         $i = 1;
                         while ($row = $this->db->nextRow($data)) {
                             // this starts a row
@@ -845,7 +845,7 @@ class AjaxProcessor
                 }
                 // Save in an array in `fileActions`
                 // Delete actions at back of array, we will process those first
-                $this->nextParams['fileActions'] = $addFilesForUpgrade + $deleteFilesForUpgrade;
+                $this->nextParams['fileActions'] = array_merge($addFilesForUpgrade, $deleteFilesForUpgrade);
             } else {
                 $this->nextErrors[] = $this->l('Couldn\'t find a list of files to upgrade');
                 $this->nextDesc = $this->l('Couldn\'t find a list of files to upgrade');
@@ -881,7 +881,6 @@ class AjaxProcessor
             return false;
         }
 
-        // @TODO : does not upgrade files in modules, translations if they have not a correct md5 (or crc32, or whatever) from previous version
         for ($i = 0; $i < UpgraderTools::$loopUpgradeFiles; $i++) {
             if (count($this->nextParams['fileActions']) <= 0) {
                 $this->next = 'upgradeDb';
@@ -904,7 +903,7 @@ class AjaxProcessor
         if (isset($this->nextParams['fileActions']) && count($this->nextParams['fileActions']) > 0) {
             if (count($this->nextParams['fileActions'])) {
                 $this->nextDesc = sprintf($this->l('%1$s files left to upgrade.'), count($this->nextParams['fileActions']));
-                $this->nextQuickInfo[] = sprintf($this->l('%2$s files left to upgrade.'), count($this->nextParams['fileActions']));
+                $this->nextQuickInfo[] = sprintf($this->l('%1$s files left to upgrade.'), count($this->nextParams['fileActions']));
                 $this->stepDone = false;
             }
         }
@@ -1551,7 +1550,6 @@ class AjaxProcessor
         }
 
         //check DB access
-        $this->db;
         error_reporting(E_ALL);
         $resultDB = Db::checkConnection(_DB_SERVER_, _DB_USER_, _DB_PASSWD_, _DB_NAME_);
         if ($resultDB !== 0) {
@@ -2375,7 +2373,7 @@ class AjaxProcessor
         switch ($fileAction['action']) {
             case 'delete':
                 if (is_dir($dest)) {
-                    UpgraderTools::rrmdir($dest);
+                    Tools::deleteDirectory($dest);
                     $this->nextQuickInfo[] = sprintf($this->l('Recursively removed directory %1$s.'), $dest);
                 } else {
                     @unlink($dest);

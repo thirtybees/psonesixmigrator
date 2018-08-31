@@ -268,8 +268,7 @@ class Upgrader
         $latestVersion = '0.0.0';
         $channelWithLatest = false;
 
-        // FIXME: check if migration module needs to be updated as well
-        $semver = new Version('1.0.0');
+        $semver = new Version($this->getModuleVersion());
 
         $checkVersions = [];
         foreach (['stable', 'rc', 'beta', 'alpha'] as $type) {
@@ -332,5 +331,15 @@ class Upgrader
         }
 
         return $cached;
+    }
+
+    private function getModuleVersion()
+    {
+        return Db::getInstance()->getValue(
+            (new DbQuery())
+                ->select('`version`')
+                ->from('module')
+                ->where("`name` = 'psonesixmigrator'")
+        );
     }
 }
