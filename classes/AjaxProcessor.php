@@ -945,6 +945,11 @@ class AjaxProcessor
             copy(_PS_ROOT_DIR_.'/config/xml/themes/default.xml', _PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml');
         }
 
+        // copy community-theme-default config.xml file to config directory
+        if (!file_exists(_PS_ROOT_DIR_.'/config/xml/themes/community-theme-default.xml') && file_exists(_PS_ROOT_DIR_.'/themes/community-theme-default/config.xml')) {
+            copy(_PS_ROOT_DIR_.'/themes/community-theme-default/config.xml', _PS_ROOT_DIR_.'/config/xml/themes/community-theme-default.xml');
+        }
+
         // register community theme
         $idTheme = false;
         if (Db::getInstance()->insert(
@@ -965,9 +970,6 @@ class AjaxProcessor
             Db::getInstance()->execute('
                 INSERT INTO ps_theme_meta (`id_theme`, `id_meta`, `left_column`, `right_column`)
                 SELECT '.$idTheme.' as `id_theme`, `id_meta`, `left_column`, `right_column` FROM ps_theme_meta WHERE id_theme = '.$idThemeDefault);
-
-            // copy config.xml file to config directory
-            copy(_PS_ROOT_DIR_.'/themes/community-theme-default/config.xml', _PS_ROOT_DIR_.'/config/xml/themes/community-theme-default.xml');
         }
 
         // optionaly switch to community theme
@@ -1796,20 +1798,6 @@ class AjaxProcessor
             Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 0 WHERE `name` LIKE \'PS_LEGACY_IMAGES\'');
             if (Db::getInstance()->getValue('SELECT COUNT(id_product_download) FROM `'._DB_PREFIX_.'product_download` WHERE `active` = 1') > 0) {
                 Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 1 WHERE `name` LIKE \'PS_VIRTUAL_PROD_FEATURE_ACTIVE\'');
-            }
-
-            if (defined('_THEME_NAME_') && $this->updateDefaultTheme && preg_match('#(default|prestashop|default-bootstrap)$#', _THEME_NAME_)) {
-                $separator = addslashes(DIRECTORY_SEPARATOR);
-                $file = _PS_ROOT_DIR_.$separator.'themes'.$separator._THEME_NAME_.$separator.'cache'.$separator;
-                if (file_exists($file)) {
-                    foreach (scandir($file) as $cache) {
-                        if ($cache[0] != '.' && $cache != 'index.php' && $cache != '.htaccess' && file_exists($file.$cache) && !is_dir($file.$cache)) {
-                            if (file_exists($dir.$cache)) {
-                                unlink($file.$cache);
-                            }
-                        }
-                    }
-                }
             }
 
             if (version_compare($this->installVersion, '1.5.4.0', '>=')) {
