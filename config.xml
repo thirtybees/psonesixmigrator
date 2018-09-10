@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <name><![CDATA[psonesixmigrator]]></name>
+  <displayName><![CDATA[1-Click PrestaShop 1.6 to thirty bees migration]]></displayName>
+  <version><![CDATA[1.0.1]]></version>
+  <description><![CDATA[Provides an automated way to fully migrate your PrestaShop 1.6 store to thirty bees.]]></description>
+  <author><![CDATA[thirty bees]]></author>
+  <author_uri/>
+  <tab><![CDATA[administration]]></tab>
+  <confirmUninstall/>
+  <is_configurable>1</is_configurable>
+  <need_instance>1</need_instance>
+  <limited_countries/>
+</module>
