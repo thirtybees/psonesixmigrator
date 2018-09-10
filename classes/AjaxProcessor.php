@@ -940,40 +940,41 @@ class AjaxProcessor
      */
     public function ajaxProcessUpgradeModules()
     {
-        if (UpgraderTools::getConfig(UpgraderTools::SWITCH_TO_DEFAULT_THEME)) {
+        // register community theme
+        $idTheme = false;
+        if (Db::getInstance()->insert(
+            'theme',
+            [
+                'name'                => 'community-theme-default',
+                'directory'           => 'community-theme-default',
+                'responsive'          => 1,
+                'default_left_column' => 1,
+                'product_per_page'    => 12,
+            ]
+        )) {
+            $idTheme = (int) Db::getInstance()->Insert_ID();
             $idShopDefault = (int) Configuration::get('PS_SHOP_DEFAULT');
             $idThemeDefault = Db::getInstance(0)->getValue('SELECT `id_theme` FROM `'._DB_PREFIX_.'shop` WHERE `id_shop` = '.(int) $idShopDefault);
 
-            if (Db::getInstance()->insert(
-                'theme',
-                [
-                    'name'                => 'community-theme-default',
-                    'directory'           => 'community-theme-default',
-                    'responsive'          => 1,
-                    'default_left_column' => 1,
-                    'product_per_page'    => 12,
-                ]
-            )) {
-                $idTheme = (int) Db::getInstance()->Insert_ID();
-                // Set theme for all shops
-                Db::getInstance()->update(
-                    'shop',
-                    [
-                        'id_theme' => $idTheme,
-                    ]
-                );
-                // Copy meta info
-                Db::getInstance()->execute('
+            // Copy meta info
+            Db::getInstance()->execute('
                 INSERT INTO ps_theme_meta (`id_theme`, `id_meta`, `left_column`, `right_column`)
                 SELECT '.$idTheme.' as `id_theme`, `id_meta`, `left_column`, `right_column` FROM ps_theme_meta WHERE id_theme = '.$idThemeDefault);
+        }
 
-            }
+        // optionaly switch to community theme
+        if ($idTheme && UpgraderTools::getConfig(UpgraderTools::SWITCH_TO_DEFAULT_THEME)) {
+            Db::getInstance()->update(
+                'shop',
+                [
+                    'id_theme' => $idTheme,
+                ]
+            );
             $this->nextDesc = $this->l('Switched to default theme.');
             $this->nextQuickInfo[] = $this->l('Switched to default theme.');
         }
 
         $this->next = 'upgradeComplete';
-
         return true;
     }
 
