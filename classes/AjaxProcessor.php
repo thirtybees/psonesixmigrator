@@ -940,6 +940,11 @@ class AjaxProcessor
      */
     public function ajaxProcessUpgradeModules()
     {
+        // copy default.xml to default-bootstrap.xml
+        if (!file_exists(_PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml') && file_exists(_PS_ROOT_DIR_.'/config/xml/themes/default.xml')) {
+            copy(_PS_ROOT_DIR_.'/config/xml/themes/default.xml', _PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml');
+        }
+
         // register community theme
         $idTheme = false;
         if (Db::getInstance()->insert(
@@ -960,6 +965,9 @@ class AjaxProcessor
             Db::getInstance()->execute('
                 INSERT INTO ps_theme_meta (`id_theme`, `id_meta`, `left_column`, `right_column`)
                 SELECT '.$idTheme.' as `id_theme`, `id_meta`, `left_column`, `right_column` FROM ps_theme_meta WHERE id_theme = '.$idThemeDefault);
+
+            // copy config.xml file to config directory
+            copy(_PS_ROOT_DIR_.'/themes/community-theme-default/config.xml', _PS_ROOT_DIR_.'/config/xml/themes/community-theme-default.xml');
         }
 
         // optionaly switch to community theme
