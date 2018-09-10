@@ -951,25 +951,9 @@ class AjaxProcessor
         }
 
         // register community theme
-        $idTheme = false;
-        if (Db::getInstance()->insert(
-            'theme',
-            [
-                'name'                => 'community-theme-default',
-                'directory'           => 'community-theme-default',
-                'responsive'          => 1,
-                'default_left_column' => 1,
-                'product_per_page'    => 12,
-            ]
-        )) {
-            $idTheme = (int) Db::getInstance()->Insert_ID();
-            $idShopDefault = (int) Configuration::get('PS_SHOP_DEFAULT');
-            $idThemeDefault = Db::getInstance(0)->getValue('SELECT `id_theme` FROM `'._DB_PREFIX_.'shop` WHERE `id_shop` = '.(int) $idShopDefault);
-
-            // Copy meta info
-            Db::getInstance()->execute('
-                INSERT INTO ps_theme_meta (`id_theme`, `id_meta`, `left_column`, `right_column`)
-                SELECT '.$idTheme.' as `id_theme`, `id_meta`, `left_column`, `right_column` FROM ps_theme_meta WHERE id_theme = '.$idThemeDefault);
+        $idTheme = $this->getCommunityThemeID();
+        if (! $idTheme) {
+            $idTheme = $this->addCommunityTheme();
         }
 
         // optionaly switch to community theme
@@ -2728,5 +2712,40 @@ class AjaxProcessor
         $tokenShouldBe = $blowfish->encrypt('thirtybees1337H4ck0rzz');
 
         return $tokenShouldBe && $ajaxToken === $tokenShouldBe;
+    }
+
+    private function getCommunityThemeID()
+    {
+        return (int)Db::getInstance()->getValue(
+            (new DbQuery())
+                ->select('`id_theme`')
+                ->from('theme')
+                ->where("`name` = 'community-theme-default'")
+        );
+    }
+
+    private function addCommunityTheme() {
+        if (Db::getInstance()->insert(
+            'theme',
+            [
+                'name'                => 'community-theme-default',
+                'directory'           => 'community-theme-default',
+                'responsive'          => 1,
+                'default_left_column' => 1,
+                'product_per_page'    => 12,
+            ]
+        )) {
+            $idTheme = (int) Db::getInstance()->Insert_ID();
+            $idShopDefault = (int) Configuration::get('PS_SHOP_DEFAULT');
+            $idThemeDefault = Db::getInstance(0)->getValue('SELECT `id_theme` FROM `'._DB_PREFIX_.'shop` WHERE `id_shop` = '.(int) $idShopDefault);
+
+            // Copy meta info
+            Db::getInstance()->execute('
+                INSERT INTO ps_theme_meta (`id_theme`, `id_meta`, `left_column`, `right_column`)
+                SELECT '.$idTheme.' as `id_theme`, `id_meta`, `left_column`, `right_column` FROM ps_theme_meta WHERE id_theme = '.$idThemeDefault);
+
+            return $idTheme;
+        }
+        return false;
     }
 }
