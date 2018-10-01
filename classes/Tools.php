@@ -2233,9 +2233,15 @@ class Tools
      */
     public static function copy($source, $destination, $streamContext = null)
     {
+        $timeout = ini_get('max_execution_time');
+        if ( ! $timeout || $timeout > 600) {
+            $timeout = 600;
+        }
+        $timeout -= 5; // Room for other processing.
+
         $guzzle = new Client([
             'verify'   => __DIR__.'/../cacert.pem',
-            'timeout'  => 600,
+            'timeout'  => $timeout,
         ]);
 
         try {
