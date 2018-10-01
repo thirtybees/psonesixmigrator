@@ -288,20 +288,23 @@ class AjaxProcessor
                 $this->nextQuickInfo[] = sprintf($this->l('Downloads took %s seconds.'), $seconds);
 
                 if ($res) {
-                    $md5CoreFile = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR."thirtybees-v{$this->upgrader->version}.zip");
-                    $md5ExtraFile = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR."thirtybees-extra-v{$this->upgrader->version}.zip");
+                    $pathCore = $this->tools->downloadPath.DIRECTORY_SEPARATOR
+                                .'thirtybees-v'.$this->upgrader->version.'.zip';
+                    $pathExtra = $this->tools->downloadPath.DIRECTORY_SEPARATOR
+                                 .'thirtybees-extra-v'.$this->upgrader->version.'.zip';
+
+                    $md5CoreFile = md5_file($pathCore);
+                    $md5ExtraFile = md5_file($pathExtra);
                     if ($md5CoreFile === $this->upgrader->md5Core && $md5ExtraFile === $this->upgrader->md5Extra) {
                         $this->nextQuickInfo[] = $this->l('Download complete.');
                         $this->next = 'unzip';
                         $this->nextDesc = $this->l('Download complete. Now extracting...');
                     } else {
                         if ($md5CoreFile !== $this->upgrader->md5Core) {
-                            $this->nextQuickInfo[] = sprintf($this->l('Download complete but the md5 sum of the core package does not match (%s).'), $md5CoreFile);
-                            $this->nextErrors[] = sprintf($this->l('Download complete but md5 the sum of the core package does not match (%s).'), $md5CoreFile);
+                            $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the core ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathCore);
                         }
                         if ($md5ExtraFile !== $this->upgrader->md5Extra) {
-                            $this->nextQuickInfo[] = sprintf($this->l('Download complete but md5 sum of the extra package does not match (%s).'), $md5ExtraFile);
-                            $this->nextErrors[] = sprintf($this->l('Download complete but md5 sum the extra package does not match (%s).'), $md5ExtraFile);
+                            $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the extra ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathExtra);
                         }
 
                         $this->next = 'error';
