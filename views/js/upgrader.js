@@ -541,10 +541,6 @@
         $('#currentlyProcessing').show();
 
         window.upgrader.action = buttonSelector.substr(1);
-        if (window.upgrader.action === 'upgradeNow') {
-          nextParams.newsletter = !!$('#newsletter').attr('checked');
-          nextParams.employee = $('#employee').val();
-        }
         window.upgrader.res = doAjaxRequest(window.upgrader.action, nextParams);
       });
     }

@@ -60,10 +60,6 @@ $channel = UpgraderTools::getConfig('channel');
 					<i class="icon icon-wrench"></i> <?php echo sprintf($this->l('Migrate to thirty bees'), $this->upgrader->version); ?>
 				</a>
 			</p>
-			<input type="checkbox" id="newsletter" name="newsletter" checked="checked"> I would like to subscribe to the thirty bees newsletter
-			<input type="hidden" id="employee" name="employee" value="<?php echo Context::getContext()->employee->id; ?>">
-			<br>
-			<br>
         <?php endif; ?>
         <?php echo $this->displayAdminTemplate(__DIR__.'/channelselect.phtml'); ?>
 	<?php else: ?>
