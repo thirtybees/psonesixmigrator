@@ -89,3 +89,7 @@ typings/
 .env
 
 *psonesixmigrator*.zip
+
+/cache/*
+!/**/index.php
+
