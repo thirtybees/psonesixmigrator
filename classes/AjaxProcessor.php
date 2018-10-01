@@ -282,7 +282,11 @@ class AjaxProcessor
             $report = '';
             $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
             if (ConfigurationTest::test_dir($relativeDownloadPath, false, $report)) {
+                $timestamp = time();
                 $res = $this->upgrader->downloadLast($this->tools->downloadPath);
+                $seconds = (string) (time() - $timestamp);
+                $this->nextQuickInfo[] = sprintf($this->l('Downloads took %s seconds.'), $seconds);
+
                 if ($res) {
                     $md5CoreFile = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR."thirtybees-v{$this->upgrader->version}.zip");
                     $md5ExtraFile = md5_file(realpath($this->tools->downloadPath).DIRECTORY_SEPARATOR."thirtybees-extra-v{$this->upgrader->version}.zip");
