@@ -247,8 +247,14 @@ class Upgrader
         $extraDestPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-extra-v{$this->version}.zip";
         $fileActionsPath = realpath($dest).DIRECTORY_SEPARATOR."thirtybees-file-actions-v{$this->version}.json";
 
-        Tools::copy($this->coreLink, $coreDestPath);
-        Tools::copy($this->extraLink, $extraDestPath);
+        if (!file_exists($coreDestPath)
+            || md5_file($coreDestPath) !== $this->md5Core) {
+            Tools::copy($this->coreLink, $coreDestPath);
+        }
+        if (!file_exists($extraDestPath)
+            || md5_file($extraDestPath) !== $this->md5Extra) {
+            Tools::copy($this->extraLink, $extraDestPath);
+        }
         Tools::copy($this->fileActionsLink, $fileActionsPath);
 
         return is_file($coreDestPath) && is_file($extraDestPath) && is_file($fileActionsPath);
