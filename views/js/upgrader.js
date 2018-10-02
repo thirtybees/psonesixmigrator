@@ -339,13 +339,7 @@
         .html('<h3>ToDo list:</h3>');
 
       $pleaseWait.hide();
-      if (params.warningExists === 'false') {
-        $infoStep.html('<h3>Upgrade Complete!</h3>');
-      } else {
-        $pleaseWait.hide();
-        $infoStep.html('<h3>Upgrade complete, but warning notifications has been found.</h3>');
-      }
-
+      $infoStep.html('<h3>Upgrade Complete!</h3>');
 
       for (i = 0; i < todoList.length; i += 1) {
         todoUl += '<li>' + todoList[i] + '</li>';
