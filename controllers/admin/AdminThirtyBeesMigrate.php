@@ -23,11 +23,6 @@
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 use PsOneSixMigrator\Upgrader;
 use PsOneSixMigrator\ConfigurationTest;
 use PsOneSixMigrator\UpgraderTools;
