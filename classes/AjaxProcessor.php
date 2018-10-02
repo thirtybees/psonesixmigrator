@@ -1848,6 +1848,11 @@ class AjaxProcessor
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1" WHERE name = "PS_NEED_REBUILD_INDEX"', false);
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1.6.1.999" WHERE name = "PS_VERSION_DB"', false);
 
+        if (file_exists($this->tools->latestPath)) {
+            Tools::deleteDirectory($this->tools->latestPath, true);
+            $this->nextQuickInfo[] = $this->l('ZIP unpack directory removed.');
+        }
+
         if ($this->next === 'error') {
             return false;
         } elseif (!empty($warningExist) || $this->warningExists) {
