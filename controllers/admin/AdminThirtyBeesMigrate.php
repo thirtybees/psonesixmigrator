@@ -135,12 +135,18 @@ class AdminThirtyBeesMigrateController extends AdminController
         }
 
         $html = '<div class="row">';
-        $html .= $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/welcome.phtml');
 
-        $html .= $this->displayCurrentConfiguration();
-        $html .= $this->displayBlockUpgradeButton();
+        if (defined('_TB_VERSION_')) {
+            $this->context->controller->informations[] = $this->l('This shop is running thirty bees already, you can safely remove this module.');
+        } else {
+            $html .= $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/welcome.phtml');
 
-        $html .= $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/anotherchecklist.phtml');
+            $html .= $this->displayCurrentConfiguration();
+            $html .= $this->displayBlockUpgradeButton();
+
+            $html .= $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/anotherchecklist.phtml');
+        }
+
         $html .= $this->displayRollbackForm();
 
         $html .= $this->getJsInit();
