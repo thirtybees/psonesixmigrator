@@ -35,7 +35,7 @@ $tools = \PsOneSixMigrator\UpgraderTools::getInstance();
 PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
 ?>
 
-<div class="panel col-md-6" id="currentConfigurationBlock">
+<div class="panel col-lg-6" id="currentConfigurationBlock">
 	<div class="panel-heading"><?php echo $this->l('The pre-Upgrade checklist'); ?></div>
     <?php if (!$this->configOk()) : ?>
 		<div class="clear"><br></div><p class="warn"><?php echo $this->l('The checklist is not OK. You can only upgrade your shop once all indicators are green.'); ?></p>
