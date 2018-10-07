@@ -184,33 +184,12 @@ class AjaxProcessor
      * The very first step of the upgrade process.
      * The only thing done here is the selection of the next step.
      *
-     * Upgrade order:
-     *   - download
-     *   - unzip
-     *   - removeSamples
-     *   - backupFiles
-     *   - backupDb
-     *   - upgradeFiles
-     *   - upgradeDb
-     *   - upgradeModules
-     *   - cleanDatabase
-     *   - upgradeComplete
-     * Rollback order:
-     *   - rollback
-     *   - restoreFiles
-     *   - restoreDb
-     *   - rollbackComplete
-     *
-     *
      * @return void
      *
      * @since 1.0.0
      */
     public function ajaxProcessUpgradeNow()
     {
-        $this->nextDesc = $this->l('Starting upgrade...');
-        preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
-
         $this->next = 'testDirs';
         $this->nextDesc = $this->l('Shop deactivated. Now downloading... (this can take a while)');
 
@@ -273,8 +252,6 @@ class AjaxProcessor
             if (!is_object($this->upgrader)) {
                 $this->upgrader = Upgrader::getInstance();
             }
-            // regex optimization
-            preg_match('#([0-9]+\.[0-9]+)(?:\.[0-9]+){1,2}#', _PS_VERSION_, $matches);
 
             $this->nextQuickInfo[] = sprintf($this->l('Downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
             $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath(), $this->getExtraFilePath());
