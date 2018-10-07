@@ -6,6 +6,7 @@ tags:
 - prestashop
 - prestashop migration
 - prestashop migrator
+- psonesixmigrator
 description_short: Our Prestashop to thirty bees migrator module allows you to migrate any 1.6 version of PrestaShop
   to thirty bees.
 description: description.md
