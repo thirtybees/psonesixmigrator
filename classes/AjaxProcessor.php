@@ -255,10 +255,7 @@ class AjaxProcessor
 
             $this->nextQuickInfo[] = sprintf($this->l('Downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
             $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath(), $this->getExtraFilePath());
-            if (file_exists($this->tools->downloadPath)) {
-                Tools::deleteDirectory($this->tools->downloadPath, false);
-                $this->nextQuickInfo[] = $this->l('Download directory has been cleared');
-            }
+
             $report = '';
             $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
             if (ConfigurationTest::test_dir($relativeDownloadPath, false, $report)) {
