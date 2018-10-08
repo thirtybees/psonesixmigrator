@@ -812,6 +812,64 @@ class AjaxProcessor
             $this->nextQuickInfo[] = $this->l('No incompatible modules found.');
         }
 
+        $this->next = 'deleteModules';
+        $this->nextDesc = $this->l('Deleting now obsolete modules...');
+    }
+
+    /**
+     * This step uninstalls and deletes official modules no longer existing in
+     * thirty bees.
+     *
+     * @return void
+     *
+     * @since 1.0.3
+     */
+    public function ajaxProcessDeleteModules()
+    {
+        $modulesToDelete = [
+            'graphnvd3',
+            'gridhtml',
+            'pagesnotfound',
+            'sekeywords',
+            'statsbestcategories',
+            'statsbestcustomers',
+            'statsbestmanufacturers',
+            'statsbestproducts',
+            'statsbestsuppliers',
+            'statsbestvouchers',
+            'statscarrier',
+            'statscatalog',
+            'statscheckup',
+            'statsequipment',
+            'statsforecast',
+            'statslive',
+            'statsnewsletter',
+            'statsorigin',
+            'statspersonalinfos',
+            'statsproduct',
+            'statsregistrations',
+            'statssales',
+            'statssearch',
+            'statsstock',
+            'statsvisits',
+        ];
+
+        foreach ($modulesToDelete as $module) {
+            // Uninstall the module for tidyness.
+            $this->uninstallModule($module);
+
+            // Delete the module.
+            $moduleDir = _PS_MODULE_DIR_.$module;
+            if (is_dir($moduleDir)) {
+                if (Tools::deleteDirectory($moduleDir)) {
+                    $this->nextQuickInfo[] = sprintf($this->l('Deleted now obsolete module %s.'), $module);
+                } else {
+                    $this->nextQuickInfo[] = $this->nextErrors[] =
+                        sprintf($this->l('Error when trying to delete directory %s. Please delete it manually as soon as the migration is finished.'), $moduleDir);
+                }
+            }
+        }
+
         $this->next = 'upgradeFiles';
         $this->nextDesc = $this->l('Now upgrading files...');
     }
