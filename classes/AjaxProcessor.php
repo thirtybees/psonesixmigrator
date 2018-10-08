@@ -493,8 +493,8 @@ class AjaxProcessor
         if (!UpgraderTools::getConfig(UpgraderTools::BACKUP)) {
             $this->stepDone = true;
             $this->nextParams['dbStep'] = 0;
-            $this->nextDesc = sprintf($this->l('Database backup skipped. Now upgrading files...'), $this->backupName);
-            $this->next = 'upgradeFiles';
+            $this->nextDesc = $this->l('Database backup skipped. Now moving aside incompatible modules...');
+            $this->next = 'moveModules';
 
             return true;
         }
@@ -758,11 +758,62 @@ class AjaxProcessor
             // reset dbStep at the end of this step
             $this->nextParams['dbStep'] = 0;
 
-            $this->nextDesc = sprintf($this->l('Database backup done in filename %s. Now upgrading files...'), $this->backupName);
-            $this->next = 'upgradeFiles';
+            $this->nextDesc = sprintf($this->l('Database backup done in filename %s. Now moving aside incompatible modules...'), $this->backupName);
+            $this->next = 'moveModules';
 
             return true;
         }
+    }
+
+    /**
+     * This step moves aside modules which are known to be incompatible with
+     * thirty bees. Just uninstalling isn't sufficient, because listing modules
+     * in back office loads uninstalled modules as well.
+     *
+     * @return void
+     *
+     * @since 1.0.3
+     */
+    public function ajaxProcessMoveModules()
+    {
+        $modulesAside = [
+            'autoupgrade',
+            'gauthenticator',
+            'graphgooglechart',
+            'graphvisifire',
+            'graphxmlswfcharts',
+        ];
+        $moduleFound = false;
+        $moduleAsideDir = _PS_ROOT_DIR_.'/modules.off';
+
+        foreach ($modulesAside as $module) {
+            // Uninstall the module, mostly to remove eventual overrides.
+            if ($this->uninstallModule($module)) {
+                $moduleFound = true;
+                $this->nextQuickInfo[] = sprintf($this->l('Uninstalled module %s.'), $module);
+            }
+
+            // Move module files aside.
+            $moduleDir = _PS_MODULE_DIR_.$module;
+            if (is_dir($moduleDir)) {
+                $moduleFound = true;
+                @mkdir($moduleAsideDir);
+
+                if (rename($moduleDir, $moduleAsideDir.'/'.$module)) {
+                    $this->nextQuickInfo[] = sprintf($this->l('Moved module %s to modules.off/.'), $module);
+                } else {
+                    $this->nextQuickInfo[] = $this->nextErrors[] =
+                        sprintf($this->l('Error when trying to move directory %s. Please move it out of folder modules/ manually as soon as the migration is finished.'), $moduleDir);
+                }
+            }
+        }
+
+        if ( ! $moduleFound) {
+            $this->nextQuickInfo[] = $this->l('No incompatible modules found.');
+        }
+
+        $this->next = 'upgradeFiles';
+        $this->nextDesc = $this->l('Now upgrading files...');
     }
 
     /**
@@ -1449,7 +1500,37 @@ class AjaxProcessor
      */
     public function upgradeThisModule($idModule, $name)
     {
+    }
 
+    /**
+     * Try to uninstall a module. This is fragile, because it loads core code.
+     *
+     * @param string $moduleName
+     *
+     * @return bool True if the module was uninstalled successfully. False
+     *              if it wasn't installed or on failure to uninstall.
+     *
+     * @since 1.1.0
+     */
+    private function uninstallModule($moduleName)
+    {
+        $success = false;
+
+        // Wrap it in try{} for extra safety.
+        try {
+            require_once _PS_CLASS_DIR_.'PrestaShopAutoload.php';
+            spl_autoload_register([\PrestaShopAutoload::getInstance(), 'load']);
+            require_once _PS_CONFIG_DIR_.'bootstrap.php';
+
+            if (\Module::isInstalled($moduleName)) {
+                $success = \Module::getInstanceByName($moduleName)->uninstall();
+            }
+
+            spl_autoload_unregister([\PrestaShopAutoload::getInstance(), 'load']);
+        } catch (Exception $e) {
+        }
+
+        return $success;
     }
 
     /**
