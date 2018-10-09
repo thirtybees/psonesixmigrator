@@ -274,8 +274,6 @@ class Upgrader
         $latestVersion = '0.0.0';
         $channelWithLatest = false;
 
-        $semver = new Version($this->getModuleVersion());
-
         $checkVersions = [];
         foreach (['stable', 'rc', 'beta', 'alpha'] as $type) {
             $checkVersions[] = $type;
@@ -287,7 +285,7 @@ class Upgrader
         foreach ($this->versionInfo as $type => $versionInfo) {
             if (in_array($type, $checkVersions) && isset($versionInfo['version'])) {
                 $compareVersion = $versionInfo['version'];
-                if (Version::gt($compareVersion, $latestVersion) && $semver->satisfies(new Expression($versionInfo['compatibility']))) {
+                if (Version::gt($compareVersion, $latestVersion)) {
                     $latestVersion = $compareVersion;
                     $channelWithLatest = $type;
                 }
@@ -337,15 +335,5 @@ class Upgrader
         }
 
         return $cached;
-    }
-
-    private function getModuleVersion()
-    {
-        return Db::getInstance()->getValue(
-            (new DbQuery())
-                ->select('`version`')
-                ->from('module')
-                ->where("`name` = 'psonesixmigrator'")
-        );
     }
 }
