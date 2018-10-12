@@ -770,6 +770,8 @@ class AjaxProcessor
      * thirty bees. Just uninstalling isn't sufficient, because listing modules
      * in back office loads uninstalled modules as well.
      *
+     * Also move theme default XML.
+     *
      * @return void
      *
      * @since 1.0.3
@@ -809,6 +811,13 @@ class AjaxProcessor
 
         if ( ! $moduleFound) {
             $this->nextQuickInfo[] = $this->l('No incompatible modules found.');
+        }
+
+        // Copy theme default.xml to default-bootstrap.xml.
+        if ( ! file_exists(_PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml')
+            && file_exists(_PS_ROOT_DIR_.'/config/xml/themes/default.xml')) {
+            copy(_PS_ROOT_DIR_.'/config/xml/themes/default.xml',
+                 _PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml');
         }
 
         $this->next = 'deleteModules';
@@ -1006,11 +1015,6 @@ class AjaxProcessor
      */
     public function ajaxProcessUpgradeModules()
     {
-        // copy default.xml to default-bootstrap.xml
-        if (!file_exists(_PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml') && file_exists(_PS_ROOT_DIR_.'/config/xml/themes/default.xml')) {
-            copy(_PS_ROOT_DIR_.'/config/xml/themes/default.xml', _PS_ROOT_DIR_.'/config/xml/themes/default-bootstrap.xml');
-        }
-
         // copy community-theme-default config.xml file to config directory
         if (!file_exists(_PS_ROOT_DIR_.'/config/xml/themes/community-theme-default.xml') && file_exists(_PS_ROOT_DIR_.'/themes/community-theme-default/config.xml')) {
             copy(_PS_ROOT_DIR_.'/themes/community-theme-default/config.xml', _PS_ROOT_DIR_.'/config/xml/themes/community-theme-default.xml');
