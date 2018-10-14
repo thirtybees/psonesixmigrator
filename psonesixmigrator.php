@@ -146,6 +146,8 @@ class PsOneSixMigrator extends Module
         /* Remove the 1-click upgrade working directory */
         static::removeDirectory(PsOneSixMigrator\UpgraderTools::getInstance()->autoupgradePath);
 
+        Configuration::deleteByName('PS_AUTOUPDATE_MODULE_IDTAB');
+
         return parent::uninstall();
     }
 
