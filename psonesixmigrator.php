@@ -144,7 +144,7 @@ class PsOneSixMigrator extends Module
         }
 
         /* Remove the 1-click upgrade working directory */
-        static::removeDirectory(PsOneSixMigrator\UpgraderTools::getInstance()->autoupgradePath);
+        Tools::deleteDirectory(PsOneSixMigrator\UpgraderTools::getInstance()->autoupgradePath, true);
 
         Configuration::deleteByName('PS_AUTOUPDATE_MODULE_IDTAB');
 
@@ -199,28 +199,5 @@ class PsOneSixMigrator extends Module
         $this->_errors[] = $error;
 
         return false;
-    }
-
-    /**
-     * @param string $dir
-     *
-     * @since 1.00
-     */
-    protected static function removeDirectory($dir)
-    {
-        if ($handle = @opendir($dir)) {
-            while (false !== ($entry = @readdir($handle))) {
-                if ($entry != '.' && $entry != '..') {
-                    if (is_dir($dir.DIRECTORY_SEPARATOR.$entry) === true) {
-                        static::removeDirectory($dir.DIRECTORY_SEPARATOR.$entry);
-                    } else {
-                        @unlink($dir.DIRECTORY_SEPARATOR.$entry);
-                    }
-                }
-            }
-
-            @closedir($handle);
-            @rmdir($dir);
-        }
     }
 }
