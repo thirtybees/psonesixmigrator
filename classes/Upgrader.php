@@ -160,9 +160,14 @@ class Upgrader
 
             $remoteVersion = $versionBreakdown[0].$versionBreakdown[1];
 
+            // For a local api.thirtybees.com test server.
+            $source = str_replace('https://api.thirtybees.com/',
+                                  'http://localhost/api.thirtybees.com/',
+                                  self::CHANNELS_BASE_URI);
+
             $guzzle = new Client(
                 [
-                    'base_uri' => self::CHANNELS_BASE_URI,
+                    'base_uri' => $source,
                     'timeout'  => 10,
                     'verify'   => __DIR__.'/../cacert.pem',
                 ]

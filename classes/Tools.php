@@ -2275,6 +2275,11 @@ class Tools
             return @copy($source, $destination);
         }
 
+        // For a local api.thirtybees.com test server.
+        $source = str_replace('https://api.thirtybees.com/',
+                              'http://localhost/api.thirtybees.com/',
+                              $source);
+
         $guzzle = new Client([
             'verify'   => __DIR__.'/../cacert.pem',
             'timeout'  => $timeout,
