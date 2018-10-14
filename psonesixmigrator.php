@@ -115,8 +115,6 @@ class PsOneSixMigrator extends Module
             !@mkdir(_PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'xml')
         ) {
             return $this->abortInstall(sprintf($this->l('Unable to create the directory "%s"'), _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'xml'));
-        } else {
-            @chmod(_PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'xml', 0777);
         }
 
         /* Create a dummy index.php file in the XML config directory to avoid directory listing */
