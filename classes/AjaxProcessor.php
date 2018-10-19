@@ -784,6 +784,7 @@ class AjaxProcessor
             'graphvisifire',
             'graphxmlswfcharts',
             'pagecache',
+            'tmmegamenu',
         ];
         $moduleFound = false;
         $moduleAsideDir = _PS_ROOT_DIR_.'/modules.off';
