@@ -783,6 +783,7 @@ class AjaxProcessor
             'graphgooglechart',
             'graphvisifire',
             'graphxmlswfcharts',
+            'pagecache',
         ];
         $moduleFound = false;
         $moduleAsideDir = _PS_ROOT_DIR_.'/modules.off';
