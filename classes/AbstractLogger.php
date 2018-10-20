@@ -2,8 +2,8 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
@@ -15,27 +15,28 @@
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
  *
- * @author    Thirty Bees <modules@thirtybees.com>
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to https://www.thirtybees.com for more information.
+ *
+ *  @author    thirty bees <modules@thirtybees.com>
+ *  @author    PrestaShop SA <contact@prestashop.com>
+ *  @copyright 2017-2018 thirty bees
+ *  @copyright 2007-2016 PrestaShop SA
+ *  @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
 namespace PsOneSixMigrator;
 
 /**
- * Class AbstractLoggerCore
- *
- * @since 1.0.0
+ * Class AbstractLogger
  */
 abstract class AbstractLogger
 {
-    const DEBUG = 0;
-    const INFO = 1;
-    const WARNING = 2;
-    const ERROR = 3;
+    // @codingStandardsIgnoreStart
     public $level;
     protected $level_value = [
         0 => 'DEBUG',
@@ -43,6 +44,12 @@ abstract class AbstractLogger
         2 => 'WARNING',
         3 => 'ERROR',
     ];
+    // @codingStandardsIgnoreEnd
+
+    const DEBUG = 0;
+    const INFO = 1;
+    const WARNING = 2;
+    const ERROR = 3;
 
     /**
      * AbstractLoggerCore constructor.
@@ -50,6 +57,7 @@ abstract class AbstractLogger
      * @param int $level
      *
      * @since 1.0.0
+     * @version 1.0.0 Initial version
      */
     public function __construct($level = self::INFO)
     {
@@ -61,20 +69,13 @@ abstract class AbstractLogger
     }
 
     /**
-     * Log a debug message
-     *
-     * @param string $message
-     */
-    public function logDebug($message)
-    {
-        $this->log($message, static::DEBUG);
-    }
-
-    /**
      * Check the level and log the message if needed
      *
      * @param string $message
      * @param int    $level
+     *
+     * @since 1.0.0
+     * @version 1.0.0 Initial version
      */
     public function log($message, $level = self::DEBUG)
     {
@@ -84,30 +85,52 @@ abstract class AbstractLogger
     }
 
     /**
-     * Log an info message
+    * Log a debug message
+    *
+    * @param string $message
+    *
+    * @since 1.0.0
+    * @version 1.0.0 Initial version
+    */
+    public function logDebug($message)
+    {
+        $this->log($message, static::DEBUG);
+    }
+
+    /**
+    * Log an info message
+    *
+    * @param string $message
      *
-     * @param string $message
-     */
+     * @since 1.0.0
+     * @version 1.0.0 Initial version
+    */
     public function logInfo($message)
     {
         $this->log($message, static::INFO);
     }
 
     /**
-     * Log a warning message
+    * Log a warning message
+    *
+    * @param string $message
      *
-     * @param string $message
-     */
+     * @since 1.0.0
+     * @version 1.0.0 Initial version
+    */
     public function logWarning($message)
     {
         $this->log($message, static::WARNING);
     }
 
     /**
-     * Log an error message
+    * Log an error message
+    *
+    * @param string $message
      *
-     * @param string $message
-     */
+     * @since 1.0.0
+     * @version 1.0.0 Initial version
+    */
     public function logError($message)
     {
         $this->log($message, static::ERROR);
@@ -116,8 +139,11 @@ abstract class AbstractLogger
     /**
      * Log the message
      *
-     * @param string $message
+     * @param string message
      * @param level
+     *
+     * @since 1.0.0
+     * @version 1.0.0 Initial version
      */
     abstract protected function logMessage($message, $level);
 }
