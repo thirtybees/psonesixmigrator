@@ -136,6 +136,7 @@ sed '
   s/\\\?\bPDO\b/\\PDO/g
   s/\\\?\bPDOStatement\b/\\PDOStatement/g
   s/\\\?\bSimpleXMLElement\b/\\SimpleXMLElement/g
+  s/\\\?\bReflectionClass\b/\\ReflectionClass/g
   s/\\\?\bZipArchive\b/\\ZipArchive/g
 
   # Various other replacements to deal with the isolated namespace.
@@ -216,6 +217,12 @@ case "${CLASS}" in
     echo " - Delete Language::checkFiles()."
     echo " - Delete Language::checkFilesWithIsoCode()."
     echo " - Delete Language::getFilesList()."
+    ;;
+  'ObjectModel')
+    echo "Known required manual tweaks:"
+    echo " - Delete ObjectModel::getWebserviceParameters()."
+    echo " - Delete ObjectModel::getWebserviceObjectList()."
+    echo " - Delete ObjectModel::deleteImage()."
     ;;
   'Shop')
     echo "Known required manual tweaks:"
