@@ -175,6 +175,17 @@ case "${CLASS}" in
       }
     ' "${FILE_TARGET}"
     ;;
+  'Dispatcher')
+    echo "Known required manual tweaks:"
+    echo " - Delete Dispatcher::getModuleControllers()."
+    echo " - Delete Dispatcher::dispatch()."
+    echo " - Remove all code but the last line in Dispatcher::supplierID()."
+    echo " - Remove all code but the last line in Dispatcher::manufacturerID()."
+    echo " - Remove all code but the last line in Dispatcher::productID()."
+    echo " - Remove all code but the last line in Dispatcher::categoryID()."
+    echo " - Remove all code but the last line in Dispatcher::cmsID()."
+    echo " - Remove all code but the last line in Dispatcher::cmsCategoryID()."
+    ;;
   'Group')
     echo "Known required manual tweaks:"
     echo " - Delete Group::getReduction()."
