@@ -2,15 +2,15 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License (AFL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
@@ -21,18 +21,18 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <contact@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
 namespace PsOneSixMigrator;
 
 /**
- * Class ContextCore
+ * Class Context
  *
  * @since 1.0.0
  */
@@ -100,15 +100,14 @@ class Context
     // @codingStandardsIgnoreEnd
 
     /**
-     * @param $test_instance Context
-     *                       Unit testing purpose only
+     * @param Context $testInstance Unit testing purpose only
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
-    public static function setInstanceForTesting($test_instance)
+    public static function setInstanceForTesting($testInstance)
     {
-        static::$instance = $test_instance;
+        static::$instance = $testInstance;
     }
 
     /**
@@ -166,7 +165,7 @@ class Context
      */
     public function isTablet()
     {
-        if ($this->is_tablet === null) {;
+        if ($this->is_tablet === null) {
             $this->is_tablet = false;
         }
 
