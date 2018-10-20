@@ -202,6 +202,20 @@ case "${CLASS}" in
     echo " - Delete Hook::updateOrderStatus()."
     echo " - Delete Hook::paymentReturn()."
     ;;
+  'Language')
+    echo "Known required manual tweaks:"
+    echo " - Delete Language::updateModulesTranslations()."
+    echo " - Delete Language::downloadAndInstallLanguagePack()."
+    echo " - Delete Language::checkAndAddLanguage()."
+    echo " - Delete Language::deleteSelection()."
+    echo " - Delete Language::delete()."
+    echo " - Delete Language::_copyNoneFlag()."
+    echo " - Delete Language::moveToIso()."
+    echo " - Delete Language::_getThemesList()."
+    echo " - Delete Language::checkFiles()."
+    echo " - Delete Language::checkFilesWithIsoCode()."
+    echo " - Delete Language::getFilesList()."
+    ;;
   'Tab')
     echo "Known required manual tweaks:"
     echo " - Delete Tab::checkTabRights()."
