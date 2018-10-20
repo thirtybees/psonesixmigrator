@@ -2,15 +2,15 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License (AFL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
@@ -21,11 +21,11 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <contact@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
@@ -34,7 +34,7 @@ namespace PsOneSixMigrator;
 /**
  * Class CryptBlowfish
  *
- * @package PsOneSixMigrator
+ * @since 1.0.0
  */
 class CryptBlowfish
 {
@@ -315,6 +315,8 @@ class CryptBlowfish
 
     public $_iv = null;
 
+    protected $_unpackMode = PS_UNPACK_NATIVE;
+
     public function __construct($key, $iv)
     {
         $_iv = $iv;
@@ -325,6 +327,10 @@ class CryptBlowfish
         $data = 0;
         $datal = 0;
         $datar = 0;
+
+        if (PHP_VERSION_ID == '50201' || PHP_VERSION_ID == '50206') {
+            $this->_unpackMode = PS_UNPACK_MODIFIED;
+        }
 
         for ($i = 0; $i < 18; $i++) {
             $data = 0;
@@ -382,12 +388,26 @@ class CryptBlowfish
         $len = strlen($plainText);
         $plainText .= str_repeat(chr(0), (8 - ($len % 8)) % 8);
         for ($i = 0; $i < $len; $i += 8) {
-            list(, $Xl, $Xr) = unpack('N2', substr($plainText, $i, 8));
+            list(, $Xl, $Xr) = ($this->_unpackMode == PS_UNPACK_NATIVE ? unpack('N2', substr($plainText, $i, 8)) : $this->myUnpackN2(substr($plainText, $i, 8)));
             $this->_encipher($Xl, $Xr);
             $cipherText .= pack('N2', $Xl, $Xr);
         }
 
         return $cipherText;
+    }
+
+    public function myUnpackN2($str)
+    {
+        return ['1' => $this->myUnpackN($str), '2' => $this->myUnpackN(substr($str, 4))];
+    }
+
+    public function myUnpackN($str)
+    {
+        if (pack('L', 0x6162797A) == pack('V', 0x6162797A)) {
+            return ((ord($str) << 24) | (ord(substr($str, 1)) << 16) | (ord(substr($str, 2)) << 8) | ord(substr($str, 3)));
+        } else {
+            return (ord($str) | (ord(substr($str, 1)) << 8) | (ord(substr($str, 2)) << 16) | (ord(substr($str, 3)) << 24));
+        }
     }
 
     public function decrypt($cipherText)
@@ -396,7 +416,7 @@ class CryptBlowfish
         $len = strlen($cipherText);
         $cipherText .= str_repeat(chr(0), (8 - ($len % 8)) % 8);
         for ($i = 0; $i < $len; $i += 8) {
-            list(, $Xl, $Xr) = unpack('N2', substr($cipherText, $i, 8));
+            list(, $Xl, $Xr) = ($this->_unpackMode == PS_UNPACK_NATIVE ? unpack('N2', substr($cipherText, $i, 8)) : $this->myUnpackN2(substr($cipherText, $i, 8)));
             $this->_decipher($Xl, $Xr);
             $plainText .= pack('N2', $Xl, $Xr);
         }
