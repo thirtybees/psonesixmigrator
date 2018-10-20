@@ -2,15 +2,15 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License (AFL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
@@ -21,33 +21,41 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <contact@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
 namespace PsOneSixMigrator;
 
 /**
- * Class ShopUrlCore
+ * Class ShopUrl
  *
  * @since 1.0.0
  */
 class ShopUrl extends ObjectModel
 {
     // @codingStandardsIgnoreStart
+    /** @var int $id_shop */
     public $id_shop;
+    /** @var string $domain */
     public $domain;
+    /** @var string $domain_ssl */
     public $domain_ssl;
+    /** @var string $physical_uri */
     public $physical_uri;
+    /** @var string $virtual_uri */
     public $virtual_uri;
+    /** @var bool $main */
     public $main;
+    /** @var bool $active */
     public $active;
-
+    /** @var array $main_domain */
     protected static $main_domain = [];
+    /** @var array $main_domain_ssl */
     protected static $main_domain_ssl = [];
     // @codingStandardsIgnoreEnd
 
@@ -80,6 +88,7 @@ class ShopUrl extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function getFields()
     {
@@ -140,6 +149,7 @@ class ShopUrl extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function getShopUrls($idShop = false)
     {
@@ -154,6 +164,8 @@ class ShopUrl extends ObjectModel
     /**
      * @return bool
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
@@ -179,15 +191,16 @@ class ShopUrl extends ObjectModel
     }
 
     /**
-     * @param $domain
-     * @param $domainSsl
-     * @param $physicalUri
-     * @param $virtualUri
+     * @param string $domain
+     * @param string $domainSsl
+     * @param string $physicalUri
+     * @param string $virtualUri
      *
      * @return false|null|string
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function canAddThisUrl($domain, $domainSsl, $physicalUri, $virtualUri)
     {
@@ -204,35 +217,40 @@ class ShopUrl extends ObjectModel
             $virtualUri = preg_replace('#/+#', '/', trim($virtualUri, '/')).'/';
         }
 
-        $sql = 'SELECT id_shop_url
-				FROM '._DB_PREFIX_.'shop_url
-				WHERE physical_uri = \''.pSQL($physicalUri).'\'
-					AND virtual_uri = \''.pSQL($virtualUri).'\'
-					AND (domain = \''.pSQL($domain).'\' '.(($domainSsl) ? ' OR domain_ssl = \''.pSQL($domainSsl).'\'' : '').')'
-            .($this->id ? ' AND id_shop_url != '.(int) $this->id : '');
-
-        return Db::getInstance()->getValue($sql);
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
+            (new DbQuery())
+                ->select('`id_shop_url`')
+                ->from('shop_url')
+                ->where('`physical_uri` = \''.pSQL($physicalUri).'\'')
+                ->where('`virtual_uri` = \''.pSQL($virtualUri).'\'')
+                ->where('`domain` = \''.pSQL($domain).'\''.(($domainSsl) ? ' OR domain_ssl = \''.pSQL($domainSsl).'\'' : ''))
+                ->where($this->id ? '`id_shop_url` != '.(int) $this->id : '')
+        );
     }
 
     /**
-     * @param $idShop
+     * @param int $idShop
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
     public static function cacheMainDomainForShop($idShop)
     {
+        // @codingStandardsIgnoreStart
         if (!isset(static::$main_domain_ssl[(int) $idShop]) || !isset(static::$main_domain[(int) $idShop])) {
             $row = Db::getInstance()->getRow(
-                '
-			SELECT domain, domain_ssl
-			FROM '._DB_PREFIX_.'shop_url
-			WHERE main = 1
-			AND id_shop = '.($idShop !== null ? (int) $idShop : (int) Context::getContext()->shop->id)
+                (new DbQuery())
+                    ->select('`domain`, `domain_ssl`')
+                    ->from('shop_url')
+                    ->where('`main` = 1')
+                    ->where('`id_shop` = '.($idShop !== null ? (int) $idShop : (int) Context::getContext()->shop->id))
             );
             static::$main_domain[(int) $idShop] = $row['domain'];
             static::$main_domain_ssl[(int) $idShop] = $row['domain_ssl'];
         }
+        // @codingStandardsIgnoreEnd
     }
 
     /**
@@ -241,8 +259,10 @@ class ShopUrl extends ObjectModel
      */
     public static function resetMainDomainCache()
     {
+        // @codingStandardsIgnoreStart
         static::$main_domain = [];
         static::$main_domain_ssl = [];
+        // @codingStandardsIgnoreEnd
     }
 
     /**
@@ -250,6 +270,8 @@ class ShopUrl extends ObjectModel
      *
      * @return mixed
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
@@ -257,14 +279,18 @@ class ShopUrl extends ObjectModel
     {
         static::cacheMainDomainForShop($idShop);
 
+        // @codingStandardsIgnoreStart
         return static::$main_domain[(int) $idShop];
+        // @codingStandardsIgnoreEnd
     }
 
     /**
-     * @param null $idShop
+     * @param int|null $idShop
      *
      * @return mixed
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
@@ -272,6 +298,8 @@ class ShopUrl extends ObjectModel
     {
         static::cacheMainDomainForShop($idShop);
 
+        // @codingStandardsIgnoreStart
         return static::$main_domain_ssl[(int) $idShop];
+        // @codingStandardsIgnoreEnd
     }
 }

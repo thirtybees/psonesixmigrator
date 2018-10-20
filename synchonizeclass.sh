@@ -216,6 +216,14 @@ case "${CLASS}" in
     echo " - Delete Language::checkFilesWithIsoCode()."
     echo " - Delete Language::getFilesList()."
     ;;
+  'Shop')
+    echo "Known required manual tweaks:"
+    echo " - Delete Shop::getAddress()."
+    echo " - Delete Shop::getUrlsSharedCart()."
+    echo " - Delete Shop::getGroup()."
+    echo " - Delete Shop::getContextShopGroup()."
+    echo " - Delete Shop::copyShopData()."
+    ;;
   'Tab')
     echo "Known required manual tweaks:"
     echo " - Delete Tab::checkTabRights()."
