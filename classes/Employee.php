@@ -2,15 +2,15 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License (AFL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
@@ -21,15 +21,17 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <contact@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
 namespace PsOneSixMigrator;
+
+use \GuzzleHttp\Exception\RequestException;
 
 /**
  * Class Employee
@@ -51,13 +53,19 @@ class Employee extends ObjectModel
     public $email;
     /** @var string Password */
     public $passwd;
-    /** @var \Datetime $last_passwd_gen */
+    /** @var datetime Password */
     public $last_passwd_gen;
+    /** @var string $stats_date_from */
     public $stats_date_from;
+    /** @var string $stats_date_to */
     public $stats_date_to;
+    /** @var string $stats_compare_from */
     public $stats_compare_from;
+    /** @var string $stats_compare_to */
     public $stats_compare_to;
+    /** @var int $stats_compare_option */
     public $stats_compare_option = 1;
+    /** @var string $preselect_date_range */
     public $preselect_date_range;
     /** @var string Display back office background in the specified color */
     public $bo_color;
@@ -139,6 +147,8 @@ class Employee extends ObjectModel
      * @param int|null $idLang
      * @param int|null $idShop
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
@@ -164,6 +174,8 @@ class Employee extends ObjectModel
      *
      * @return array|false Employees or false
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
@@ -181,12 +193,13 @@ class Employee extends ObjectModel
     }
 
     /**
-     * @param $email
+     * @param string $email
      *
      * @return bool
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function employeeExists($email)
     {
@@ -194,20 +207,22 @@ class Employee extends ObjectModel
             die(Tools::displayError());
         }
 
-        return (bool) Db::getInstance()->getValue(
-            '
-		SELECT `id_employee`
-		FROM `'._DB_PREFIX_.'employee`
-		WHERE `email` = \''.pSQL($email).'\''
+        return (bool) Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
+            (new DbQuery())
+                ->select('`id_employee`')
+                ->from('employee')
+                ->where('`email` = \''.pSQL($email).'\'')
         );
     }
 
     /**
-     * @param      $idProfile
+     * @param int  $idProfile
      * @param bool $activeOnly
      *
      * @return array|false|\mysqli_result|null|\PDOStatement|resource
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
@@ -229,26 +244,29 @@ class Employee extends ObjectModel
      *
      * @return bool
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
     public static function setLastConnectionDate($idEmployee)
     {
-        return Db::getInstance()->execute(
-            '
-			UPDATE `'._DB_PREFIX_.'employee`
-			SET `last_connection_date` = CURRENT_DATE()
-			WHERE `id_employee` = '.(int) $idEmployee.' AND `last_connection_date`< CURRENT_DATE()
-		'
+        return Db::getInstance()->update(
+            bqSQL(static::$definition['table']),
+            [
+                'last_connection_date' => ['type' => 'sql', 'value' => 'CURRENT_DATE()'],
+            ],
+            '`id_employee` = '.(int) $idEmployee.' AND `last_connection_date` < CURRENT_DATE()'
         );
     }
 
     /**
-     * @see ObjectModel::getFields()
+     * @see     ObjectModel::getFields()
      * @return array
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function getFields()
     {
@@ -272,30 +290,72 @@ class Employee extends ObjectModel
     }
 
     /**
-     * @param bool $autodate
+     * @param bool $autoDate
      * @param bool $nullValues
      *
      * @return bool
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
-    public function add($autodate = true, $nullValues = true)
+    public function add($autoDate = true, $nullValues = true)
     {
         $this->last_passwd_gen = date('Y-m-d H:i:s', strtotime('-'.Configuration::get('PS_PASSWD_TIME_BACK').'minutes'));
         $this->saveOptin();
         $this->updateTextDirection();
 
-        return parent::add($autodate, $nullValues);
+        return parent::add($autoDate, $nullValues);
     }
 
     /**
+     * Subscribe to the thirty bees newsletter. Also resets $this->optin on
+     * failure.
+     *
+     * @return bool Wether un/registration was successful.
+     *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @version 1.0.6 Added return value.
      */
     protected function saveOptin()
     {
+        $success = true;
 
+        if (!defined('TB_INSTALLATION_IN_PROGRESS')) {
+            if ($this->optin) {
+                $context = Context::getContext();
+
+                $guzzle = new \GuzzleHttp\Client([
+                    'base_uri'    => 'https://api.thirtybees.com',
+                    'timeout'     => 20,
+                    'verify'      => _PS_TOOL_DIR_.'cacert.pem',
+                ]);
+
+                try {
+                    $guzzle->post(
+                        '/newsletter/', [
+                            'json' => [
+                                'email'    => $this->email,
+                                'fname'    => $this->firstname,
+                                'lname'    => $this->lastname,
+                                'activity' => Configuration::get('PS_SHOP_ACTIVITY'),
+                                'country'  => $context->country->iso_code,
+                                'language' => $context->language->iso_code,
+                                'URL'      => $context->shop->getBaseURL(),
+                            ],
+                        ]
+                    );
+                } catch (RequestException $e) {
+                    $success = false;
+                    $this->optin = false;
+                }
+            } else {
+                // TODO: actually unregister
+            }
+        }
+
+        return $success;
     }
 
     /**
@@ -327,6 +387,9 @@ class Employee extends ObjectModel
     }
 
     /**
+     * Update the database record. Also used by AdminDashboardController for
+     * newsletter registration.
+     *
      * @param bool $nullValues
      *
      * @return bool
@@ -336,6 +399,8 @@ class Employee extends ObjectModel
      */
     public function update($nullValues = false)
     {
+        $success = true;
+
         if (empty($this->stats_date_from) || $this->stats_date_from == '0000-00-00') {
             $this->stats_date_from = date('Y-m-d');
         }
@@ -345,32 +410,35 @@ class Employee extends ObjectModel
         }
 
         $currentEmployee = new Employee((int) $this->id);
-
-        if ($currentEmployee->optin != $this->optin) {
-            $this->saveOptin();
+        if ($currentEmployee->optin != $this->optin
+            || $currentEmployee->email != $this->email
+            || !Configuration::get('TB_STORE_REGISTERED')) {
+            $success = $this->saveOptin();
         }
 
         $this->updateTextDirection();
 
-        return parent::update($nullValues);
+        return $success && parent::update($nullValues);
     }
 
     /**
-     * Return employee instance from its e-mail (optionnaly check password)
+     * Return employee instance from its e-mail (optionally check password)
      *
-     * @param string $email             e-mail
+     * @param string $email             E-mail
      * @param string $plainTextPassword Password is also checked if specified
      * @param bool   $activeOnly        Filter employee by active status
      *
      * @return Employee|bool Employee instance
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
     public function getByEmail($email, $plainTextPassword = null, $activeOnly = true)
     {
-        if (!Validate::isEmail($email) || ($plainTextPassword != null && !Validate::isPasswd($plainTextPassword))) {
-            die(Tools::displayError());
+        if (!Validate::isEmail($email) || ($plainTextPassword && !Validate::isPasswdAdmin($plainTextPassword))) {
+            return false;
         }
 
         $sql = new DbQuery();
@@ -380,20 +448,16 @@ class Employee extends ObjectModel
         if ($activeOnly) {
             $sql->where('`active` = 1');
         }
-
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow($sql);
-        if ($plainTextPassword && !password_verify($plainTextPassword, $result['passwd'])) {
-            $sql = new DbQuery();
-            $sql->select('*');
-            $sql->from('employee');
-            $sql->where('`email` = \''.pSQL($email).'\'');
-            $sql->where('`passwd` = \''.md5(_COOKIE_KEY_.$plainTextPassword).'\'');
-            if ($activeOnly) {
-                $sql->where('`active` = 1');
-            }
 
-            $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow($sql);
-            if ($result) {
+        if (!$result) {
+            return false;
+        }
+
+        // If password is provided but doesn't match.
+        if ($plainTextPassword && !password_verify($plainTextPassword, $result['passwd'])) {
+            // Check if it matches the legacy md5 hashing and, if it does, rehash it.
+            if (Validate::isMd5($result['passwd']) && $result['passwd'] === md5(_COOKIE_KEY_.$plainTextPassword)) {
                 $newHash = Tools::hash($plainTextPassword);
                 Db::getInstance()->update(
                     bqSQL(static::$definition['table']),
@@ -424,6 +488,7 @@ class Employee extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function isLastAdmin()
     {
@@ -447,13 +512,14 @@ class Employee extends ObjectModel
     }
 
     /**
-     * @param      $idProfile
+     * @param int  $idProfile
      * @param bool $activeOnly
      *
      * @return false|null|string
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function countProfile($idProfile, $activeOnly = false)
     {
@@ -496,6 +562,7 @@ class Employee extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function isLoggedBack()
     {
@@ -523,6 +590,7 @@ class Employee extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function checkPassword($idEmployee, $hashedPassword)
     {
@@ -558,16 +626,20 @@ class Employee extends ObjectModel
     /**
      * @return array|false|\mysqli_result|null|\PDOStatement|resource
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
     public function favoriteModulesList()
     {
-        return Db::getInstance()->executeS(
-            '
-			SELECT `module`
-			FROM `'._DB_PREFIX_.'module_preference`
-			WHERE `id_employee` = '.(int) $this->id.' AND `favorite` = 1 AND (`interest` = 1 OR `interest` IS NULL)'
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
+            (new DbQuery())
+                ->select('module')
+                ->from('module_preference')
+                ->where('`id_employee` = '.(int) $this->id)
+                ->where('`favorite` = 1')
+                ->where('`interest` = 1 OR `interest` IS NULL')
         );
     }
 
@@ -618,6 +690,7 @@ class Employee extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function getDefaultShopID()
     {
@@ -636,11 +709,7 @@ class Employee extends ObjectModel
      */
     public function getImage()
     {
-        if (!Validate::isLoadedObject($this)) {
-            return Tools::getAdminImageUrl('thirty-bees-avatar.png');
-        }
-
-        return 'https://www.gravatar.com/avatar/'.md5(Tools::strtolower(trim($this->email))).'?s=200&d=mm';
+        return 'https://www.gravatar.com/avatar/'.md5(mb_strtolower(trim($this->email))).'?s=200&d=mm';
     }
 
     /**
@@ -650,14 +719,15 @@ class Employee extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function getLastElementsForNotify($element)
     {
         $element = bqSQL($element);
-        $max = Db::getInstance()->getValue(
-            '
-			SELECT MAX(`id_'.$element.'`) as `id_'.$element.'`
-			FROM `'._DB_PREFIX_.$element.($element == 'order' ? 's' : '').'`'
+        $max = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
+            (new DbQuery())
+                ->select('MAX(`id_'.bqSQL($element).'`) as `id_'.bqSQL($element).'`')
+                ->from(bqSQL($element).($element == 'order' ? 's' : ''))
         );
 
         // if no rows in table, set max to 0

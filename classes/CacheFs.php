@@ -2,8 +2,8 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
@@ -21,9 +21,9 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <modules@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
  * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
@@ -45,13 +45,18 @@ class CacheFs extends Cache
      */
     protected $depth;
 
+    /**
+     * CacheFsCore constructor.
+     *
+     * @throws \Exception
+     */
     protected function __construct()
     {
-        $this->depth = (int) Db::getInstance()->getValue('SELECT value FROM '._DB_PREFIX_.'configuration WHERE name= \'PS_CACHEFS_DIRECTORY_DEPTH\'', false);
+        $this->depth = (int) Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT value FROM '._DB_PREFIX_.'configuration WHERE name= \'PS_CACHEFS_DIRECTORY_DEPTH\'', false);
 
         $keysFilename = $this->getFilename(static::KEYS_NAME);
         if (@filemtime($keysFilename)) {
-            $this->keys = unserialize(file_get_contents($keysFilename));
+            $this->keys = json_decode(file_get_contents($keysFilename), true);
         }
     }
 
@@ -60,7 +65,15 @@ class CacheFs extends Cache
      */
     protected function _set($key, $value, $ttl = 0)
     {
-        return (@file_put_contents($this->getFilename($key), serialize($value)));
+        $definedUmask = defined('_TB_UMASK_') ? _TB_UMASK_ : 0000;
+
+        $previousUmask = @umask($definedUmask);
+
+        $result = @file_put_contents($this->getFilename($key), json_encode($value));
+
+        @umask($previousUmask);
+
+        return $result;
     }
 
     /**
@@ -83,7 +96,7 @@ class CacheFs extends Cache
         }
         $file = file_get_contents($filename);
 
-        return unserialize($file);
+        return json_decode($file);
     }
 
     /**
@@ -118,7 +131,13 @@ class CacheFs extends Cache
      */
     protected function _writeKeys()
     {
-        @file_put_contents($this->getFilename(static::KEYS_NAME), serialize($this->keys));
+        $definedUmask = defined('_TB_UMASK_') ? _TB_UMASK_ : 0000;
+
+        $previousUmask = @umask($definedUmask);
+
+        @file_put_contents($this->getFilename(static::KEYS_NAME), json_encode($this->keys));
+
+        @umask($previousUmask);
     }
 
     /**
@@ -179,7 +198,10 @@ class CacheFs extends Cache
         }
 
         if (!is_dir($path)) {
+            $definedUmask = defined('_TB_UMASK_') ? _TB_UMASK_ : 0000;
+            $previousUmask = @umask($definedUmask);
             @mkdir($path, 0777, true);
+            @umask($previousUmask);
         }
 
         return $path.$key;

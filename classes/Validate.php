@@ -2,15 +2,15 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License (AFL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
@@ -21,18 +21,18 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <contact@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
 namespace PsOneSixMigrator;
 
 /**
- * Class ValidateCore
+ * Class Validate
  *
  * @since 1.0.0
  */
@@ -42,7 +42,7 @@ class Validate
     const PASSWORD_LENGTH = 5;
 
     /**
-     * @param $ip
+     * @param string $ip
      *
      * @return int
      *
@@ -74,10 +74,14 @@ class Validate
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     *
+     * @since 1.0.2 For validation we now use a new `Swift_Message` instance
+     *        to automatically check for RFC 2822 compliance, because
+     *        that is the only RFC supported by thirty bees
      */
     public static function isEmail($email)
     {
-        return !empty($email) && preg_match(Tools::cleanNonUnicodeSupport('/^[a-z\p{L}0-9!#$%&\'*+\/=?^`{}|~_-]+[.a-z\p{L}0-9!#$%&\'*+\/=?^`{}|~_-]*@[a-z\p{L}0-9]+(?:[.]?[_a-z\p{L}0-9-])*\.[a-z\p{L}0-9]+$/ui'), $email);
+        return true;
     }
 
     /**
@@ -105,7 +109,7 @@ class Validate
                 $errors[] = Tools::displayError('Invalid URL');
             }
         }
-        if (!count($errors)) {
+        if (!is_array($errors) || !count($errors)) {
             return true;
         }
 
@@ -227,7 +231,7 @@ class Validate
      */
     public static function isName($name)
     {
-        return (bool) preg_match(Tools::cleanNonUnicodeSupport('/^[^0-9!<>,;?=+()@#"°{}_$%:]*$/u'), stripslashes($name));
+        return (bool) preg_match(Tools::cleanNonUnicodeSupport('/^[^0-9!<>,;?()@"°{}_$%:]*$/u'), stripslashes($name));
     }
 
     /**
@@ -416,7 +420,7 @@ class Validate
      */
     public static function isDiscountName($voucher)
     {
-        return (bool) preg_match(Tools::cleanNonUnicodeSupport('/^[^!<>,;?=+()@"°{}_$%:]{3,32}$/u'), $voucher);
+        return (bool) preg_match(Tools::cleanNonUnicodeSupport('/^[^!<>,;?()@"°{}_$%:]{3,32}$/u'), $voucher);
     }
 
     /**
@@ -431,7 +435,7 @@ class Validate
      */
     public static function isCatalogName($name)
     {
-        return (bool) preg_match(Tools::cleanNonUnicodeSupport('/^[^<>;=#{}]*$/u'), $name);
+        return (bool) preg_match(Tools::cleanNonUnicodeSupport('/^[^<>;{}]*$/u'), $name);
     }
 
     /**
@@ -473,6 +477,7 @@ class Validate
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function isLinkRewrite($link)
     {
@@ -492,6 +497,7 @@ class Validate
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function isRoutePattern($pattern)
     {
@@ -619,7 +625,7 @@ class Validate
      */
     public static function isPasswd($plainTextPassword, $size = self::PASSWORD_LENGTH)
     {
-        return (Tools::strlen($plainTextPassword) >= $size && Tools::strlen($plainTextPassword) < 255);
+        return (mb_strlen($plainTextPassword) >= $size && mb_strlen($plainTextPassword) < 255);
     }
 
     /**
@@ -685,7 +691,12 @@ class Validate
             return false;
         }
 
-        return checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1]);
+        foreach ([1, 2, 3] as $i) {
+            $matches[$i] = (int) $matches[$i];
+        }
+
+        return ($matches[1] === 0 && $matches[2] === 0 && $matches[3] === 0)
+               || checkdate($matches[2], $matches[3], $matches[1]);
     }
 
     /**
@@ -1144,7 +1155,7 @@ class Validate
     }
 
     /**
-     * @param $unit
+     * @param string $unit
      *
      * @return int
      *
@@ -1153,7 +1164,7 @@ class Validate
      */
     public static function isWeightUnit($unit)
     {
-        return (static::isGenericName($unit) & (Tools::strlen($unit) < 5));
+        return (static::isGenericName($unit) & (mb_strlen($unit) < 5));
     }
 
     /**
@@ -1181,7 +1192,7 @@ class Validate
      */
     public static function isDistanceUnit($unit)
     {
-        return (static::isGenericName($unit) & (Tools::strlen($unit) < 5));
+        return (static::isGenericName($unit) & (mb_strlen($unit) < 5));
     }
 
     /**
@@ -1360,12 +1371,32 @@ class Validate
      *
      * @return bool Validity is ok or not
      *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated Use the generally safer JSON format instead of serialize().
+     *
+     * @since      1.0.0
+     * @version    1.0.0 Initial version
+     * @deprecated 1.0.5
      */
     public static function isSerializedArray($data)
     {
         return $data === null || (is_string($data) && preg_match('/^a:[0-9]+:{.*;}$/s', $data));
+    }
+
+    /**
+     * Check for JSON encoded data.
+     *
+     * @param string $data JSON encoded data to validate.
+     *
+     * @return bool Validity is ok or not
+     *
+     * @since   1.0.4
+     * @version 1.0.4 Initial version
+     */
+    public static function isJSON($data)
+    {
+        json_decode($data);
+
+        return (json_last_error() === JSON_ERROR_NONE);
     }
 
     /**
@@ -1497,7 +1528,7 @@ class Validate
      */
     public static function isSiret($siret)
     {
-        if (Tools::strlen($siret) != 14) {
+        if (mb_strlen($siret) != 14) {
             return false;
         }
         $sum = 0;
@@ -1560,6 +1591,7 @@ class Validate
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function isOrderInvoiceNumber($id)
     {

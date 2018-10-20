@@ -175,6 +175,16 @@ case "${CLASS}" in
       }
     ' "${FILE_TARGET}"
     ;;
+  'Group')
+    echo "Known required manual tweaks:"
+    echo " - Delete Group::getReduction()."
+    echo " - Delete Group::add()."
+    ;;
+  'Tab')
+    echo "Known required manual tweaks:"
+    echo " - Delete Tab::checkTabRights()."
+    echo " - Delete Tab::getTabModulesList()."
+    ;;
   'Tools')
     echo "Known required manual tweaks:"
     echo " - Add 'use CommerceGuys\Intl\Currency\CurrencyRepository;' in the header."
@@ -206,6 +216,14 @@ case "${CLASS}" in
     echo " - Delete Tools::getShopDomainSsl()."
     echo " - Delete Tools::smartyImplode()."
     echo " - Remove usages of Logger::addLog()."
+    ;;
+  'Translate')
+    echo "Known required manual tweaks:"
+    echo " - Delete Translate::getAdminTranslation()."
+    ;;
+  'Validate')
+    echo "Known required manual tweaks:"
+    echo " - Replace all code inside Validate::isEmail() with 'return true;'."
     ;;
 esac
 
