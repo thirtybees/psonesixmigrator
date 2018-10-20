@@ -129,8 +129,11 @@ sed '
   # \b = word boundary.
   s/\bArrayAccess\b/\\ArrayAccess/g
   s/\bCountable\b/\\Countable/g
+  s/\bDateTime\b/\\DateTime/g
+  s/\bDateTimeZone\b/\\DateTimeZone/g
   s/\bIterator\b/\\Iterator/g
   s/\bmysqli_result\b/\\mysqli_result/g
+  s/\bPDO\b/\\PDO/g
   s/\bPDOStatement\b/\\PDOStatement/g
   s/\bSimpleXMLElement\b/\\SimpleXMLElement/g
   s/\bZipArchive\b/\\ZipArchive/g
@@ -139,12 +142,17 @@ sed '
   s/\bPrestaShopException\b/\\Exception/g
   s/\bPrestaShopDatabaseException\b/\\Exception/g
 
+  # Unused PS/thirty bees stuff. Point to the core implementation.
+  s/\bWebserviceRequest\b/\\WebserviceRequest/g
+
   # Remove obsolete stuff.
   s/\s\+implements\s\+Core_Foundation_Database_EntityInterface//
 ' < "${FILE_SOURCE}" > "${FILE_TARGET}"
 
 
-### Describe recommended manual fixes.
+### Function fixes.
+#
+# Most of them just described as recommended manual fixes.
 #
 # These were found when comparing module class files of version 1.0.2 with
 # core class files of Git version 1.0.6~1620 (which was about the closest match
@@ -157,6 +165,15 @@ case "${CLASS}" in
     echo " - Delete Context->checkMobileContext()."
     echo " - Delete Context->getMobileDetect()."
     echo "... and each of their usage. is_tablet, is_mobile always false."
+    ;;
+  'Db')
+    sed -i '
+      /public static function getClass()/ {
+        n
+        a \'"        return (__NAMESPACE__ ? __NAMESPACE__.'\\\\\\\\' : '').'DbPDO';"'
+        p; N; d;
+      }
+    ' "${FILE_TARGET}"
     ;;
   'Tools')
     echo "Known required manual tweaks:"

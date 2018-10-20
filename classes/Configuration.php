@@ -2,15 +2,15 @@
 /**
  * 2007-2016 PrestaShop
  *
- * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * thirty bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License (AFL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@thirtybees.com so we can send you a copy immediately.
@@ -21,18 +21,18 @@
  * versions in the future. If you wish to customize PrestaShop for your
  * needs please refer to https://www.thirtybees.com for more information.
  *
- * @author    Thirty Bees <contact@thirtybees.com>
+ * @author    thirty bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license   Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
  */
 
 namespace PsOneSixMigrator;
 
 /**
- * Class ConfigurationCore
+ * Class Configuration
  *
  * @since 1.0.0
  */
@@ -264,6 +264,10 @@ class Configuration extends ObjectModel
     const ROUTE_CMS_CATEGORY_RULE = 'PS_ROUTE_cms_category_rule';
     const DISABLE_OVERRIDES = 'PS_DISABLE_OVERRIDES';
     const DISABLE_NON_NATIVE_MODULE = 'PS_DISABLE_NON_NATIVE_MODULE';
+    const CUSTOMCODE_METAS = 'TB_CUSTOMCODE_METAS';
+    const CUSTOMCODE_CSS = 'TB_CUSTOMCODE_CSS';
+    const CUSTOMCODE_JS = 'TB_CUSTOMCODE_JS';
+    const CUSTOMCODE_ORDERCONF_JS = 'TB_CUSTOMCODE_ORDERCONF_JS';
     // @codingStandardsIgnoreStart
     /**
      * @see ObjectModel::$definition
@@ -339,8 +343,8 @@ class Configuration extends ObjectModel
     }
 
     /**
-     * @param      $key
-     * @param null $idLang
+     * @param string   $key
+     * @param int|null $idLang
      *
      * @return string
      *
@@ -355,13 +359,16 @@ class Configuration extends ObjectModel
     /**
      * Get a single configuration value (in one language only)
      *
-     * @param string $key    Key wanted
-     * @param int    $idLang Language ID
+     * @param string   $key    Key wanted
+     * @param int      $idLang Language ID
+     * @param int|null $idShopGroup
+     * @param int|null $idShop
      *
      * @return string Value
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function get($key, $idLang = null, $idShopGroup = null, $idShop = null)
     {
@@ -373,7 +380,12 @@ class Configuration extends ObjectModel
         if (!isset(static::$_cache[static::$definition['table']])) {
             Configuration::loadConfiguration();
             if (!static::$_cache[static::$definition['table']]) {
-                return Db::getInstance()->getValue('SELECT `value` FROM `'._DB_PREFIX_.bqSQL(static::$definition['table']).'` WHERE `name` = "'.pSQL($key).'"');
+                return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
+                    (new DbQuery())
+                        ->select('`value`')
+                        ->from(bqSQL(static::$definition['table']))
+                        ->where('`name` = "'.pSQL($key).'"')
+                );
             }
         }
         $idLang = (int) $idLang;
@@ -407,13 +419,35 @@ class Configuration extends ObjectModel
      */
     public static function loadConfiguration()
     {
+        return static::loadConfigurationFromDB(Db::getInstance(_PS_USE_SQL_SLAVE_));
+    }
+
+    /**
+     * Load all configuration data, using an existing database connection.
+     *
+     * @param Db $connection Database connection to be used for data retrieval.
+     *
+     * @since   1.0.7
+     * @version 1.0.7 Initial version
+     */
+    public static function loadConfigurationFromDB($connection)
+    {
         static::$_cache[static::$definition['table']] = [];
 
-        $sql = 'SELECT c.`name`, cl.`id_lang`, IF(cl.`id_lang` IS NULL, c.`value`, cl.`value`) AS value, c.id_shop_group, c.id_shop
-                FROM `'._DB_PREFIX_.bqSQL(static::$definition['table']).'` c
-                LEFT JOIN `'._DB_PREFIX_.bqSQL(static::$definition['table']).'_lang` cl ON (c.`'.bqSQL(static::$definition['primary']).'` = cl.`'.bqSQL(static::$definition['primary']).'`)';
-        $db = Db::getInstance();
-        $rows = (array) $db->executeS($sql);
+        $rows = $connection->executeS(
+            (new DbQuery())
+                ->select('c.`name`, cl.`id_lang`, IFNULL(cl.`value`, c.`value`) AS `value`, c.`id_shop_group`, c.`id_shop`')
+                ->from(bqSQL(static::$definition['table']), 'c')
+                ->leftJoin(static::$definition['table'].'_lang', 'cl', 'c.`'.bqSQL(static::$definition['primary']).'` = cl.`'.bqSQL(static::$definition['primary']).'`')
+        );
+
+        // Backwards compatible keys
+
+
+        if (!is_array($rows)) {
+            return;
+        }
+
         foreach ($rows as $row) {
             $lang = ($row['id_lang']) ? $row['id_lang'] : 0;
             static::$types[$row['name']] = ($lang) ? 'lang' : 'normal';
@@ -432,14 +466,6 @@ class Configuration extends ObjectModel
             } else {
                 static::$_cache[static::$definition['table']][$lang]['global'][$row['name']] = $row['value'];
             }
-        }
-
-        // Adjust automatic values.
-        if (static::get('PS_SHOP_DOMAIN') === '*automatic*') {
-            static::set('PS_SHOP_DOMAIN', $_SERVER['HTTP_HOST']);
-        }
-        if (static::get('PS_SHOP_DOMAIN_SSL') === '*automatic*') {
-            static::set('PS_SHOP_DOMAIN_SSL', $_SERVER['HTTP_HOST']);
         }
     }
 
@@ -490,6 +516,7 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function getInt($key, $idShopGroup = null, $idShop = null)
     {
@@ -504,13 +531,14 @@ class Configuration extends ObjectModel
     /**
      * Get a single configuration value for all shops
      *
-     * @param string $key Key wanted
+     * @param string $key    Key wanted
      * @param int    $idLang
      *
      * @return array Values for all shops
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function getMultiShopValues($key, $idLang = null)
     {
@@ -528,8 +556,8 @@ class Configuration extends ObjectModel
      *
      * @throws \Exception
      *
-     * @param array $keys   Keys wanted
-     * @param int   $idLang Language ID
+     * @param array $keys        Keys wanted
+     * @param int   $idLang      Language ID
      * @param int   $idShopGroup
      * @param int   $idShop
      *
@@ -571,6 +599,7 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function updateGlobalValue($key, $values, $html = false)
     {
@@ -595,6 +624,7 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function updateValue($key, $values, $html = false, $idShopGroup = null, $idShop = null)
     {
@@ -633,10 +663,14 @@ class Configuration extends ObjectModel
                 if (!$lang) {
                     // Update config not linked to lang
                     $result &= Db::getInstance()->update(
-                        static::$definition['table'], [
-                        'value'    => pSQL($value, $html),
-                        'date_upd' => date('Y-m-d H:i:s'),
-                    ], '`name` = \''.pSQL($key).'\''.Configuration::sqlRestriction($idShopGroup, $idShop), 1, true
+                        static::$definition['table'],
+                        [
+                            'value'    => pSQL($value, $html),
+                            'date_upd' => date('Y-m-d H:i:s'),
+                        ],
+                        '`name` = \''.pSQL($key).'\''.Configuration::sqlRestriction($idShopGroup, $idShop),
+                        1,
+                        true
                     );
                 } else {
                     // Update multi lang
@@ -655,14 +689,13 @@ class Configuration extends ObjectModel
             } // If key does not exists, create it
             else {
                 if (!$configID = Configuration::getIdByName($key, $idShopGroup, $idShop)) {
-                    $now = date('Y-m-d H:i:s');
                     $data = [
                         'id_shop_group' => $idShopGroup ? (int) $idShopGroup : null,
                         'id_shop'       => $idShop ? (int) $idShop : null,
                         'name'          => pSQL($key),
                         'value'         => $lang ? null : pSQL($value, $html),
-                        'date_add'      => $now,
-                        'date_upd'      => $now,
+                        'date_add'      => ['type' => 'sql', 'value' => 'NOW()'],
+                        'date_upd'      => ['type' => 'sql', 'value' => 'NOW()'],
                     ];
                     $result &= Db::getInstance()->insert(static::$definition['table'], $data, true);
                     $configID = Db::getInstance()->Insert_ID();
@@ -670,7 +703,8 @@ class Configuration extends ObjectModel
 
                 if ($lang) {
                     $result &= Db::getInstance()->insert(
-                        static::$definition['table'].'_lang', [
+                        static::$definition['table'].'_lang',
+                        [
                             static::$definition['primary'] => $configID,
                             'id_lang'                    => (int) $lang,
                             'value'                      => pSQL($value, $html),
@@ -679,14 +713,6 @@ class Configuration extends ObjectModel
                     );
                 }
             }
-        }
-
-        // Adjust automatic values.
-        if ($key === 'PS_SHOP_DOMAIN' && in_array('*automatic*', $values)) {
-            $values = $_SERVER['HTTP_HOST'];
-        }
-        if ($key === 'PS_SHOP_DOMAIN_SSL' && in_array('*automatic*', $values)) {
-            $values = $_SERVER['HTTP_HOST'];
         }
 
         Configuration::set($key, $values, $idShopGroup, $idShop);
@@ -727,6 +753,7 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function getIdByName($key, $idShopGroup = null, $idShop = null)
     {
@@ -748,8 +775,8 @@ class Configuration extends ObjectModel
     /**
      * Set TEMPORARY a single configuration value (in one language only)
      *
-     * @param string $key    Key wanted
-     * @param mixed  $values $values is an array if the configuration is multilingual, a single string else.
+     * @param string $key         Key wanted
+     * @param mixed  $values      $values is an array if the configuration is multilingual, a single string else.
      * @param int    $idShopGroup
      * @param int    $idShop
      *
@@ -793,6 +820,8 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
+     * @throws \Exception
      */
     public static function deleteByName($key)
     {
@@ -810,11 +839,7 @@ class Configuration extends ObjectModel
         )'
         );
 
-        $result2 = Db::getInstance()->execute(
-            '
-        DELETE FROM `'._DB_PREFIX_.bqSQL(static::$definition['table']).'`
-        WHERE `name` = "'.pSQL($key).'"'
-        );
+        $result2 = Db::getInstance()->delete(bqSQL(static::$definition['table']), '`name` = "'.pSQL($key).'"');
 
         static::$_cache[static::$definition['table']] = null;
 
@@ -828,6 +853,8 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
+     * @throws \Exception
      */
     public static function deleteFromContext($key)
     {
@@ -842,27 +869,26 @@ class Configuration extends ObjectModel
         }
 
         $id = Configuration::getIdByName($key, $idShopGroup, $idShop);
-        Db::getInstance()->execute(
-            '
-        DELETE FROM `'._DB_PREFIX_.bqSQL(static::$definition['table']).'`
-        WHERE `'.bqSQL(static::$definition['primary']).'` = '.(int) $id
+        Db::getInstance()->delete(
+            bqSQL(static::$definition['table']),
+            '`'.bqSQL(static::$definition['primary']).'` = '.(int) $id
         );
-        Db::getInstance()->execute(
-            '
-        DELETE FROM `'._DB_PREFIX_.bqSQL(static::$definition['table']).'_lang`
-        WHERE `'.bqSQL(static::$definition['primary']).'` = '.(int) $id
+        Db::getInstance()->delete(
+            bqSQL(static::$definition['table']).'_lang',
+            '`'.bqSQL(static::$definition['primary']).'` = '.(int) $id
         );
 
         static::$_cache[static::$definition['table']] = null;
     }
 
     /**
-     * @param $key
+     * @param string $key
      *
      * @return bool
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public static function isOverridenByCurrentContext($key)
     {
@@ -907,6 +933,7 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @return bool
      */
     public static function hasContext($key, $idLang, $context)
     {
@@ -937,6 +964,7 @@ class Configuration extends ObjectModel
      *
      * @since   1.0.0
      * @version 1.0.0 Initial version
+     * @throws \Exception
      */
     public function getFieldsLang()
     {
@@ -950,25 +978,27 @@ class Configuration extends ObjectModel
     /**
      * This method is override to allow TranslatedConfiguration entity
      *
-     * @param $sqlJoin
-     * @param $sqlFilter
-     * @param $sqlSort
-     * @param $sqlLimit
+     * @param string $sqlJoin
+     * @param string $sqlFilter
+     * @param string $sqlSort
+     * @param string $sqlLimit
      *
      * @return array
      *
+     * @throws \Exception
+     * @throws \Exception
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
     public function getWebserviceObjectList($sqlJoin, $sqlFilter, $sqlSort, $sqlLimit)
     {
         $query = '
-        SELECT DISTINCT main.`'.bqSQL($this->def['primary']).'`
-        FROM `'._DB_PREFIX_.bqSQL($this->def['table']).'` main
+        SELECT DISTINCT main.`'.bqSQL(static::$definition['primary']).'`
+        FROM `'._DB_PREFIX_.bqSQL(static::$definition['table']).'` main
         '.$sqlJoin.'
-        WHERE id_configuration NOT IN (
-            SELECT id_configuration
-            FROM '._DB_PREFIX_.bqSQL($this->def['table']).'_lang
+        WHERE `'.bqSQL(static::$definition['primary']).'` NOT IN (
+            SELECT `'.bqSQL(static::$definition['primary']).'`
+            FROM '._DB_PREFIX_.bqSQL(static::$definition['table']).'_lang
         ) '.$sqlFilter.'
         '.($sqlSort != '' ? $sqlSort : '').'
         '.($sqlLimit != '' ? $sqlLimit : '');
