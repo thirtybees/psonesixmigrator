@@ -191,6 +191,17 @@ case "${CLASS}" in
     echo " - Delete Group::getReduction()."
     echo " - Delete Group::add()."
     ;;
+  'Hook')
+    echo "Known required manual tweaks:"
+    echo " - Replace all code in Hook::exec() with just 'return;'"
+    echo " - Replace all code in Hook::getHookModuleExecList() with just 'return [];'"
+    echo " - Delete Hook::execWithoutCache()."
+    echo " - Delete Hook::coreCallHook()."
+    echo " - Delete Hook::postUpdateOrderStatus()."
+    echo " - Delete Hook::orderConfirmation()."
+    echo " - Delete Hook::updateOrderStatus()."
+    echo " - Delete Hook::paymentReturn()."
+    ;;
   'Tab')
     echo "Known required manual tweaks:"
     echo " - Delete Tab::checkTabRights()."
