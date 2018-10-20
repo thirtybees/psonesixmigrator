@@ -139,6 +139,7 @@ sed '
   s/\bZipArchive\b/\\ZipArchive/g
 
   # Various other replacements to deal with the isolated namespace.
+  s/\Adapter_Exception\b/\\Exception/g
   s/\bPrestaShopException\b/\\Exception/g
   s/\bPrestaShopDatabaseException\b/\\Exception/g
 

@@ -31,6 +31,7 @@ if (!function_exists('PsOneSixMigrator\GuzzleHttp\Promise\promise_for')) {
 spl_autoload_register(
     function ($class) {
         if (in_array($class, [
+            'PsOneSixMigrator\\Adapter_ServiceLocator',
             'PsOneSixMigrator\\AbstractLogger',
             'PsOneSixMigrator\\AddConfToFile',
             'PsOneSixMigrator\\AjaxProcessor',
