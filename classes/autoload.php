@@ -37,6 +37,7 @@ spl_autoload_register(
             'PsOneSixMigrator\\Archive_Tar',
             'PsOneSixMigrator\\Blowfish',
             'PsOneSixMigrator\\Cache',
+            'PsOneSixMigrator\\CacheFs',
             'PsOneSixMigrator\\Configuration',
             'PsOneSixMigrator\\ConfigurationTest',
             'PsOneSixMigrator\\Context',
