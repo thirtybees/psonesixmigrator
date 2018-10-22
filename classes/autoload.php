@@ -51,7 +51,6 @@ spl_autoload_register(
             'PsOneSixMigrator\\Group',
             'PsOneSixMigrator\\Hook',
             'PsOneSixMigrator\\Language',
-            'PsOneSixMigrator\\ObjectFileModel',
             'PsOneSixMigrator\\ObjectModel',
             'PsOneSixMigrator\\PEAR',
             'PsOneSixMigrator\\PrestaShopCollection',
