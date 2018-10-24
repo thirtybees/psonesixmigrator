@@ -827,6 +827,7 @@ class AjaxProcessor
     {
         $modulesToDelete = [
             'autoupgrade',
+            'pscleaner',
             'graphnvd3',
             'gridhtml',
             'pagesnotfound',
