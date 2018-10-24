@@ -777,7 +777,6 @@ class AjaxProcessor
     public function ajaxProcessMoveModules()
     {
         $modulesAside = [
-            'autoupgrade',
             'gauthenticator',
             'graphgooglechart',
             'graphvisifire',
@@ -827,6 +826,7 @@ class AjaxProcessor
     public function ajaxProcessDeleteModules()
     {
         $modulesToDelete = [
+            'autoupgrade',
             'graphnvd3',
             'gridhtml',
             'pagesnotfound',
