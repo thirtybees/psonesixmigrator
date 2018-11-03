@@ -444,8 +444,8 @@ class UpgraderTools
                     _PS_MODULE_DIR_.'psonesixmigrator'.DIRECTORY_SEPARATOR.$_COOKIE['iso_code'].'.php', // 1.4
                 ];
             }
-            // translations may be in "autoupgrade/translations/iso_code.php" or "autoupgrade/iso_code.php",
-            // try both locations.
+            // Translations may be in either '<autoupgradeDir>/translations/
+            // iso_code.php' or '<autoupgradeDir>/iso_code.php', try both.
             foreach ($filesToTry as $file) {
                 if (file_exists($file) && include($file) && isset($_MODULE)) {
                     $_MODULES = !empty($_MODULES) ? array_merge($_MODULES, $_MODULE) : $_MODULE;

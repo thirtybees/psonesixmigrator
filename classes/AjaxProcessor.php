@@ -828,7 +828,9 @@ class AjaxProcessor
         if (!isset($this->nextParams['fileActions'])) {
             // list saved in $this->toUpgradeFileList
             // get files differences (previously generated)
-            $filepathListDiff = _PS_ADMIN_DIR_."/autoupgrade/download/thirtybees-file-actions-v{$this->upgrader->version}.json";
+            $filepathListDiff = _PS_ADMIN_DIR_
+                                .'/'.$this->tools->autoupgradeDir.'/download/thirtybees-file-actions-v'.
+                                $this->upgrader->version.'.json';
             if (file_exists($filepathListDiff)) {
                 $unsortedListFilesToUpgrade = json_decode(file_get_contents($filepathListDiff), true);
                 $deleteFilesForUpgrade = [];
@@ -2113,7 +2115,8 @@ class AjaxProcessor
         foreach ($toRemove as $key => $file) {
             $filename = substr($file, strrpos($file, '/') + 1);
             $toRemove[$key] = preg_replace('#^/admin/#', $adminDir.'/', $file);
-            // this is a really sensitive part, so we add extra checks: preserve everything that contains "autoupgrade"
+            // This is a really sensitive part, so we add extra checks:
+            // preserve everything in the autoupgrade directory.
             if ($this->skipFile($filename, $file, 'backup') || strpos($file, $this->tools->autoupgradeDir)) {
                 unset($toRemove[$key]);
             }
@@ -2643,7 +2646,7 @@ class AjaxProcessor
         // during restoration, do not remove :
         $this->restoreIgnoreAbsoluteFiles[] = '/config/settings.inc.php';
         $this->restoreIgnoreAbsoluteFiles[] = '/modules/autoupgrade';
-        $this->restoreIgnoreAbsoluteFiles[] = "/$adminDir/autoupgrade";
+        $this->restoreIgnoreAbsoluteFiles[] = $adminDir.'/'.$this->tools->autoupgradeDir;
         $this->restoreIgnoreAbsoluteFiles[] = '.';
         $this->restoreIgnoreAbsoluteFiles[] = '..';
 
@@ -2662,7 +2665,7 @@ class AjaxProcessor
         $this->backupIgnoreAbsoluteFiles[] = '/modules/psonefivemigrator';
         $this->backupIgnoreAbsoluteFiles[] = '/modules/psonesixmigrator';
         $this->backupIgnoreAbsoluteFiles[] = '/modules/psonesevenmigrator';
-        $this->backupIgnoreAbsoluteFiles[] = "/$adminDir/autoupgrade";
+        $this->backupIgnoreAbsoluteFiles[] = $adminDir.'/'.$this->tools->autoupgradeDir;
 
         $this->backupIgnoreFiles[] = '.';
         $this->backupIgnoreFiles[] = '..';

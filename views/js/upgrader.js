@@ -507,7 +507,7 @@
           $('#pleaseWait').hide();
           if (textStatus === 'timeout') {
             if (action === 'download') {
-              updateInfoStep('Your server cannot download the file. Please upload it first by ftp in your admin/autoupgrade directory');
+              updateInfoStep('Your server cannot download the file. Please upload it by FTP and try again. URL and destination see log messages.');
             } else {
               updateInfoStep('[Server Error] Timeout:The request exceeded the max_time_limit. Please change your server configuration.');
             }

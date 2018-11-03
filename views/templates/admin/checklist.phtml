@@ -45,11 +45,11 @@ PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tool
 		<p><?php echo $this->l('Before starting the upgrade process, please make sure this checklist is all green.'); ?></p>
 		<table class="table" cellpadding="0" cellspacing="0">
 			<tr>
-				<td><?php echo $this->l('Your store\'s root directory is writable (with appropriate CHMOD permissions)'); ?></td>
+				<td><?php echo $this->l('Your store\'s root directory is writable (with appropriate permissions)'); ?></td>
 				<td><?php echo($currentPsConfig['root_writable'] ? $picOk : $picNok.' '.$tools->root_writable_report); ?></td>
 			</tr>
 			<tr>
-				<td><?php echo $this->l('The "/admin/autoupgrade" directory is writable (appropriate CHMOD permissions)'); ?></td>
+				<td><?php echo sprintf($this->l('Directory %s is writable (with appropriate permissions)'), $tools->autoupgradePath); ?></td>
 				<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
 			</tr>
 

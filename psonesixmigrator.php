@@ -64,6 +64,8 @@ class PsOneSixMigrator extends Module
      */
     public function install()
     {
+        require_once __DIR__.'/classes/UpgraderTools.php';
+
         /* If the "AdminThirtyBeesMigrate" tab does not exist yet, create it */
         if (!$idTab = Tab::getIdFromClassName('AdminThirtyBeesMigrate')) {
             $tab = new Tab();
@@ -88,7 +90,7 @@ class PsOneSixMigrator extends Module
         }
 
         /* Check that the 1-click upgrade working directory is existing or create it */
-        $autoupgradeDir = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'autoupgrade';
+        $autoupgradeDir = PsOneSixMigrator\UpgraderTools::getInstance()->autoupgradePath;
         if (!file_exists($autoupgradeDir) && !@mkdir($autoupgradeDir)) {
             return $this->abortInstall(sprintf($this->l('Unable to create the directory "%s"'), $autoupgradeDir));
         }
@@ -135,6 +137,8 @@ class PsOneSixMigrator extends Module
      */
     public function uninstall()
     {
+        require_once __DIR__.'/classes/UpgraderTools.php';
+
         /* Delete the 1-click upgrade Back-office tab */
         if ($idTab = Tab::getIdFromClassName('AdminThirtyBeesMigrate')) {
             $tab = new Tab((int) $idTab);
@@ -142,7 +146,7 @@ class PsOneSixMigrator extends Module
         }
 
         /* Remove the 1-click upgrade working directory */
-        static::removeDirectory(_PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'autoupgrade');
+        static::removeDirectory(PsOneSixMigrator\UpgraderTools::getInstance()->autoupgradePath);
 
         return parent::uninstall();
     }
