@@ -86,7 +86,7 @@ class UpgraderTools
     const PERFORMANCE = 'performance';
 
     public $autoupgradePath;
-    public $autoupgradeDir = 'autoupgrade';
+    public $autoupgradeDir = 'psonesixmigrator';
     /**
      * modules_addons is an array of array(id_addons => name_module).
      *
