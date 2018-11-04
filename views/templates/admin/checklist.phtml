@@ -52,18 +52,6 @@ PsOneSixMigrator\ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools
 				<td><?php echo sprintf($this->l('Directory %s is writable (with appropriate permissions)'), $tools->autoupgradePath); ?></td>
 				<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
 			</tr>
-
-            <?php
-            if (!$safeMode = @ini_get('safe_mode')) {
-                $safeMode = '';
-            }
-            $safeMode = in_array(Tools::strtolower($safeMode), [1, 'on']);
-            ?>
-
-			<tr>
-				<td><?php echo $this->l('PHP\'s "Safe mode" option is turned off'); ?></td>
-				<td><?php echo(!$safeMode ? $picOk : $picWarn); ?></td>
-			</tr>
 			<tr>
 				<td><?php echo $this->l('PHP\'s "allow_url_fopen" option is turned on, or cURL is installed'); ?></td>
 				<td><?php echo(PsOneSixMigrator\ConfigurationTest::testFopen() ? $picOk : $picNok); ?></td>
