@@ -126,25 +126,25 @@ sed '
   s/\([Cc]lass\s\+\w\+\)Core/\1/
 
   # PHP core class replacements to deal with the isolated namespace.
-  # \b = word boundary.
-  s/\bArrayAccess\b/\\ArrayAccess/g
-  s/\bCountable\b/\\Countable/g
-  s/\bDateTime\b/\\DateTime/g
-  s/\bDateTimeZone\b/\\DateTimeZone/g
-  s/\bIterator\b/\\Iterator/g
-  s/\bmysqli_result\b/\\mysqli_result/g
-  s/\bPDO\b/\\PDO/g
-  s/\bPDOStatement\b/\\PDOStatement/g
-  s/\bSimpleXMLElement\b/\\SimpleXMLElement/g
-  s/\bZipArchive\b/\\ZipArchive/g
+  # \b = word boundary, \\\? for an optional already existing backslash.
+  s/\\\?\bArrayAccess\b/\\ArrayAccess/g
+  s/\\\?\bCountable\b/\\Countable/g
+  s/\\\?\bDateTime\b/\\DateTime/g
+  s/\\\?\bDateTimeZone\b/\\DateTimeZone/g
+  s/\\\?\bIterator\b/\\Iterator/g
+  s/\\\?\bmysqli_result\b/\\mysqli_result/g
+  s/\\\?\bPDO\b/\\PDO/g
+  s/\\\?\bPDOStatement\b/\\PDOStatement/g
+  s/\\\?\bSimpleXMLElement\b/\\SimpleXMLElement/g
+  s/\\\?\bZipArchive\b/\\ZipArchive/g
 
   # Various other replacements to deal with the isolated namespace.
-  s/\Adapter_Exception\b/\\Exception/g
-  s/\bPrestaShopException\b/\\Exception/g
-  s/\bPrestaShopDatabaseException\b/\\Exception/g
+  s/\\\?\bAdapter_Exception\b/\\Exception/g
+  s/\\\?\bPrestaShopException\b/\\Exception/g
+  s/\\\?\bPrestaShopDatabaseException\b/\\Exception/g
 
   # Unused PS/thirty bees stuff. Point to the core implementation.
-  s/\bWebserviceRequest\b/\\WebserviceRequest/g
+  s/\\\?\bWebserviceRequest\b/\\WebserviceRequest/g
 
   # Remove obsolete stuff.
   s/\s\+implements\s\+Core_Foundation_Database_EntityInterface//
