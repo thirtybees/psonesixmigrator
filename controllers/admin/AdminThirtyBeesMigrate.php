@@ -258,7 +258,10 @@ class AdminThirtyBeesMigrateController extends AdminController
 
         if (empty($allowedArray)) {
             $allowedArray = [];
-            $allowedArray['fopen'] = ConfigurationTest::testFopen();
+            $allowedArray['check'] = ConfigurationTest::check(ConfigurationTest::getDefaultTests());
+            // This is expected to not work before the migration.
+            unset($allowedArray['check']['Files']);
+
             $allowedArray['root_writable'] = $this->getRootWritable();
             $tools = UpgraderTools::getInstance();
             $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
@@ -303,8 +306,18 @@ class AdminThirtyBeesMigrateController extends AdminController
      */
     public function configOk()
     {
+        $allowed = true;
         $allowedArray = $this->getCheckCurrentPsConfig();
-        $allowed = array_product($allowedArray);
+
+        foreach ($allowedArray as $item) {
+            $allowed = $allowed && (bool) $item;
+        }
+        foreach ($allowedArray['check'] as $check) {
+            if ($check !== 'ok') {
+                $allowed = false;
+                break;
+            }
+        }
 
         return $allowed;
     }

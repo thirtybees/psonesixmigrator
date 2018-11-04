@@ -31,7 +31,7 @@ $picNok = '<i class="icon icon-times" style="color: firebrick">';
 $picWarn = '<i class="icon icon-checkmark" style="color: orange">';
 $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
 $maxExecTime = ini_get('max_execution_time');
-$tools = \PsOneSixMigrator\UpgraderTools::getInstance();
+$tools = PsOneSixMigrator\UpgraderTools::getInstance();
 PsOneSixMigrator\ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
 ?>
 
@@ -53,8 +53,19 @@ PsOneSixMigrator\ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools
 				<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
 			</tr>
 			<tr>
-				<td><?php echo $this->l('PHP\'s "allow_url_fopen" option is turned on, or cURL is installed'); ?></td>
-				<td><?php echo(PsOneSixMigrator\ConfigurationTest::testFopen() ? $picOk : $picNok); ?></td>
+      <?php if ($this->configOk()) { ?>
+          <td><?php echo $this->l('thirty bees test suite passing'); ?></td>
+          <td><?php echo($picOk); ?></td>
+      <?php } else { ?>
+          <td><?php echo $this->l('thirty bees test suite passing');
+              foreach ($currentPsConfig['check'] as $test => $check) {
+                  if ($check !== 'ok') {
+                      echo '<br />'.$this->l('Test').' \''.$test.'\': '.$check;
+                  }
+              }
+          ?></td>
+          <td><?php echo($picNok); ?></td>
+      <?php } ?>
 			</tr>
 			<tr>
 				<td><?php echo $this->l('Your store is in maintenance mode').' '.(!$currentPsConfig['shop_deactivated'] ? '<br><form method="post" action="'.static::$currentIndex.'&token='.$this->token.'"><input type="submit" class="button" name="putUnderMaintenance" value="'.$this->l('Click here to put your shop under maintenance').'"></form>' : ''); ?></td>
