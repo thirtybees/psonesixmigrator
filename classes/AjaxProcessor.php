@@ -223,7 +223,7 @@ class AjaxProcessor
         ];
 
         foreach ($testDirs as $dir) {
-            if (!ConfigurationTest::test_dir($dir, true)) {
+            if (!ConfigurationTest::testDir($dir, true)) {
                 $this->nextQuickInfo[] = sprintf($this->l('The directory `%s` is not writable.'), $dir);
                 $this->nextErrors[] = sprintf($this->l('The directory `%s` is not writable.'), $dir);
                 $this->next = 'error';
@@ -248,7 +248,7 @@ class AjaxProcessor
      */
     public function ajaxProcessDownload()
     {
-        if (ConfigurationTest::test_fopen() || ConfigurationTest::test_curl()) {
+        if (ConfigurationTest::testFopen()) {
             if (!is_object($this->upgrader)) {
                 $this->upgrader = Upgrader::getInstance();
             }
@@ -258,7 +258,7 @@ class AjaxProcessor
 
             $report = '';
             $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
-            if (ConfigurationTest::test_dir($relativeDownloadPath, false, $report)) {
+            if (ConfigurationTest::testDir($relativeDownloadPath, false, $report)) {
                 $timestamp = time();
                 $res = $this->upgrader->downloadLast($this->tools->downloadPath);
                 $seconds = (string) (time() - $timestamp);
@@ -328,7 +328,7 @@ class AjaxProcessor
         }
         $relativeExtractPath = str_replace(_PS_ROOT_DIR_, '', $coreFileDest);
         $report = '';
-        if (ConfigurationTest::test_dir($relativeExtractPath, false, $report)) {
+        if (ConfigurationTest::testDir($relativeExtractPath, false, $report)) {
             if ($this->extractZip($coreFilePath, $coreFileDest) && $this->extractZip($extraFilePath, $extraFileDest)) {
                 // Unsetting to force listing
                 unset($this->nextParams['removeList']);
@@ -501,7 +501,7 @@ class AjaxProcessor
 
         $relativeBackupPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->backupPath);
         $report = '';
-        if (!ConfigurationTest::test_dir($relativeBackupPath, false, $report)) {
+        if (!ConfigurationTest::testDir($relativeBackupPath, false, $report)) {
             $this->nextDesc = $this->l('Backup directory is not writable ');
             $this->nextQuickInfo[] = 'Backup directory is not writable ';
             $this->nextErrors[] = 'Backup directory is not writable "'.$this->tools->backupPath.'"';

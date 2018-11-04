@@ -258,11 +258,11 @@ class AdminThirtyBeesMigrateController extends AdminController
 
         if (empty($allowedArray)) {
             $allowedArray = [];
-            $allowedArray['fopen'] = ConfigurationTest::test_fopen() || ConfigurationTest::test_curl();
+            $allowedArray['fopen'] = ConfigurationTest::testFopen();
             $allowedArray['root_writable'] = $this->getRootWritable();
             $tools = UpgraderTools::getInstance();
             $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
-            $allowedArray['admin_au_writable'] = ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, false, $report);
+            $allowedArray['admin_au_writable'] = ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, false, $report);
             $allowedArray['shop_deactivated'] = (!Configuration::get('PS_SHOP_ENABLE') || (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['127.0.0.1', 'localhost'])));
             $allowedArray['cache_deactivated'] = !(defined('_PS_CACHE_ENABLED_') && _PS_CACHE_ENABLED_);
             $allowedArray['module_version_ok'] = true;
@@ -280,7 +280,7 @@ class AdminThirtyBeesMigrateController extends AdminController
     {
         // Root directory permissions cannot be checked recursively anymore, it takes too much time
         $tools = UpgraderTools::getInstance();
-        $tools->root_writable = ConfigurationTest::test_dir('/', false, $report);
+        $tools->root_writable = ConfigurationTest::testDir('/', false, $report);
         $tools->root_writable_report = $report;
 
         return $tools->root_writable;

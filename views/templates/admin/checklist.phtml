@@ -32,7 +32,7 @@ $picWarn = '<i class="icon icon-checkmark" style="color: orange">';
 $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
 $maxExecTime = ini_get('max_execution_time');
 $tools = \PsOneSixMigrator\UpgraderTools::getInstance();
-PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
+PsOneSixMigrator\ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, true, $report);
 ?>
 
 <div class="panel col-lg-6" id="currentConfigurationBlock">
@@ -66,7 +66,7 @@ PsOneSixMigrator\ConfigurationTest::test_dir($adminDir.DIRECTORY_SEPARATOR.$tool
 			</tr>
 			<tr>
 				<td><?php echo $this->l('PHP\'s "allow_url_fopen" option is turned on, or cURL is installed'); ?></td>
-				<td><?php echo((PsOneSixMigrator\ConfigurationTest::test_fopen() || PsOneSixMigrator\ConfigurationTest::test_curl()) ? $picOk : $picNok); ?></td>
+				<td><?php echo(PsOneSixMigrator\ConfigurationTest::testFopen() ? $picOk : $picNok); ?></td>
 			</tr>
 			<tr>
 				<td><?php echo $this->l('Your store is in maintenance mode').' '.(!$currentPsConfig['shop_deactivated'] ? '<br><form method="post" action="'.static::$currentIndex.'&token='.$this->token.'"><input type="submit" class="button" name="putUnderMaintenance" value="'.$this->l('Click here to put your shop under maintenance').'"></form>' : ''); ?></td>
