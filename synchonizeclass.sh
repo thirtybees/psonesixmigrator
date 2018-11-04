@@ -273,6 +273,17 @@ case "${CLASS}" in
     echo "Known required manual tweaks:"
     echo " - Delete Translate::getAdminTranslation()."
     ;;
+  'Upgrader')
+    echo "CAUTION: this class is pretty distinct from thirty bees core."
+    echo "         Attempts to synchonize it have failed before. Probably"
+    echo "         it's a good idea to keep this class unsynchonized."
+    echo
+    echo "Known (but incomplete) required manual tweaks:"
+    echo "Add 'use PsOneSixMigrator\GuzzleHttp\Client;' to the header."
+    echo "Add 'use PsOneSixMigrator\GuzzleHttp\Promise;' to the header."
+    echo "Add 'use PsOneSixMigrator\SemVer\Expression;' to the header."
+    echo "Add 'use PsOneSixMigrator\SemVer\Version;' to the header."
+    ;;
   'Validate')
     echo "Known required manual tweaks:"
     echo " - Replace all code inside Validate::isEmail() with 'return true;'."
