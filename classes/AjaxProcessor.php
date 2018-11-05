@@ -248,63 +248,56 @@ class AjaxProcessor
      */
     public function ajaxProcessDownload()
     {
-        if (ConfigurationTest::testFopen()) {
-            if (!is_object($this->upgrader)) {
-                $this->upgrader = Upgrader::getInstance();
-            }
+        if (!is_object($this->upgrader)) {
+            $this->upgrader = Upgrader::getInstance();
+        }
 
-            $this->nextQuickInfo[] = sprintf($this->l('Downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
-            $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath(), $this->getExtraFilePath());
+        $this->nextQuickInfo[] = sprintf($this->l('Downloading from %s and %s'), $this->upgrader->coreLink, $this->upgrader->extraLink);
+        $this->nextQuickInfo[] = sprintf($this->l('Files will be saved to %s and %s'), $this->getCoreFilePath(), $this->getExtraFilePath());
 
-            $report = '';
-            $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
-            if (ConfigurationTest::testDir($relativeDownloadPath, false, $report)) {
-                $timestamp = time();
-                $res = $this->upgrader->downloadLast($this->tools->downloadPath);
-                $seconds = (string) (time() - $timestamp);
-                $this->nextQuickInfo[] = sprintf($this->l('Downloads took %s seconds.'), $seconds);
+        $report = '';
+        $relativeDownloadPath = str_replace(_PS_ROOT_DIR_, '', $this->tools->downloadPath);
+        if (ConfigurationTest::testDir($relativeDownloadPath, false, $report)) {
+            $timestamp = time();
+            $res = $this->upgrader->downloadLast($this->tools->downloadPath);
+            $seconds = (string) (time() - $timestamp);
+            $this->nextQuickInfo[] = sprintf($this->l('Downloads took %s seconds.'), $seconds);
 
-                if ($res) {
-                    $pathCore = $this->tools->downloadPath.DIRECTORY_SEPARATOR
-                                .'thirtybees-v'.$this->upgrader->version.'.zip';
-                    $pathExtra = $this->tools->downloadPath.DIRECTORY_SEPARATOR
-                                 .'thirtybees-extra-v'.$this->upgrader->version.'.zip';
+            if ($res) {
+                $pathCore = $this->tools->downloadPath.DIRECTORY_SEPARATOR
+                            .'thirtybees-v'.$this->upgrader->version.'.zip';
+                $pathExtra = $this->tools->downloadPath.DIRECTORY_SEPARATOR
+                             .'thirtybees-extra-v'.$this->upgrader->version.'.zip';
 
-                    $md5CoreFile = md5_file($pathCore);
-                    $md5ExtraFile = md5_file($pathExtra);
-                    if ($md5CoreFile === $this->upgrader->md5Core && $md5ExtraFile === $this->upgrader->md5Extra) {
-                        $this->nextQuickInfo[] = $this->l('Download complete.');
-                        $this->next = 'unzip';
-                        $this->nextDesc = $this->l('Download complete. Now extracting...');
-                    } else {
-                        if ($md5CoreFile !== $this->upgrader->md5Core) {
-                            $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the core ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathCore);
-                        }
-                        if ($md5ExtraFile !== $this->upgrader->md5Extra) {
-                            $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the extra ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathExtra);
-                        }
-
-                        $this->next = 'error';
-                        $this->nextDesc = $this->l('Download complete but the md5 sums do not match. Operation aborted.');
-                    }
+                $md5CoreFile = md5_file($pathCore);
+                $md5ExtraFile = md5_file($pathExtra);
+                if ($md5CoreFile === $this->upgrader->md5Core && $md5ExtraFile === $this->upgrader->md5Extra) {
+                    $this->nextQuickInfo[] = $this->l('Download complete.');
+                    $this->next = 'unzip';
+                    $this->nextDesc = $this->l('Download complete. Now extracting...');
                 } else {
-                    $this->nextDesc = $this->l('Error during download');
-                    $this->nextQuickInfo[] = $this->l('Error during download');
-                    $this->nextErrors[] = $this->l('Error during download');
+                    if ($md5CoreFile !== $this->upgrader->md5Core) {
+                        $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the core ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathCore);
+                    }
+                    if ($md5ExtraFile !== $this->upgrader->md5Extra) {
+                        $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the extra ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathExtra);
+                    }
 
                     $this->next = 'error';
+                    $this->nextDesc = $this->l('Download complete but the md5 sums do not match. Operation aborted.');
                 }
             } else {
-                $this->nextDesc = $this->l('Download directory is not writable.');
-                $this->nextQuickInfo[] = $this->l('Download directory is not writable.');
-                $this->nextErrors[] = sprintf($this->l('Download directory %s is not writable.'), $this->tools->downloadPath);
+                $this->nextDesc = $this->l('Error during download');
+                $this->nextQuickInfo[] = $this->l('Error during download');
+                $this->nextErrors[] = $this->l('Error during download');
+
                 $this->next = 'error';
             }
         } else {
-            $this->nextQuickInfo[] = $this->l('You need allow_url_fopen or cURL enabled for automatic download to work.');
-            $this->nextErrors[] = $this->l('You need allow_url_fopen or cURL enabled for automatic download to work.');
+            $this->nextDesc = $this->l('Download directory is not writable.');
+            $this->nextQuickInfo[] = $this->l('Download directory is not writable.');
+            $this->nextErrors[] = sprintf($this->l('Download directory %s is not writable.'), $this->tools->downloadPath);
             $this->next = 'error';
-            $this->nextDesc = sprintf($this->l('You need allow_url_fopen or cURL enabled for automatic download to work. You can also manually upload it in filepath %s.'), $this->getCoreFilePath());
         }
     }
 
