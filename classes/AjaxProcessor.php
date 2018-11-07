@@ -1039,32 +1039,6 @@ class AjaxProcessor
     }
 
     /**
-     * Clean unwanted entries from the database
-     *
-     * @return void
-     *
-     * @since 1.0.0
-     */
-    public function ajaxProcessCleanDatabase()
-    {
-        /* Clean tabs order */
-        foreach ($this->db->executeS('SELECT DISTINCT `id_parent` FROM `'._DB_PREFIX_.'tab`') as $parent) {
-            $i = 1;
-            foreach ($this->db->executeS('SELECT `id_tab` FROM `'._DB_PREFIX_.'tab` WHERE `id_parent` = '.(int) $parent['id_parent'].' ORDER BY IF(class_name IN ("AdminHome", "AdminDashboard"), 1, 2), position ASC') as $child) {
-                $this->db->execute('UPDATE '._DB_PREFIX_.'tab SET position = '.(int) ($i++).' WHERE id_tab = '.(int) $child['id_tab'].' AND id_parent = '.(int) $parent['id_parent']);
-            }
-        }
-
-        /* Clean configuration integrity */
-        $this->db->execute('DELETE FROM `'._DB_PREFIX_.'configuration_lang` WHERE (`value` IS NULL AND `date_upd` IS NULL) OR `value` LIKE ""', false);
-
-        $this->status = 'ok';
-        $this->next = 'upgradeComplete';
-        $this->nextDesc = $this->l('The database has been cleaned.');
-        $this->nextQuickInfo[] = $this->l('The database has been cleaned.');
-    }
-
-    /**
      * ends the upgrade process
      *
      * @return void
@@ -1869,28 +1843,34 @@ class AjaxProcessor
             }
         }
 
+        Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `name` = \'PS_LEGACY_IMAGES\' WHERE name LIKE \'0\' AND `value` = 1');
+        Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 0 WHERE `name` LIKE \'PS_LEGACY_IMAGES\'');
+        if (Db::getInstance()->getValue('SELECT COUNT(id_product_download) FROM `'._DB_PREFIX_.'product_download` WHERE `active` = 1') > 0) {
+            Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 1 WHERE `name` LIKE \'PS_VIRTUAL_PROD_FEATURE_ACTIVE\'');
+        }
 
-            Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `name` = \'PS_LEGACY_IMAGES\' WHERE name LIKE \'0\' AND `value` = 1');
-            Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 0 WHERE `name` LIKE \'PS_LEGACY_IMAGES\'');
-            if (Db::getInstance()->getValue('SELECT COUNT(id_product_download) FROM `'._DB_PREFIX_.'product_download` WHERE `active` = 1') > 0) {
-                Db::getInstance()->execute('UPDATE `'._DB_PREFIX_.'configuration` SET `value` = 1 WHERE `name` LIKE \'PS_VIRTUAL_PROD_FEATURE_ACTIVE\'');
-            }
+        /* Clean configuration integrity. */
+        Db::getInstance()->execute('
+            DELETE FROM `'._DB_PREFIX_.'configuration_lang`
+            WHERE (`value` IS NULL AND `date_upd` IS NULL)
+            OR `value` LIKE ""
+        ', false);
 
-            if (version_compare($this->installVersion, '1.5.4.0', '>=')) {
-                // Upgrade languages
-                if (!defined('_PS_TOOL_DIR_')) {
-                    define('_PS_TOOL_DIR_', _PS_ROOT_DIR_.'/tools/');
-                }
-                if (!defined('_PS_TRANSLATIONS_DIR_')) {
-                    define('_PS_TRANSLATIONS_DIR_', _PS_ROOT_DIR_.'/translations/');
-                }
-                if (!defined('_PS_MODULES_DIR_')) {
-                    define('_PS_MODULES_DIR_', _PS_ROOT_DIR_.'/modules/');
-                }
-                if (!defined('_PS_MAILS_DIR_')) {
-                    define('_PS_MAILS_DIR_', _PS_ROOT_DIR_.'/mails/');
-                }
+        if (version_compare($this->installVersion, '1.5.4.0', '>=')) {
+            // Upgrade languages
+            if (!defined('_PS_TOOL_DIR_')) {
+                define('_PS_TOOL_DIR_', _PS_ROOT_DIR_.'/tools/');
             }
+            if (!defined('_PS_TRANSLATIONS_DIR_')) {
+                define('_PS_TRANSLATIONS_DIR_', _PS_ROOT_DIR_.'/translations/');
+            }
+            if (!defined('_PS_MODULES_DIR_')) {
+                define('_PS_MODULES_DIR_', _PS_ROOT_DIR_.'/modules/');
+            }
+            if (!defined('_PS_MAILS_DIR_')) {
+                define('_PS_MAILS_DIR_', _PS_ROOT_DIR_.'/mails/');
+            }
+        }
 
 
         $path = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'themes'.DIRECTORY_SEPARATOR.'default'.DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR.'controllers'.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.'header.tpl';
