@@ -94,12 +94,14 @@ class ConfigurationTest
                 'getcwd', 'chdir', 'chmod',
             ],
             'PhpVersion'              => false,
+            'Fopen'                   => false,
             'Gd'                      => false,
             'ConfigDir'               => 'config',
             'Files'                   => false,
             'MailsDir'                => 'mails',
             'MaxExecutionTime'        => false,
             'PdoMysql'                => false,
+            'MysqlVersion'            => false,
             'Bcmath'                  => false,
             'Xml'                     => false,
             'Json'                    => false,
@@ -161,26 +163,39 @@ class ConfigurationTest
     public static function run($ptr, $arg = 0)
     {
         $report = '';
-        $result = call_user_func_array(['static', 'test'.$ptr], [$arg, &$report]);
+        if ($arg) {
+            $result = call_user_func_array(['static', 'test'.$ptr], [$arg, &$report]);
+        } else {
+            $result = call_user_func_array(['static', 'test'.$ptr], [&$report]);
+        }
 
-        if (strlen($report)) {
-            return $report;
-        } elseif (!$result) {
-            return 'fail';
+        if ( ! $result) {
+            if (strlen($report)) {
+                return $report;
+            } else {
+                return 'fail';
+            }
         }
 
         return 'ok';
     }
 
     /**
-     * @return mixed
+     * @return bool
      *
      * @since   1.0.0
+     * @since   1.0.8 Fill error report.
      * @version 1.0.0 Initial version
      */
-    public static function testPhpVersion()
+    public static function testPhpVersion(&$report = null)
     {
-        return version_compare(PHP_VERSION, '5.5.0', '>=');
+        if (version_compare(PHP_VERSION, '5.5', '<')) {
+            $report = sprintf('PHP version is %s, should be at least version 5.5.', PHP_VERSION);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -197,12 +212,13 @@ class ConfigurationTest
     /**
      * @return bool
      *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testMysqlSupport()
     {
-        return extension_loaded('mysql') || extension_loaded('mysqli') || extension_loaded('pdo_mysql');
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -214,6 +230,28 @@ class ConfigurationTest
     public static function testPdoMysql()
     {
         return extension_loaded('pdo_mysql');
+    }
+
+    /**
+     * @return bool
+     *
+     * @since   1.0.8
+     */
+    public static function testMysqlVersion(&$report = null)
+    {
+        if (defined('_DB_SERVER_') && defined('_DB_USER_')
+            && defined('_DB_PASSWD_') && defined('_DB_NAME_')) {
+            $version = Db::getInstance()->getVersion();
+
+            if (version_compare($version, '5.5', '<')) {
+                $report = sprintf('DB server is v%s, should be at least MySQL v5.5.3 or MariaDB v5.5.', $version);
+
+                return false;
+            }
+        }
+        // Else probably installation time.
+
+        return true;
     }
 
     /**
@@ -259,12 +297,13 @@ class ConfigurationTest
     /**
      * @return bool
      *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testMagicQuotes()
     {
-        return !get_magic_quotes_gpc();
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -351,7 +390,8 @@ class ConfigurationTest
      */
     public static function testMaxExecutionTime()
     {
-        return ini_get('max_execution_time') <= 0 || ini_get('max_execution_time') >= 30;
+        return ini_get('max_execution_time') <= 0
+               || ini_get('max_execution_time') >= 30;
     }
 
     /**
@@ -446,16 +486,11 @@ class ConfigurationTest
      *
      * @return bool
      *
-     * @since   1.0.2 Add $report.
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testSitemap($dir, &$report = null)
     {
-        if (!static::testFile($dir)) {
-            $report = 'File or directory '.$dir.' is not writable.';
-            return false;
-        }
+        Tools::displayAsDeprecated();
 
         return true;
     }
@@ -491,13 +526,13 @@ class ConfigurationTest
      *
      * @return bool
      *
-     * @since   1.0.2 Add $report.
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testRootDir($dir, &$report = null)
     {
-        return static::testDir($dir, false, $report);
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -519,13 +554,13 @@ class ConfigurationTest
      *
      * @return bool
      *
-     * @since   1.0.2 Add $report.
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testAdminDir($dir, &$report = null)
     {
-        return static::testDir($dir, false, $report);
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -575,13 +610,13 @@ class ConfigurationTest
      *
      * @return bool
      *
-     * @since   1.0.2 Add $report.
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testToolsV2Dir($dir, &$report = null)
     {
-        return static::testDir($dir, false, $report);
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -589,13 +624,13 @@ class ConfigurationTest
      *
      * @return bool
      *
-     * @since   1.0.2 Add $report.
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testCacheV2Dir($dir, &$report = null)
     {
-        return static::testDir($dir, false, $report);
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -603,13 +638,13 @@ class ConfigurationTest
      *
      * @return bool
      *
-     * @since   1.0.2 Add $report.
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testDownloadDir($dir, &$report = null)
     {
-        return static::testDir($dir, false, $report);
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
@@ -739,40 +774,38 @@ class ConfigurationTest
     /**
      * @return bool
      *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
-     *
+     * @deprecated 1.0.8
      * @deprecated since PHP 7.1
      */
     public static function testMcrypt()
     {
-        return function_exists('mcrypt_encrypt');
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
      * @return bool
      *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testSessions()
     {
-        if (!$path = @ini_get('session.save_path')) {
-            return true;
-        }
+        Tools::displayAsDeprecated();
 
-        return is_writable($path);
+        return true;
     }
 
     /**
      * @return bool
      *
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
+     * @deprecated 1.0.8
      */
     public static function testDom()
     {
-        return extension_loaded('Dom');
+        Tools::displayAsDeprecated();
+
+        return true;
     }
 
     /**
