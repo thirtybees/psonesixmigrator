@@ -300,7 +300,7 @@ class AdminThirtyBeesMigrateController extends AdminController
     }
 
     /**
-     * @return float|int
+     * @return bool
      *
      * @since 1.0.0
      */
@@ -312,14 +312,30 @@ class AdminThirtyBeesMigrateController extends AdminController
         foreach ($allowedArray as $item) {
             $allowed = $allowed && (bool) $item;
         }
-        foreach ($allowedArray['check'] as $check) {
+
+        $allowed = $allowed && $this->testsuiteOk();
+
+        return $allowed;
+    }
+
+    /**
+     * @return bool
+     *
+     * @since 2.0.0
+     */
+    public function testsuiteOk()
+    {
+        $ok = true;
+        $testsuiteResult = $this->getCheckCurrentPsConfig();
+
+        foreach ($testsuiteResult['check'] as $check) {
             if ($check !== 'ok') {
-                $allowed = false;
+                $ok = false;
                 break;
             }
         }
 
-        return $allowed;
+        return $ok;
     }
 
     /**

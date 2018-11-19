@@ -53,7 +53,7 @@ PsOneSixMigrator\ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools
 				<td><?php echo($currentPsConfig['admin_au_writable'] ? $picOk : $picNok.' '.$report); ?></td>
 			</tr>
 			<tr>
-      <?php if ($this->configOk()) { ?>
+      <?php if ($this->testsuiteOk()) { ?>
           <td><?php echo $this->l('thirty bees test suite passing'); ?></td>
           <td><?php echo($picOk); ?></td>
       <?php } else { ?>
