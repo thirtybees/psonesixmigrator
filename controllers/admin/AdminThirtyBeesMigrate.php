@@ -266,7 +266,7 @@ class AdminThirtyBeesMigrateController extends AdminController
             $tools = UpgraderTools::getInstance();
             $adminDir = trim(str_replace(_PS_ROOT_DIR_, '', _PS_ADMIN_DIR_), DIRECTORY_SEPARATOR);
             $allowedArray['admin_au_writable'] = ConfigurationTest::testDir($adminDir.DIRECTORY_SEPARATOR.$tools->autoupgradeDir, false, $report);
-            $allowedArray['shop_deactivated'] = (!Configuration::get('PS_SHOP_ENABLE') || (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['127.0.0.1', 'localhost'])));
+            $allowedArray['shop_deactivated'] = ! Configuration::get('PS_SHOP_ENABLE');
             $allowedArray['cache_deactivated'] = !(defined('_PS_CACHE_ENABLED_') && _PS_CACHE_ENABLED_);
             $allowedArray['module_version_ok'] = true;
         }
