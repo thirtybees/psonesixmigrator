@@ -778,6 +778,7 @@ class AjaxProcessor
             'graphxmlswfcharts',
             'pagecache',
             'tmmegamenu',
+            'vipadvancedurl',
         ];
         $moduleFound = false;
         $moduleAsideDir = _PS_ROOT_DIR_.'/modules.off';
