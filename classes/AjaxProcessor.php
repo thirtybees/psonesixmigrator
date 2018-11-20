@@ -1559,7 +1559,12 @@ class AjaxProcessor
             require_once _PS_CONFIG_DIR_.'bootstrap.php';
 
             if (\Module::isInstalled($moduleName)) {
-                $success = \Module::getInstanceByName($moduleName)->uninstall();
+                $module = \Module::getInstanceByName($moduleName);
+                if ($module) {
+                    $success = $module->uninstall();
+                } else {
+                    $this->nextQuickInfo[] = sprintf($this->l('System considers module %s to be installed, but can\'t create an instance.'), $moduleName);
+                }
             }
 
             spl_autoload_unregister([\PrestaShopAutoload::getInstance(), 'load']);
