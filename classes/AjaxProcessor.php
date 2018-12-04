@@ -202,6 +202,8 @@ class AjaxProcessor
         if (UpgraderTools::getConfig(UpgraderTools::DISABLE_CUSTOM_MODULES)) {
             Configuration::updateGlobalValue('PS_DISABLE_NON_NATIVE_MODULE', true);
         }
+
+        return true;
     }
 
     /**
@@ -275,6 +277,8 @@ class AjaxProcessor
                     $this->nextQuickInfo[] = $this->l('Download complete.');
                     $this->next = 'unzip';
                     $this->nextDesc = $this->l('Download complete. Now extracting...');
+
+                    return true;
                 } else {
                     if ($md5CoreFile !== $this->upgrader->md5Core) {
                         $this->nextErrors[] = $this->nextQuickInfo[] = sprintf($this->l('Unable to download (part of) the core ZIP file. MD5 sum does not match. Please download the file manually and save it as %s'), $pathCore);
@@ -299,6 +303,8 @@ class AjaxProcessor
             $this->nextErrors[] = sprintf($this->l('Download directory %s is not writable.'), $this->tools->downloadPath);
             $this->next = 'error';
         }
+
+        return false;
     }
 
     /**
@@ -330,8 +336,6 @@ class AjaxProcessor
             } else {
                 $this->next = 'error';
                 $this->nextDesc = sprintf($this->l('Unable to extract %1$s and/or %2$s into %3$s folder...'), $coreFilePath, $extraFilePath, $coreFileDest);
-
-                return false;
             }
         } else {
             $this->nextDesc = $this->l('Extraction directory is not writable.');
@@ -811,6 +815,8 @@ class AjaxProcessor
 
         $this->next = 'deleteModules';
         $this->nextDesc = $this->l('Deleting now obsolete modules...');
+
+        return true;
     }
 
     /**
@@ -872,6 +878,8 @@ class AjaxProcessor
 
         $this->next = 'upgradeFiles';
         $this->nextDesc = $this->l('Now upgrading files...');
+
+        return true;
     }
 
     /**
@@ -1029,6 +1037,7 @@ class AjaxProcessor
         }
 
         $this->next = 'upgradeComplete';
+
         return true;
     }
 
@@ -1055,6 +1064,8 @@ class AjaxProcessor
         } elseif (is_dir($this->latestRootDir)) {
             $this->nextQuickInfo[] = '<strong>'.sprintf($this->l('Please remove %s by FTP'), $this->latestRootDir).'</strong>';
         }
+
+        return true;
     }
 
     /**
