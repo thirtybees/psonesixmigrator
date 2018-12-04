@@ -1513,7 +1513,6 @@ class AjaxProcessor
             }
         }
         file_put_contents($this->tools->autoupgradePath.DIRECTORY_SEPARATOR.UpgraderTools::TO_UPGRADE_MODULE_LIST, base64_encode(serialize($list)));
-        $this->nextParams['modulesToUpgrade'] = UpgraderTools::TO_UPGRADE_MODULE_LIST;
 
         return count($list);
     }

@@ -155,28 +155,11 @@ class UpgraderTools
 
     /**
      * create some required directories if they does not exists
-     *
-     * Also set nextParams (removeList and filesToUpgrade) if they
-     * exists in currentParams
-     *
      */
     public function initPath()
     {
         // If not exists in this sessions, "create"
         // session handling : from current to next params
-
-
-//        if (isset($this->currentParams['removeList'])) {
-//            $this->nextParams['removeList'] = $this->currentParams['removeList'];
-//        }
-//
-//        if (isset($this->currentParams['filesToUpgrade'])) {
-//            $this->nextParams['filesToUpgrade'] = $this->currentParams['filesToUpgrade'];
-//        }
-//
-//        if (isset($this->currentParams['modulesToUpgrade'])) {
-//            $this->nextParams['modulesToUpgrade'] = $this->currentParams['modulesToUpgrade'];
-//        }
 
         // set autoupgradePath, to be used in backupFiles and backupDb config values
         $this->autoupgradePath = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.$this->autoupgradeDir;
