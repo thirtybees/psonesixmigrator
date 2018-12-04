@@ -323,22 +323,15 @@ class AjaxProcessor
         $report = '';
         if (ConfigurationTest::testDir($relativeExtractPath, false, $report)) {
             if ($this->extractZip($coreFilePath, $coreFileDest) && $this->extractZip($extraFilePath, $extraFileDest)) {
-                // Unsetting to force listing
-                unset($this->nextParams['removeList']);
-                if (UpgraderTools::getConfig('skip_backup')) {
-                    $this->next = 'upgradeFiles';
-                    $this->nextDesc = $this->l('File extraction complete. Backup process skipped. Now upgrading files.');
-                } else {
-                    $this->next = 'backupFiles';
-                    $this->nextDesc = $this->l('File extraction complete. Now backing up files.');
-                }
+                $this->next = 'backupFiles';
+                $this->nextDesc = $this->l('File extraction complete. Now backing up files...');
 
                 return true;
             } else {
                 $this->next = 'error';
                 $this->nextDesc = sprintf($this->l('Unable to extract %1$s and/or %2$s into %3$s folder...'), $coreFilePath, $extraFilePath, $coreFileDest);
 
-                return true;
+                return false;
             }
         } else {
             $this->nextDesc = $this->l('Extraction directory is not writable.');
@@ -360,7 +353,7 @@ class AjaxProcessor
         if (!UpgraderTools::getConfig(UpgraderTools::BACKUP)) {
             $this->stepDone = true;
             $this->next = 'backupDb';
-            $this->nextDesc = 'File backup skipped.';
+            $this->nextDesc = 'File backup skipped. Now backing up database...';
 
             return true;
         }
@@ -470,7 +463,7 @@ class AjaxProcessor
         } else {
             $this->stepDone = true;
             $this->next = 'backupDb';
-            $this->nextDesc = $this->l('All files saved. Now backing up database.');
+            $this->nextDesc = $this->l('All files saved. Now backing up database...');
 
             return true;
         }
