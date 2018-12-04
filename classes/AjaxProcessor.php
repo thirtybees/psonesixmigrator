@@ -876,6 +876,49 @@ class AjaxProcessor
             }
         }
 
+        $this->next = 'prepareDb';
+        $this->nextDesc = $this->l('Now preparing the database...');
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     *
+     * @since 2.0.0
+     */
+    public function ajaxProcessPrepareDb()
+    {
+        /*
+         * URL schemas (back office -> Preferences -> SEO & URLs, panel 'Schema
+         * of URLs') aren't stored in the database by default. As thirty bees
+         * has different defaults, but the same schemas should be kept for SEO
+         * reasons, make sure these rules are in the database (either already
+         * stored custom rules or a copy of the PrestaShop default schemas).
+         */
+        // We need an instance of the PrestaShop dispatcher here.
+        require_once _PS_CLASS_DIR_.'PrestaShopAutoload.php';
+        spl_autoload_register([\PrestaShopAutoload::getInstance(), 'load']);
+        $dispatcher = \Dispatcher::getInstance();
+        spl_autoload_unregister([\PrestaShopAutoload::getInstance(), 'load']);
+
+        foreach ([
+            'product_rule',
+            'category_rule',
+            'layered_rule',
+            'supplier_rule',
+            'manufacturer_rule',
+            'cms_rule',
+            'cms_category_rule',
+            // Ignore the modules rule, thirty bees no longer has one.
+        ] as $route) {
+            $configKey ='PS_ROUTE_'.$route;
+            if ( ! Configuration::get($configKey)) {
+                $rule = $dispatcher->default_routes[$route]['rule'];
+                Configuration::updateValue($configKey, $rule);
+            }
+        }
+
         $this->next = 'upgradeFiles';
         $this->nextDesc = $this->l('Now upgrading files...');
 
