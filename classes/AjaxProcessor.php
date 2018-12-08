@@ -1995,6 +1995,18 @@ class AjaxProcessor
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1" WHERE name = "PS_NEED_REBUILD_INDEX"', false);
         $this->db->execute('UPDATE `'._DB_PREFIX_.'configuration` SET value="1.6.1.999" WHERE name = "PS_VERSION_DB"', false);
 
+        // thirty bees theme for all employees.
+        $this->db->execute('UPDATE `'._DB_PREFIX_.'employee`
+            SET `bo_color` = NULL,
+                `bo_theme` = "default",
+                `bo_css` = "schemes/admin-theme-thirtybees.css"
+            WHERE `bo_css` NOT LIKE "%_rtl.css"', false);
+        $this->db->execute('UPDATE `'._DB_PREFIX_.'employee`
+            SET `bo_color` = NULL,
+                `bo_theme` = "default",
+                `bo_css` = "schemes_rtl/admin-theme-thirtybees_rtl.css"
+            WHERE `bo_css` LIKE "%_rtl.css"', false);
+
         if (file_exists($this->tools->latestPath)) {
             Tools::deleteDirectory($this->tools->latestPath, true);
             $this->nextQuickInfo[] = $this->l('ZIP unpack directory removed.');
