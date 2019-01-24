@@ -776,6 +776,19 @@ class AjaxProcessor
             'pagecache',
             'tmmegamenu',
             'vipadvancedurl',
+            'graphnvd3',
+            'gridhtml',
+            'statsforecast',
+            'statslive',
+            'statsnewsletter',
+            'statsorigin',
+            'statspersonalinfos',
+            'statsproduct',
+            'statssales',
+            'statssearch',
+            'statsstock',
+            'statsvisits',
+
         ];
         $moduleFound = false;
         $moduleAsideDir = _PS_ROOT_DIR_.'/modules.off';
