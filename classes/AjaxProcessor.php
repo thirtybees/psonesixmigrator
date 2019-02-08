@@ -27,6 +27,43 @@ namespace PsOneSixMigrator;
 
 use PsOneSixMigrator\GuzzleHttp\Client;
 
+if ( ! defined('__PS_BASE_URI__')) {
+    define('__PS_BASE_URI__', realpath(dirname($_SERVER['SCRIPT_NAME'])).'/../../');
+}
+if ( ! defined('_THEMES_DIR_')) {
+    define('_THEMES_DIR_', __PS_BASE_URI__.'themes/');
+}
+if ( ! defined('_PS_ROOT_DIR_')) {
+    define('_PS_ROOT_DIR_', realpath(__DIR__.'/../../..').'/');
+}
+if ( ! defined('_PS_CORE_DIR_')) {
+    define('_PS_CORE_DIR_', _PS_ROOT_DIR_);
+}
+if ( ! defined('_PS_MODULE_DIR_')) {
+    define('_PS_MODULE_DIR_', _PS_ROOT_DIR_.'/modules/');
+}
+if ( ! defined('_PS_TOOL_DIR_')) {
+    define('_PS_TOOL_DIR_', _PS_ROOT_DIR_.'/tools/');
+}
+if ( ! defined('_PS_TRANSLATIONS_DIR_')) {
+    define('_PS_TRANSLATIONS_DIR_', _PS_ROOT_DIR_.'/translations/');
+}
+if ( ! defined('_PS_MODULE_DIR_')) {
+    define('_PS_MODULE_DIR_', _PS_ROOT_DIR_.'/modules/');
+}
+if ( ! defined('_PS_MAILS_DIR_')) {
+    define('_PS_MAILS_DIR_', _PS_ROOT_DIR_.'/mails/');
+}
+if ( ! defined('_PS_CACHEFS_DIRECTORY_')) {
+    define('_PS_CACHEFS_DIRECTORY_', _PS_ROOT_DIR_.'/cache/cachefs/');
+}
+if ( ! defined('_PS_CACHE_ENABLED_')) {
+    define('_PS_CACHE_ENABLED_', '0');
+}
+if ( ! defined('_MYSQL_ENGINE_')) {
+    define('_MYSQL_ENGINE_', 'InnoDB');
+}
+
 /**
  * Class AjaxProcessor
  *
@@ -1654,14 +1691,6 @@ class AjaxProcessor
             return false;
         }
 
-        if (!defined('__PS_BASE_URI__')) {
-            define('__PS_BASE_URI__', realpath(dirname($_SERVER['SCRIPT_NAME'])).'/../../');
-        }
-
-        if (!defined('_THEMES_DIR_')) {
-            define('_THEMES_DIR_', __PS_BASE_URI__.'themes/');
-        }
-
         //check DB access
         error_reporting(E_ALL);
         $resultDB = Db::checkConnection(_DB_SERVER_, _DB_USER_, _DB_PASSWD_, _DB_NAME_);
@@ -1908,23 +1937,6 @@ class AjaxProcessor
             OR `value` LIKE ""
         ', false);
 
-        if (version_compare($this->installVersion, '1.5.4.0', '>=')) {
-            // Upgrade languages
-            if (!defined('_PS_TOOL_DIR_')) {
-                define('_PS_TOOL_DIR_', _PS_ROOT_DIR_.'/tools/');
-            }
-            if (!defined('_PS_TRANSLATIONS_DIR_')) {
-                define('_PS_TRANSLATIONS_DIR_', _PS_ROOT_DIR_.'/translations/');
-            }
-            if (!defined('_PS_MODULE_DIR_')) {
-                define('_PS_MODULE_DIR_', _PS_ROOT_DIR_.'/modules/');
-            }
-            if (!defined('_PS_MAILS_DIR_')) {
-                define('_PS_MAILS_DIR_', _PS_ROOT_DIR_.'/mails/');
-            }
-        }
-
-
         $path = _PS_ADMIN_DIR_.DIRECTORY_SEPARATOR.'themes'.DIRECTORY_SEPARATOR.'default'.DIRECTORY_SEPARATOR.'template'.DIRECTORY_SEPARATOR.'controllers'.DIRECTORY_SEPARATOR.'modules'.DIRECTORY_SEPARATOR.'header.tpl';
         if (file_exists($path)) {
             unlink($path);
@@ -1981,9 +1993,6 @@ class AjaxProcessor
 				WHERE name = "PS_CACHEFS_DIRECTORY_DEPTH"'
             );
             if ($depth) {
-                if (!defined('_PS_CACHEFS_DIRECTORY_')) {
-                    define('_PS_CACHEFS_DIRECTORY_', _PS_ROOT_DIR_.'/cache/cachefs/');
-                }
                 Tools::deleteDirectory(_PS_CACHEFS_DIRECTORY_, false);
                 if (class_exists('CacheFs', false)) {
                     static::createCacheFsDirectories((int) $depth);
@@ -2059,10 +2068,7 @@ class AjaxProcessor
         define('INSTALL_PATH', $this->tools->autoupgradePath);
         // 1.5 ...
         define('_PS_INSTALL_PATH_', INSTALL_PATH.DIRECTORY_SEPARATOR);
-        // 1.6
-        if (!defined('_PS_CORE_DIR_')) {
-            define('_PS_CORE_DIR_', _PS_ROOT_DIR_);
-        }
+        // 1.6 uses _PS_CORE_DIR_.
 
         define('PS_INSTALLATION_IN_PROGRESS', true);
         define('SETTINGS_FILE', _PS_ROOT_DIR_.'/config/settings.inc.php');
@@ -2071,13 +2077,6 @@ class AjaxProcessor
 
         if (function_exists('date_default_timezone_set')) {
             date_default_timezone_set('Europe/Amsterdam');
-        }
-
-        // if _PS_ROOT_DIR_ is defined, use it instead of "guessing" the module dir.
-        if (defined('_PS_ROOT_DIR_') and !defined('_PS_MODULE_DIR_')) {
-            define('_PS_MODULE_DIR_', _PS_ROOT_DIR_.'/modules/');
-        } elseif (!defined('_PS_MODULE_DIR_')) {
-            define('_PS_MODULE_DIR_', INSTALL_PATH.'/../modules/');
         }
 
         $upgradeDirPhp = 'latest/upgrade/php';
@@ -2141,12 +2140,6 @@ class AjaxProcessor
         if (defined('_RIJNDAEL_IV_')) {
             $datas[] = ['_RIJNDAEL_IV_', _RIJNDAEL_IV_];
         }
-        if (!defined('_PS_CACHE_ENABLED_')) {
-            define('_PS_CACHE_ENABLED_', '0');
-        }
-        if (!defined('_MYSQL_ENGINE_')) {
-            define('_MYSQL_ENGINE_', 'MyISAM');
-        }
 
         $datas[] = ['_PS_DIRECTORY_', __PS_BASE_URI__];
 
@@ -2178,9 +2171,6 @@ class AjaxProcessor
     protected function createCacheFsDirectories($levelDepth, $directory = false)
     {
         if (!$directory) {
-            if (!defined('_PS_CACHEFS_DIRECTORY_')) {
-                define('_PS_CACHEFS_DIRECTORY_', _PS_ROOT_DIR_.'/cache/cachefs/');
-            }
             $directory = _PS_CACHEFS_DIRECTORY_;
         }
         $chars = '0123456789abcdef';
