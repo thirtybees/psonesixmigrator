@@ -45,7 +45,7 @@ class PsOneSixMigrator extends Module
         $this->name = 'psonesixmigrator';
         $this->tab = 'administration';
         $this->author = 'thirty bees';
-        $this->version = '2.0.0';
+        $this->version = '2.0.1';
         $this->need_instance = 1;
 
         $this->bootstrap = true;
