@@ -3,19 +3,19 @@ compatible_versions: 1.0.0+
 author: thirty bees
 category: administration
 tags:
-- prestashop
-- prestashop migration
-- prestashop migrator
-- psonesixmigrator
-description_short: Our Prestashop to thirty bees migrator module allows you to migrate any 1.6 version of PrestaShop
-  to thirty bees.
+  - prestashop
+  - prestashop migration
+  - prestashop migrator
+  - psonesixmigrator
+description_short: Our Prestashop to thirty bees migrator module allows you to migrate any 1.6 version of PrestaShop to thirty bees.
 description: description.md
 images:
-- image-1.png
+  - image-1.png
 gdpr_compliant: true
 license: AFL
 php_version:
-- 5.5
-- 5.6
-- 7.0
-- 7.1
+  - 5.5
+  - 5.6
+  - 7.0
+  - 7.1
+  - 7.2
