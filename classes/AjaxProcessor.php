@@ -39,6 +39,9 @@ if ( ! defined('_PS_ROOT_DIR_')) {
 if ( ! defined('_PS_CORE_DIR_')) {
     define('_PS_CORE_DIR_', _PS_ROOT_DIR_);
 }
+if ( ! defined('_PS_CONFIG_DIR_')) {
+    define('_PS_CONFIG_DIR_', _PS_ROOT_DIR_.'/config/');
+}
 if ( ! defined('_PS_MODULE_DIR_')) {
     define('_PS_MODULE_DIR_', _PS_ROOT_DIR_.'/modules/');
 }
