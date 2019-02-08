@@ -939,6 +939,9 @@ class AjaxProcessor
         // We need an instance of the PrestaShop dispatcher here.
         require_once _PS_CLASS_DIR_.'PrestaShopAutoload.php';
         spl_autoload_register([\PrestaShopAutoload::getInstance(), 'load']);
+        // Dispatcher loads modules, some of which do database requests in
+        // their constructor, which get enabled in bootstrap.php.
+        require_once _PS_CONFIG_DIR_.'bootstrap.php';
         $dispatcher = \Dispatcher::getInstance();
         spl_autoload_unregister([\PrestaShopAutoload::getInstance(), 'load']);
 
