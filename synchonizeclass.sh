@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 ##
-# Copyright (C) 2018 thirty bees
+# Copyright (C) 2018-2019 thirty bees
 #
 # @author    thirty bees <modules@thirtybees.com>
-# @copyright 2018 thirty bees
+# @copyright 2018-2019 thirty bees
 # @license   proprietary
 
 function usage {
