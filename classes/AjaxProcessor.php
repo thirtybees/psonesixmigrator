@@ -822,9 +822,14 @@ class AjaxProcessor
 
         foreach ($modulesAside as $module) {
             // Uninstall the module, mostly to remove eventual overrides.
-            if ($this->uninstallModule($module)) {
-                $moduleFound = true;
-                $this->nextQuickInfo[] = sprintf($this->l('Uninstalled module %s.'), $module);
+            try {
+                if ($this->uninstallModule($module)) {
+                    $moduleFound = true;
+                    $this->nextQuickInfo[] = sprintf($this->l('Uninstalled module %s.'), $module);
+                }
+            } catch (Exception $e) {
+                $this->nextQuickInfo[] = $this->nextErrors[] =
+                    sprintf($this->l('Error when trying to uninstall module %s. This is usually harmless.'), $module);
             }
 
             // Move module files aside.
@@ -902,7 +907,12 @@ class AjaxProcessor
 
         foreach ($modulesToDelete as $module) {
             // Uninstall the module for tidyness.
-            $this->uninstallModule($module);
+            try {
+                $this->uninstallModule($module);
+            } catch (Exception $e) {
+                $this->nextQuickInfo[] = $this->nextErrors[] =
+                    sprintf($this->l('Error when trying to uninstall module %s. This is usually harmless.'), $module);
+            }
 
             // Delete the module.
             $moduleDir = _PS_MODULE_DIR_.$module;
