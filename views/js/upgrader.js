@@ -98,73 +98,10 @@
     window.upgrader.firstTimeParams = window.upgrader.firstTimeParams.nextParams;
     window.upgrader.firstTimeParams.firstTime = '1';
 
-    // js initialization : prepare upgrade and rollback buttons
-    function refreshChannelInfo() {
-      var channel = $('select[name=channel]').find('option:selected').val();
-      var $selectedVersion = $('#selectedVersion');
-      var $upgradeNow = $('#upgradeNow');
-      var $selectChannelErrors = $('#channelSelectErrors');
-
-      $upgradeNow.attr('disabled', 'disabled');
-      $selectedVersion.html('<i class="icon icon-spinner icon-pulse"></i>');
-      $selectChannelErrors.hide();
-
-      if (typeof window.upgrader.currentChannelAjax === 'object') {
-        window.upgrader.currentChannelAjax.abort();
-      }
-
-      window.upgrader.currentChannelAjax = $.ajax({
-        type: 'POST',
-        url: window.upgrader.ajaxLocation,
-        dataType: 'json',
-        processData: false,
-        contentType: 'application/json; ; charset=UTF-8',
-        data: JSON.stringify({
-          dir: window.upgrader.dir,
-          token: window.upgrader.token,
-          autoupgradeDir: window.upgrader.autoupgradeDir,
-          tab: 'AdminThirtyBeesMigrate',
-          action: 'getChannelInfo',
-          ajax: '1',
-          ajaxToken: window.upgrader.ajaxToken,
-          params: {
-            channel: channel,
-          },
-        }),
-        success: function (res) {
-          var result;
-          if (res && !res.error) {
-            result = res.nextParams.result;
-            if (!result.available) {
-              $selectedVersion.html('Not available');
-            } else {
-              $selectedVersion.html(result.version);
-              $upgradeNow.attr('disabled', false);
-            }
-            $selectChannelErrors.hide();
-          } else if (res.error && res.status) {
-            $selectedVersion.html('Error');
-            $selectChannelErrors.html('Error during channel selection: ' + res.status);
-            $selectChannelErrors.show();
-          }
-        },
-        error: function () {
-          $selectedVersion.html('Error');
-          $selectChannelErrors.html('Could not connect with the server');
-          $selectChannelErrors.show();
-        },
-      });
-    }
-
     $(document).ready(function () {
-      var $channelSelect = $('#channelSelect');
       var $restoreNameSelect = $('select[name=restoreName]');
 
-      $channelSelect.change(function () {
-        refreshChannelInfo();
-      });
       $('div[id|=for]').hide();
-      $('select[name=channel]').change();
 
       // The configuration forms
       $('.generatedForm select').change(function () {
