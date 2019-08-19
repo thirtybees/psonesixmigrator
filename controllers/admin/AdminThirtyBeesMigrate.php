@@ -147,8 +147,6 @@ class AdminThirtyBeesMigrateController extends AdminController
             $html .= $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/anotherchecklist.phtml');
         }
 
-        $html .= $this->displayRollbackForm();
-
         $html .= $this->getJsInit();
         $html .= '</div>';
 
@@ -481,18 +479,6 @@ class AdminThirtyBeesMigrateController extends AdminController
         ];
 
         return $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/displayform.phtml', $params);
-    }
-
-    /**
-     * Display rollback form
-     *
-     * @return string
-     *
-     * @since 1.0.0
-     */
-    protected function displayRollbackForm()
-    {
-        return $this->displayAdminTemplate(__DIR__.'/../../views/templates/admin/rollbackform.phtml');
     }
 
     /**
