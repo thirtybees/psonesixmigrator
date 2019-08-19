@@ -544,20 +544,6 @@ class AdminThirtyBeesMigrateController extends AdminController
             'desc'         => $this->l('To save time, you can decide not to back your images up. In any case, always make sure you did back them up manually.'),
         ];
 
-        $this->upgradeOptions[UpgraderTools::PERFORMANCE] = [
-            'title'        => $this->l('Server performance'),
-            'cast'         => 'intval',
-            'validation'   => 'isInt',
-            'defaultValue' => '1',
-            'type'         => 'select',
-            'desc'         => $this->l('Unless you are using a dedicated server, select "Low".').'<br />'.$this->l('A high value can cause the upgrade to fail if your server is not powerful enough to process the upgrade tasks in a short amount of time.'),
-            'choices'      => [
-                1 => $this->l('Low (recommended)'),
-                2 => $this->l('Medium'),
-                3 => $this->l('High'),
-            ],
-        ];
-
         $this->upgradeOptions[UpgraderTools::DISABLE_CUSTOM_MODULES] = [
             'title'      => $this->l('Disable non-native modules'),
             'cast'       => 'intval',
