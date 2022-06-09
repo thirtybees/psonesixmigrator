@@ -3,5 +3,6 @@
 !/translations/index.php
 
 /config*.xml
+/json/*.json
 
 psonesixmigrator-*.zip
